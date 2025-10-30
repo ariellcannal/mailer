@@ -4,26 +4,43 @@ namespace App\Controllers;
 use App\Models\MessageModel;
 use App\Models\CampaignModel;
 use App\Models\SenderModel;
+use App\Models\MessageSendModel;
 use App\Models\ContactModel;
 use App\Libraries\Email\QueueManager;
+use CodeIgniter\HTTP\RedirectResponse;
 
 class MessageController extends BaseController {
-    public function index() {
+    public function index(): string {
         $model = new MessageModel();
         $messages = $model->orderBy('created_at', 'DESC')->paginate(20);
-        
+
+        $campaignModel = new CampaignModel();
+        $senderModel = new SenderModel();
+
+        $campaignMap = [];
+        foreach ($campaignModel->findAll() as $campaign) {
+            $campaignMap[$campaign['id']] = $campaign['name'];
+        }
+
+        $senderMap = [];
+        foreach ($senderModel->findAll() as $sender) {
+            $senderMap[$sender['id']] = $sender['name'];
+        }
+
         return view('messages/index', [
             'messages' => $messages,
             'pager' => $model->pager,
+            'campaignMap' => $campaignMap,
+            'senderMap' => $senderMap,
             'activeMenu' => 'messages',
             'pageTitle' => 'Mensagens'
         ]);
     }
     
-    public function create() {
+    public function create(): string {
         $campaignModel = new CampaignModel();
         $senderModel = new SenderModel();
-        
+
         return view('messages/create', [
             'campaigns' => $campaignModel->where('is_active', 1)->findAll(),
             'senders' => $senderModel->where('is_active', 1)->where('ses_verified', 1)->findAll(),
@@ -31,7 +48,68 @@ class MessageController extends BaseController {
             'pageTitle' => 'Nova Mensagem'
         ]);
     }
-    
+
+    /**
+     * Exibe uma mensagem cadastrada.
+     */
+    public function view(int $id)
+    {
+        $model = new MessageModel();
+        $message = $model->find($id);
+
+        if (!$message) {
+            return redirect()->to('/messages')->with('error', 'Mensagem não encontrada');
+        }
+
+        $sendModel = new MessageSendModel();
+        $sends = $sendModel->where('message_id', $id)
+            ->orderBy('id', 'DESC')
+            ->findAll(20);
+
+        $contactMap = [];
+        if (!empty($sends)) {
+            $contactIds = array_unique(array_column($sends, 'contact_id'));
+            if (!empty($contactIds)) {
+                $contactModel = new ContactModel();
+                foreach ($contactModel->whereIn('id', $contactIds)->findAll() as $contact) {
+                    $contactMap[$contact['id']] = $contact['email'];
+                }
+            }
+        }
+
+        return view('messages/view', [
+            'message' => $message,
+            'sends' => $sends,
+            'contactMap' => $contactMap,
+            'activeMenu' => 'messages',
+            'pageTitle' => $message['subject'],
+        ]);
+    }
+
+    /**
+     * Exibe formulário de edição da mensagem.
+     */
+    public function edit(int $id)
+    {
+        $model = new MessageModel();
+        $message = $model->find($id);
+
+        if (!$message) {
+            return redirect()->to('/messages')->with('error', 'Mensagem não encontrada');
+        }
+
+        $campaignModel = new CampaignModel();
+        $senderModel = new SenderModel();
+
+        return view('messages/edit', [
+            'message' => $message,
+            'campaigns' => $campaignModel->where('is_active', 1)->findAll(),
+            'senders' => $senderModel->where('is_active', 1)->where('ses_verified', 1)->findAll(),
+            'activeMenu' => 'messages',
+            'pageTitle' => 'Editar Mensagem'
+        ]);
+    }
+
     public function store() {
         $model = new MessageModel();
         
@@ -72,6 +150,43 @@ class MessageController extends BaseController {
             'success' => false,
             'error' => 'Erro ao salvar mensagem'
         ]);
+    }
+
+    /**
+     * Atualiza uma mensagem existente.
+     */
+    public function update(int $id): RedirectResponse
+    {
+        $model = new MessageModel();
+        $message = $model->find($id);
+
+        if (!$message) {
+            return redirect()->to('/messages')->with('error', 'Mensagem não encontrada');
+        }
+
+        $htmlContent = $this->request->getPost('html_content');
+        $validation = $this->validateOptOutLink($htmlContent);
+
+        if (!$validation['valid']) {
+            return redirect()->back()->withInput()->with('error', $validation['message']);
+        }
+
+        $data = [
+            'campaign_id' => $this->request->getPost('campaign_id'),
+            'sender_id' => $this->request->getPost('sender_id'),
+            'subject' => $this->request->getPost('subject'),
+            'from_name' => $this->request->getPost('from_name'),
+            'reply_to' => $this->request->getPost('reply_to'),
+            'html_content' => $htmlContent,
+            'has_optout_link' => $validation['has_optout'],
+            'optout_link_visible' => $validation['is_visible'],
+        ];
+
+        if ($model->update($id, $data)) {
+            return redirect()->to('/messages/view/' . $id)->with('success', 'Mensagem atualizada!');
+        }
+
+        return redirect()->back()->withInput()->with('error', 'Erro ao atualizar mensagem');
     }
     
     public function send($id) {

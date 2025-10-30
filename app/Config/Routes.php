@@ -107,3 +107,4 @@ $routes->get('login', 'AuthController::login');
 $routes->get('logout', 'AuthController::logout');
 $routes->get('auth/google', 'AuthController::google');
 $routes->get('auth/google/callback', 'AuthController::googleCallback');
+$routes->get('profile', 'ProfileController::index');

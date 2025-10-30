@@ -53,15 +53,15 @@ class SenderController extends BaseController {
     public function view($id) {
         $model = new SenderModel();
         $sender = $model->find($id);
-        
+
         if (!$sender) {
             return redirect()->to('/senders')->with('error', 'Remetente não encontrado');
         }
-        
+
         // Validar DNS
         $validator = new DNSValidator();
         $dnsStatus = $validator->validateAll($sender['domain']);
-        
+
         return view('senders/view', [
             'sender' => $sender,
             'dnsStatus' => $dnsStatus,
@@ -69,7 +69,68 @@ class SenderController extends BaseController {
             'pageTitle' => $sender['email']
         ]);
     }
-    
+
+    /**
+     * Exibe formulário de edição de remetente.
+     */
+    public function edit(int $id)
+    {
+        $model = new SenderModel();
+        $sender = $model->find($id);
+
+        if (!$sender) {
+            return redirect()->to('/senders')->with('error', 'Remetente não encontrado');
+        }
+
+        return view('senders/edit', [
+            'sender' => $sender,
+            'activeMenu' => 'senders',
+            'pageTitle' => 'Editar Remetente'
+        ]);
+    }
+
+    /**
+     * Atualiza dados do remetente.
+     */
+    public function update(int $id)
+    {
+        $model = new SenderModel();
+        $sender = $model->find($id);
+
+        if (!$sender) {
+            return redirect()->to('/senders')->with('error', 'Remetente não encontrado');
+        }
+
+        $email = $this->request->getPost('email');
+        $name = $this->request->getPost('name');
+        $domain = substr(strrchr($email, '@'), 1) ?: $sender['domain'];
+
+        $model->update($id, [
+            'email' => $email,
+            'name' => $name,
+            'domain' => $domain,
+        ]);
+
+        return redirect()->to('/senders/view/' . $id)->with('success', 'Remetente atualizado com sucesso!');
+    }
+
+    /**
+     * Remove um remetente.
+     */
+    public function delete(int $id)
+    {
+        $model = new SenderModel();
+        $sender = $model->find($id);
+
+        if (!$sender) {
+            return redirect()->to('/senders')->with('error', 'Remetente não encontrado');
+        }
+
+        $model->delete($id);
+
+        return redirect()->to('/senders')->with('success', 'Remetente removido com sucesso!');
+    }
+
     public function verify($id) {
         $this->verifySender($id);
         return redirect()->to('/senders/view/' . $id)->with('success', 'Verificação iniciada!');
