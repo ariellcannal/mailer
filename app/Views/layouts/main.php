@@ -200,7 +200,7 @@
         <div class="sidebar-brand">
             <i class="fas fa-envelope"></i> Mailer
         </div>
-        
+        <?php $activeMenu = $activeMenu ?? ''; ?>
         <div class="sidebar-menu">
             <a href="<?= base_url('dashboard') ?>" class="sidebar-menu-item <?= $activeMenu === 'dashboard' ? 'active' : '' ?>">
                 <i class="fas fa-home"></i>
