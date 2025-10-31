@@ -35,6 +35,7 @@ class TemplateController extends BaseController
         return view('templates/create', [
             'activeMenu' => 'templates',
             'pageTitle' => 'Novo Template',
+            'editorEngine' => get_system_setting('editor_engine', 'tinymce'),
         ]);
     }
 
@@ -99,6 +100,7 @@ class TemplateController extends BaseController
             'template' => $template,
             'activeMenu' => 'templates',
             'pageTitle' => 'Editar Template',
+            'editorEngine' => get_system_setting('editor_engine', 'tinymce'),
         ]);
     }
 

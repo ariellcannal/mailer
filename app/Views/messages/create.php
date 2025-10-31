@@ -1,14 +1,7 @@
 <?= $this->extend('layouts/main') ?>
 
 <?= $this->section('styles') ?>
-<link rel="stylesheet" href="https://unpkg.com/grapesjs/dist/css/grapes.min.css">
-<link rel="stylesheet" href="https://unpkg.com/grapesjs-preset-newsletter/dist/grapesjs-preset-newsletter.css">
 <style>
-.gjs-editor {
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    overflow: hidden;
-}
 .step-wizard {
     display: flex;
     justify-content: space-between;
@@ -127,11 +120,9 @@
                             <i class="fas fa-times-circle"></i> Link Opt-out *
                         </button>
                     </div>
-                    
-                    <div id="gjs" style="height: 600px;"></div>
-                    <input type="hidden" name="html_content" id="html_content">
+                    <textarea id="messageEditor" name="html_content" class="form-control js-rich-editor" rows="15" required><?= old('html_content') ?></textarea>
                 </div>
-                
+
                 <button type="button" class="btn btn-secondary me-2" onclick="prevStep()">
                     <i class="fas fa-arrow-left"></i> Anterior
                 </button>
@@ -241,45 +232,28 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script src="https://unpkg.com/grapesjs"></script>
-<script src="https://unpkg.com/grapesjs-preset-newsletter"></script>
-
+<?= view('partials/rich_editor_scripts', [
+    'editorEngine' => $editorEngine ?? 'tinymce',
+    'selector' => '#messageEditor',
+    'height' => 600,
+]) ?>
 <script>
 let currentStep = 1;
-let editor;
-
-$(document).ready(function() {
-    initGrapesJS();
-});
-
-function initGrapesJS() {
-    editor = grapesjs.init({
-        container: '#gjs',
-        plugins: ['gjs-preset-newsletter'],
-        pluginsOpts: {
-            'gjs-preset-newsletter': {}
-        },
-        storageManager: false,
-        assetManager: {
-            upload: false,
-        },
-    });
-}
 
 function nextStep() {
-    if (currentStep === 2) {
-        // Salvar HTML do editor
-        const html = editor.getHtml();
-        const css = editor.getCss();
-        const fullHtml = `<style>${css}</style>${html}`;
-        $('#html_content').val(fullHtml);
+    if (currentStep === 2 && typeof window.syncRichEditors === 'function') {
+        window.syncRichEditors();
     }
-    
+
     $('.step-content[data-step="' + currentStep + '"]').hide();
     $('.step[data-step="' + currentStep + '"]').removeClass('active').addClass('completed');
-    
+
     currentStep++;
-    
+
+    if (currentStep === 5) {
+        updateReview();
+    }
+
     $('.step-content[data-step="' + currentStep + '"]').show();
     $('.step[data-step="' + currentStep + '"]').addClass('active');
 }
@@ -287,40 +261,55 @@ function nextStep() {
 function prevStep() {
     $('.step-content[data-step="' + currentStep + '"]').hide();
     $('.step[data-step="' + currentStep + '"]').removeClass('active');
-    
+
     currentStep--;
-    
+
     $('.step-content[data-step="' + currentStep + '"]').show();
     $('.step[data-step="' + currentStep + '"]').removeClass('completed').addClass('active');
 }
 
 function insertVariable(variable) {
-    editor.getSelected().append(`<span>${variable}</span>`);
+    if (typeof window.insertRichText === 'function') {
+        window.insertRichText(variable);
+    }
 }
 
 function insertWebviewLink() {
     const html = '<a href="{{webview_link}}" style="color: #999; font-size: 12px;">Clique aqui se não estiver visualizando corretamente</a>';
-    editor.getSelected().append(html);
-    alertify.success('Link de visualização inserido!');
+
+    if (typeof window.insertRichHtml === 'function') {
+        window.insertRichHtml(html);
+        alertify.success('Link de visualização inserido!');
+    }
 }
 
 function insertOptoutLink() {
     const html = '<p style="text-align: center; margin-top: 20px;"><a href="{{optout_link}}" style="color: #666; font-size: 12px;">Descadastrar</a></p>';
-    editor.getSelected().append(html);
-    alertify.success('Link de opt-out inserido!');
+
+    if (typeof window.insertRichHtml === 'function') {
+        window.insertRichHtml(html);
+        alertify.success('Link de opt-out inserido!');
+    }
+}
+
+function updateReview() {
+    if (typeof window.syncRichEditors === 'function') {
+        window.syncRichEditors();
+    }
+
+    const htmlContent = $('#messageEditor').val();
+    $('#review-content').html(htmlContent);
 }
 
 $('#messageForm').on('submit', function(e) {
     e.preventDefault();
-    
-    // Salvar HTML final
-    const html = editor.getHtml();
-    const css = editor.getCss();
-    const fullHtml = `<style>${css}</style>${html}`;
-    $('#html_content').val(fullHtml);
-    
+
+    if (typeof window.syncRichEditors === 'function') {
+        window.syncRichEditors();
+    }
+
     const formData = $(this).serialize();
-    
+
     $.ajax({
         url: '<?= base_url('messages/store') ?>',
         method: 'POST',

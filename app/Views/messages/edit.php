@@ -53,7 +53,7 @@
 
                 <div class="col-12 mb-3">
                     <label class="form-label">HTML</label>
-                    <textarea name="html_content" class="form-control" rows="12" required><?= esc($message['html_content']) ?></textarea>
+                    <textarea name="html_content" class="form-control js-rich-editor" rows="12" required><?= old('html_content', $message['html_content']) ?></textarea>
                 </div>
             </div>
 
@@ -66,4 +66,25 @@
         </form>
     </div>
 </div>
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<?= view('partials/rich_editor_scripts', [
+    'editorEngine' => $editorEngine ?? 'tinymce',
+    'selector' => 'textarea[name="html_content"]',
+    'height' => 600,
+]) ?>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+
+        if (form) {
+            form.addEventListener('submit', function() {
+                if (typeof window.syncRichEditors === 'function') {
+                    window.syncRichEditors();
+                }
+            });
+        }
+    });
+</script>
 <?= $this->endSection() ?>

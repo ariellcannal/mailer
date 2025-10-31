@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Controllers;
 
 use App\Models\MessageModel;
@@ -45,7 +48,8 @@ class MessageController extends BaseController {
             'campaigns' => $campaignModel->where('is_active', 1)->findAll(),
             'senders' => $senderModel->where('is_active', 1)->where('ses_verified', 1)->findAll(),
             'activeMenu' => 'messages',
-            'pageTitle' => 'Nova Mensagem'
+            'pageTitle' => 'Nova Mensagem',
+            'editorEngine' => get_system_setting('editor_engine', 'tinymce'),
         ]);
     }
 
@@ -89,7 +93,7 @@ class MessageController extends BaseController {
     /**
      * Exibe formulário de edição da mensagem.
      */
-    public function edit(int $id)
+    public function edit(int $id): string|RedirectResponse
     {
         $model = new MessageModel();
         $message = $model->find($id);
@@ -106,7 +110,8 @@ class MessageController extends BaseController {
             'campaigns' => $campaignModel->where('is_active', 1)->findAll(),
             'senders' => $senderModel->where('is_active', 1)->where('ses_verified', 1)->findAll(),
             'activeMenu' => 'messages',
-            'pageTitle' => 'Editar Mensagem'
+            'pageTitle' => 'Editar Mensagem',
+            'editorEngine' => get_system_setting('editor_engine', 'tinymce'),
         ]);
     }
 
