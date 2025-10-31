@@ -95,7 +95,7 @@ class SenderController extends BaseController
         }
 
         $validator = new DNSValidator();
-        $dkimTokens = $this->decodeDkimTokens($sender['dkim_tokens'] ?? null);
+        $dkimTokens = $this->resolveDkimTokens($sender);
         $dnsStatus = $validator->validateAll($sender['domain'], $dkimTokens);
         $dnsInstructions = $validator->generateDNSInstructions(
             $sender['domain'],
@@ -211,7 +211,7 @@ class SenderController extends BaseController
         }
 
         $validator = new DNSValidator();
-        $dkimTokens = $this->decodeDkimTokens($sender['dkim_tokens'] ?? null);
+        $dkimTokens = $this->resolveDkimTokens($sender);
         $result = $validator->validateAll($sender['domain'], $dkimTokens);
 
         $this->model->update($id, [
@@ -291,6 +291,44 @@ class SenderController extends BaseController
         }
 
         return array_values(array_filter($tokens, static fn($item): bool => is_string($item) && $item !== ''));
+    }
+
+    /**
+     * Garante a sincronização dos tokens DKIM entre a base local e a AWS.
+     *
+     * @param array $sender Dados completos do remetente atual.
+     *
+     * @return array<int, string> Lista de tokens DKIM disponíveis.
+     */
+    private function resolveDkimTokens(array $sender): array
+    {
+        $tokens = $this->decodeDkimTokens($sender['dkim_tokens'] ?? null);
+
+        if (!empty($tokens)) {
+            return $tokens;
+        }
+
+        try {
+            $service = new SESService();
+            $dkimAttributes = $service->getIdentityDkimAttributes($sender['domain']);
+
+            if (($dkimAttributes['success'] ?? false) === true && !empty($dkimAttributes['tokens'])) {
+                $tokens = array_values(array_filter(
+                    $dkimAttributes['tokens'],
+                    static fn($token): bool => is_string($token) && $token !== ''
+                ));
+
+                $this->model->update((int) $sender['id'], [
+                    'dkim_tokens' => json_encode($tokens),
+                ]);
+
+                return $tokens;
+            }
+        } catch (Throwable $exception) {
+            log_message('error', 'Error resolving DKIM tokens: ' . $exception->getMessage());
+        }
+
+        return [];
     }
 
     /**

@@ -211,7 +211,10 @@ class SESService
 
             return [
                 'success' => true,
-                'dkimTokens' => $result['DkimTokens'],
+                'dkimTokens' => array_values(array_filter(
+                    $result['DkimTokens'],
+                    static fn($token): bool => is_string($token) && $token !== ''
+                )),
             ];
         } catch (AwsException $e) {
             return [
@@ -222,10 +225,50 @@ class SESService
     }
 
     /**
+     * Obtém atributos DKIM de uma identidade já configurada.
+     *
+     * @param string $identity Identidade (domínio ou email) consultada.
+     *
+     * @return array Dados contendo status, tokens e habilitação.
+     */
+    public function getIdentityDkimAttributes(string $identity): array
+    {
+        try {
+            $result = $this->client->getIdentityDkimAttributes([
+                'Identities' => [$identity],
+            ]);
+
+            $attributes = $result['DkimAttributes'][$identity] ?? null;
+
+            if ($attributes === null) {
+                return [
+                    'success' => false,
+                    'message' => 'Identidade não encontrada na AWS SES.',
+                ];
+            }
+
+            return [
+                'success' => true,
+                'enabled' => (bool) ($attributes['DkimEnabled'] ?? false),
+                'status' => $attributes['DkimVerificationStatus'] ?? null,
+                'tokens' => array_values(array_filter(
+                    $attributes['DkimTokens'] ?? [],
+                    static fn($token): bool => is_string($token) && $token !== ''
+                )),
+            ];
+        } catch (AwsException $e) {
+            return [
+                'success' => false,
+                'message' => 'Falha ao obter atributos DKIM: ' . $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
      * Obtém status de verificação de uma identidade
-     * 
+     *
      * @param string $identity Email ou domínio
-     * 
+     *
      * @return array Status de verificação
      * @throws AwsException Se houver erro
      */
@@ -280,6 +323,7 @@ class SESService
             return [
                 'success' => false,
                 'error' => $e->getMessage(),
+                'message' => 'Não foi possível obter os limites no momento. ' . $e->getMessage(),
             ];
         }
     }
