@@ -19,6 +19,10 @@
     <!-- Alertify CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/alertify.min.css"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/themes/bootstrap.min.css"/>
+    
+    <!-- Icones -->
+    <link href="<?= base_url('assets/images/icon.png') ?>" rel="icon" media="(prefers-color-scheme: light)">
+	<link href="<?= base_url('assets/images/icon_neg.png') ?>" rel="icon" media="(prefers-color-scheme: dark)">
 
     <!-- Custom CSS -->
     <style>
@@ -270,7 +274,7 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <img src="<?= base_url('assets/images/logo.svg') ?>" alt="CANNAL Mídias Digitais" class="img-fluid">
+            <img src="<?= base_url('assets/images/logo.png') ?>" alt="CANNAL Mídias Digitais" class="img-fluid">
         </div>
         <?php $activeMenu = $activeMenu ?? ''; ?>
         <div class="sidebar-menu">
@@ -324,7 +328,7 @@
                 <div class="mobile-menu-toggle me-3" onclick="toggleSidebar()">
                     <i class="fas fa-bars"></i>
                 </div>
-                <img src="<?= base_url('assets/images/icon.svg') ?>" alt="Ícone CANNAL" class="header-icon me-2">
+                <img src="<?= base_url('assets/images/icon.png') ?>" alt="Ícone CANNAL" class="header-icon me-2">
                 <h5 class="mb-0 text-primary"><?= mb_strtoupper($pageTitle ?? 'Dashboard') ?></h5>
             </div>
             
