@@ -68,39 +68,39 @@ class ContactModel extends Model
      */
     public function getContacts(array $filters = [], int $perPage = 20): array
     {
-        $builder = $this->builder();
+        $this->select('*');
 
         // Filtro por email
         if (!empty($filters['email'])) {
-            $builder->like('email', $filters['email']);
+            $this->like('email', $filters['email']);
         }
 
         // Filtro por nome
         if (!empty($filters['name'])) {
-            $builder->like('name', $filters['name']);
+            $this->like('name', $filters['name']);
         }
 
         // Filtro por qualidade
         if (!empty($filters['quality_score'])) {
-            $builder->where('quality_score', $filters['quality_score']);
+            $this->where('quality_score', $filters['quality_score']);
         }
 
         // Filtro por status
         if (isset($filters['is_active'])) {
-            $builder->where('is_active', $filters['is_active']);
+            $this->where('is_active', $filters['is_active']);
         }
 
         // Filtro por opted_out
         if (isset($filters['opted_out'])) {
-            $builder->where('opted_out', $filters['opted_out']);
+            $this->where('opted_out', $filters['opted_out']);
         }
 
         // Filtro por bounced
         if (isset($filters['bounced'])) {
-            $builder->where('bounced', $filters['bounced']);
+            $this->where('bounced', $filters['bounced']);
         }
 
-        return $builder->paginate($perPage);
+        return $this->paginate($perPage);
     }
 
     /**

@@ -32,6 +32,14 @@
                     <label class="form-label">Remetente padrão</label>
                     <input type="email" class="form-control" name="settings[default_sender]" value="<?= esc($settings['default_sender'] ?? '') ?>">
                 </div>
+                <div class="col-md-4">
+                    <label class="form-label">Editor de conteúdo</label>
+                    <select class="form-select" name="settings[editor_engine]">
+                        <?php $currentEditor = $settings['editor_engine'] ?? 'tinymce'; ?>
+                        <option value="tinymce" <?= $currentEditor === 'tinymce' ? 'selected' : '' ?>>TinyMCE</option>
+                        <option value="ckeditor" <?= $currentEditor === 'ckeditor' ? 'selected' : '' ?>>CKEditor</option>
+                    </select>
+                </div>
             </div>
 
             <div class="d-flex gap-2 mt-4">
