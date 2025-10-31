@@ -62,4 +62,15 @@ class SystemSettingModel extends Model
 
         return $this->update((int) $existing['id'], ['setting_value' => $value]);
     }
+
+    /**
+     * Remove uma configuração pela chave informada.
+     *
+     * @param string $key Chave que será eliminada.
+     * @return bool Verdadeiro quando a exclusão ocorrer sem falhas.
+     */
+    public function deleteSetting(string $key): bool
+    {
+        return $this->where('setting_key', $key)->delete() !== false;
+    }
 }

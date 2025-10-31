@@ -238,12 +238,20 @@ class DNSValidator
      * 
      * @param string $domain Domínio
      * @param array  $dkimTokens Tokens DKIM da AWS (opcional)
-     * 
+     * @param string|null $verificationToken Token TXT da verificação de domínio
+     *
      * @return array Instruções de configuração
      */
-    public function generateDNSInstructions(string $domain, array $dkimTokens = []): array
+    public function generateDNSInstructions(string $domain, array $dkimTokens = [], ?string $verificationToken = null): array
     {
         $instructions = [
+            'domain_verification' => [
+                'type' => 'TXT',
+                'name' => '_amazonses.' . $domain,
+                'value' => $verificationToken ?? 'Token indisponível. Reexecute a verificação.',
+                'ttl' => 300,
+                'description' => 'Registro TXT necessário para validar o domínio no Amazon SES',
+            ],
             'spf' => [
                 'type' => 'TXT',
                 'name' => '@',

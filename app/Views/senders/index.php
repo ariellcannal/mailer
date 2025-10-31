@@ -4,7 +4,7 @@
 <div class="card">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="mb-0"><i class="fas fa-at"></i> Remetentes</h4>
+            <h4 class="mb-0 section-title"><i class="fas fa-at text-secondary me-2"></i>Remetentes</h4>
             <a href="<?= base_url('senders/create') ?>" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Novo Remetente
             </a>
@@ -14,12 +14,12 @@
             <table class="table table-hover align-middle">
                 <thead>
                     <tr>
-                        <th>Email</th>
-                        <th>Nome</th>
-                        <th>Domínio</th>
-                        <th>Status</th>
-                        <th>Verificações</th>
-                        <th>Ações</th>
+                        <th class="text-uppercase">Email</th>
+                        <th class="text-uppercase">Nome</th>
+                        <th class="text-uppercase">Domínio</th>
+                        <th class="text-uppercase">Status</th>
+                        <th class="text-uppercase">Verificações</th>
+                        <th class="text-uppercase">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -41,9 +41,9 @@
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <span class="badge <?= (int) $sender['spf_verified'] === 1 ? 'bg-success' : 'bg-warning text-dark' ?>">SPF</span>
-                                    <span class="badge <?= (int) $sender['dkim_verified'] === 1 ? 'bg-success' : 'bg-warning text-dark' ?>">DKIM</span>
-                                    <span class="badge <?= (int) $sender['dmarc_verified'] === 1 ? 'bg-success' : 'bg-warning text-dark' ?>">DMARC</span>
+                                    <span class="badge <?= (int) $sender['spf_verified'] === 1 ? 'bg-success' : 'bg-warning' ?>">SPF</span>
+                                    <span class="badge <?= (int) $sender['dkim_verified'] === 1 ? 'bg-success' : 'bg-warning' ?>">DKIM</span>
+                                    <span class="badge <?= (int) $sender['dmarc_verified'] === 1 ? 'bg-success' : 'bg-warning' ?>">DMARC</span>
                                 </td>
                                 <td>
                                     <a href="<?= base_url('senders/view/' . $sender['id']) ?>" class="btn btn-sm btn-outline-primary">

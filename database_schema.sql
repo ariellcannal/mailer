@@ -113,6 +113,7 @@ CREATE TABLE IF NOT EXISTS senders (
     domain VARCHAR(255) NOT NULL,
     ses_verified TINYINT(1) DEFAULT 0,
     ses_verification_token VARCHAR(255) NULL,
+    dkim_tokens TEXT NULL,
     dkim_verified TINYINT(1) DEFAULT 0,
     spf_verified TINYINT(1) DEFAULT 0,
     dmarc_verified TINYINT(1) DEFAULT 0,
