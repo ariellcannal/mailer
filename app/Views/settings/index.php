@@ -3,27 +3,29 @@
 <?= $this->section('content') ?>
 <div class="card mb-4">
     <div class="card-body">
-        <h4 class="mb-4"><i class="fas fa-cog"></i> Configurações Gerais</h4>
+        <h4 class="mb-4 section-title"><i class="fas fa-cog text-secondary me-2"></i> Configurações Gerais</h4>
 
         <?php if (session('success')): ?>
             <div class="alert alert-success"><?= esc(session('success')) ?></div>
         <?php endif; ?>
 
+        <div class="alert alert-info d-flex align-items-center gap-3">
+            <img src="<?= base_url('assets/images/icon.svg') ?>" alt="Ícone da CANNAL" width="48" height="48">
+            <div>
+                <strong>Credenciais AWS SES</strong><br>
+                Os dados de autenticação são carregados exclusivamente do arquivo <code>.env</code>.<br>
+                Região configurada: <span class="badge bg-primary"><?= esc($awsConfig['region']) ?></span>
+                <?php if ($awsConfig['hasAccessKey'] && $awsConfig['hasSecretKey']): ?>
+                    <span class="badge bg-success ms-2">Chaves configuradas</span>
+                <?php else: ?>
+                    <span class="badge bg-danger ms-2">Chaves ausentes</span>
+                <?php endif; ?>
+            </div>
+        </div>
+
         <form action="<?= base_url('settings/update') ?>" method="POST">
             <?= csrf_field() ?>
             <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">AWS Access Key</label>
-                    <input type="text" class="form-control" name="settings[aws_access_key]" value="<?= esc($settings['aws_access_key'] ?? '') ?>">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">AWS Secret Key</label>
-                    <input type="password" class="form-control" name="settings[aws_secret_key]" value="<?= esc($settings['aws_secret_key'] ?? '') ?>">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Região SES</label>
-                    <input type="text" class="form-control" name="settings[ses_region]" value="<?= esc($settings['ses_region'] ?? '') ?>" placeholder="us-east-1">
-                </div>
                 <div class="col-md-4">
                     <label class="form-label">Taxa de envio (emails/seg)</label>
                     <input type="number" class="form-control" name="settings[throttle_rate]" value="<?= esc($settings['throttle_rate'] ?? '14') ?>">

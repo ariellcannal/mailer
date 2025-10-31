@@ -42,7 +42,7 @@
                                     <?php elseif ($message['status'] === 'sending'): ?>
                                         <span class="badge bg-info">Enviando</span>
                                     <?php elseif ($message['status'] === 'scheduled'): ?>
-                                        <span class="badge bg-warning text-dark">Agendada</span>
+                                        <span class="badge bg-warning">Agendada</span>
                                     <?php elseif ($message['status'] === 'cancelled'): ?>
                                         <span class="badge bg-secondary">Cancelada</span>
                                     <?php else: ?>

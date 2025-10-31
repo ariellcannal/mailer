@@ -19,6 +19,8 @@ class SettingsController extends BaseController
     public function index(): string
     {
         $model = new SystemSettingModel();
+        $this->purgeAwsCredentials($model);
+
         $settings = [];
 
         foreach ($model->findAll() as $item) {
@@ -29,6 +31,11 @@ class SettingsController extends BaseController
             'settings' => $settings,
             'activeMenu' => 'settings',
             'pageTitle' => 'Configurações',
+            'awsConfig' => [
+                'region' => getenv('aws.ses.region') ?: 'us-east-1',
+                'hasAccessKey' => (bool) getenv('aws.ses.accessKey'),
+                'hasSecretKey' => (bool) getenv('aws.ses.secretKey'),
+            ],
         ]);
     }
 
@@ -38,7 +45,11 @@ class SettingsController extends BaseController
     public function update(): ResponseInterface
     {
         $model = new SystemSettingModel();
+        $this->purgeAwsCredentials($model);
+
         $settings = $this->request->getPost('settings') ?? [];
+
+        unset($settings['aws_access_key'], $settings['aws_secret_key'], $settings['ses_region']);
 
         foreach ($settings as $key => $value) {
             $model->upsertSetting($key, $value !== '' ? (string) $value : null);
@@ -64,6 +75,19 @@ class SettingsController extends BaseController
                 'success' => false,
                 'message' => 'Não foi possível obter os limites no momento.',
             ])->setStatusCode(500);
+        }
+    }
+
+    /**
+     * Remove eventuais credenciais da AWS armazenadas em banco.
+     *
+     * @param SystemSettingModel $model Modelo utilizado para exclusão das chaves.
+     * @return void
+     */
+    private function purgeAwsCredentials(SystemSettingModel $model): void
+    {
+        foreach (['aws_access_key', 'aws_secret_key', 'ses_region'] as $key) {
+            $model->deleteSetting($key);
         }
     }
 }

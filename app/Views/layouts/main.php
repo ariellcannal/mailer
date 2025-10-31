@@ -7,188 +7,260 @@
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <!-- Alertify CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/alertify.min.css"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/themes/bootstrap.min.css"/>
-    
+
     <!-- Custom CSS -->
     <style>
         :root {
+            --color-primary: #084c6e;
+            --color-secondary: #ed6d22;
+            --color-danger: #c04c4c;
+            --color-white: #f8f8f7;
+            --color-dark: #333333;
             --sidebar-width: 260px;
-            --header-height: 60px;
+            --header-height: 70px;
         }
-        
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: #f8f9fa;
+            font-family: Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            background-color: var(--color-white);
+            color: var(--color-dark);
         }
-        
+
+        h1, h2, h3, h4, h5, h6 {
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+
+        .text-primary {
+            color: var(--color-primary) !important;
+        }
+
+        .text-secondary {
+            color: var(--color-secondary) !important;
+        }
+
         .sidebar {
             position: fixed;
             top: 0;
             left: 0;
             height: 100vh;
             width: var(--sidebar-width);
-            background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
-            color: #ecf0f1;
+            background: var(--color-primary);
+            color: var(--color-white);
             overflow-y: auto;
             z-index: 1000;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            box-shadow: 2px 0 16px rgba(0, 0, 0, 0.15);
         }
-        
+
         .sidebar-brand {
-            padding: 20px;
-            font-size: 24px;
-            font-weight: 700;
+            padding: 24px 20px;
             text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            color: #fff;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
-        
-        .sidebar-brand i {
-            color: #3498db;
+
+        .sidebar-brand img {
+            max-width: 180px;
         }
-        
+
         .sidebar-menu {
-            padding: 20px 0;
+            padding: 24px 0;
         }
-        
+
         .sidebar-menu-item {
-            padding: 12px 20px;
-            color: #ecf0f1;
+            padding: 14px 24px;
+            color: var(--color-white);
             text-decoration: none;
             display: flex;
             align-items: center;
-            transition: all 0.3s;
-            border-left: 3px solid transparent;
+            gap: 12px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
         }
-        
-        .sidebar-menu-item:hover {
-            background: rgba(255,255,255,0.1);
-            color: #fff;
-            border-left-color: #3498db;
-        }
-        
-        .sidebar-menu-item.active {
-            background: rgba(52, 152, 219, 0.2);
-            color: #fff;
-            border-left-color: #3498db;
-        }
-        
+
         .sidebar-menu-item i {
-            width: 25px;
-            margin-right: 12px;
-            font-size: 16px;
+            font-size: 18px;
+            color: var(--color-secondary);
         }
-        
+
+        .sidebar-menu-item span {
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.8px;
+        }
+
+        .sidebar-menu-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--color-white);
+            border-left-color: var(--color-secondary);
+        }
+
+        .sidebar-menu-item.active {
+            background: rgba(237, 109, 34, 0.15);
+            color: var(--color-white);
+            border-left-color: var(--color-secondary);
+        }
+
         .main-content {
             margin-left: var(--sidebar-width);
             min-height: 100vh;
+            background: var(--color-white);
         }
-        
+
         .top-header {
-            background: #fff;
+            background: var(--color-white);
             height: var(--header-height);
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            border-bottom: 1px solid rgba(8, 76, 110, 0.1);
             position: sticky;
             top: 0;
             z-index: 999;
         }
-        
+
         .page-content {
-            padding: 30px;
+            padding: 32px;
         }
-        
-        .stat-card {
-            background: #fff;
-            border-radius: 10px;
-            padding: 25px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        
-        .stat-card-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            margin-bottom: 15px;
-        }
-        
-        .stat-card-value {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-        
-        .stat-card-label {
-            color: #6c757d;
-            font-size: 14px;
-        }
-        
-        .btn-primary {
-            background: #3498db;
-            border: none;
-        }
-        
-        .btn-primary:hover {
-            background: #2980b9;
-        }
-        
+
         .card {
             border: none;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            background: #ffffff;
         }
-        
-        .table {
-            margin-bottom: 0;
+
+        .btn-primary {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        
-        .badge {
-            padding: 6px 12px;
+
+        .btn-primary:hover {
+            background: #063753;
+            border-color: #063753;
+        }
+
+        .btn-outline-primary {
+            color: var(--color-primary);
+            border-color: var(--color-primary);
+            text-transform: uppercase;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--color-primary);
+            color: var(--color-white);
+        }
+
+        .btn-secondary {
+            background: var(--color-secondary);
+            border-color: var(--color-secondary);
+        }
+
+        .btn-secondary:hover {
+            background: #c85712;
+            border-color: #c85712;
+        }
+
+        .badge.bg-primary {
+            background-color: var(--color-primary) !important;
+        }
+
+        .badge.bg-warning {
+            background-color: var(--color-secondary) !important;
+            color: #fff !important;
+        }
+
+        .badge.bg-danger {
+            background-color: var(--color-danger) !important;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            letter-spacing: 1px;
+        }
+
+        .section-subtitle {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .status-chip {
+            background: rgba(8, 76, 110, 0.06);
+            border-radius: 12px;
+            padding: 12px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             font-weight: 500;
         }
-        
+
+        .status-chip.status-success {
+            border: 1px solid rgba(8, 76, 110, 0.3);
+        }
+
+        .status-chip.status-danger {
+            border: 1px solid rgba(192, 76, 76, 0.4);
+            color: var(--color-danger);
+        }
+
+        .table thead {
+            background: rgba(8, 76, 110, 0.05);
+        }
+
+        .table thead th {
+            color: var(--color-primary);
+            font-weight: 600;
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
                 transition: transform 0.3s;
             }
-            
+
             .sidebar.show {
                 transform: translateX(0);
             }
-            
+
             .main-content {
                 margin-left: 0;
             }
-            
+
             .mobile-menu-toggle {
                 display: block !important;
             }
         }
-        
+
         .mobile-menu-toggle {
             display: none;
             cursor: pointer;
             font-size: 24px;
+            color: var(--color-primary);
+        }
+
+        .header-icon {
+            width: 36px;
+            height: 36px;
         }
     </style>
     
@@ -198,7 +270,7 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <i class="fas fa-envelope"></i> Mailer
+            <img src="<?= base_url('assets/images/logo.svg') ?>" alt="CANNAL Mídias Digitais" class="img-fluid">
         </div>
         <?php $activeMenu = $activeMenu ?? ''; ?>
         <div class="sidebar-menu">
@@ -252,7 +324,8 @@
                 <div class="mobile-menu-toggle me-3" onclick="toggleSidebar()">
                     <i class="fas fa-bars"></i>
                 </div>
-                <h5 class="mb-0"><?= $pageTitle ?? 'Dashboard' ?></h5>
+                <img src="<?= base_url('assets/images/icon.svg') ?>" alt="Ícone CANNAL" class="header-icon me-2">
+                <h5 class="mb-0 text-primary"><?= mb_strtoupper($pageTitle ?? 'Dashboard') ?></h5>
             </div>
             
             <div class="d-flex align-items-center">
