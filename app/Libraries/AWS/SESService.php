@@ -70,6 +70,10 @@ class SESService
         if (strtolower($environment) === 'development') {
             $clientConfig['http'] = [
                 'verify' => false,
+                'curl' => [
+                    CURLOPT_SSL_VERIFYPEER => false,
+                    CURLOPT_SSL_VERIFYHOST => false,
+                ],
             ];
         }
 
