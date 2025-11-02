@@ -56,14 +56,24 @@ class SESService
             throw new \Exception('AWS SES credentials not configured');
         }
 
-        $this->client = new SesClient([
+        $clientConfig = [
             'version' => 'latest',
             'region'  => $this->region,
             'credentials' => [
                 'key'    => $accessKey,
                 'secret' => $secretKey,
             ],
-        ]);
+        ];
+
+        $environment = getenv('CI_ENVIRONMENT') ?: 'production';
+
+        if (strtolower($environment) === 'development') {
+            $clientConfig['http'] = [
+                'verify' => false,
+            ];
+        }
+
+        $this->client = new SesClient($clientConfig);
     }
 
     /**
