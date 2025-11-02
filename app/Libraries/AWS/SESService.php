@@ -47,9 +47,9 @@ class SESService
      */
     public function __construct()
     {
-        $this->region = getenv('aws.ses.region') ?: 'us-east-1';
-        $accessKey = getenv('aws.ses.accessKey');
-        $secretKey = getenv('aws.ses.secretKey');
+        $this->region = $this->resolveRegion();
+        $accessKey = $this->resolveAccessKey();
+        $secretKey = $this->resolveSecretKey();
         $this->configurationSet = getenv('aws.ses.configurationSet');
 
         if (empty($accessKey) || empty($secretKey)) {
@@ -78,6 +78,73 @@ class SESService
         }
 
         $this->client = new SesClient($clientConfig);
+    }
+
+    /**
+     * Resolve a região utilizada nas chamadas do SES.
+     *
+     * @return string Região configurada ou us-east-1 como padrão.
+     */
+    protected function resolveRegion(): string
+    {
+        $regions = [
+            getenv('aws.ses.region'),
+            getenv('AWS_SES_REGION'),
+            getenv('AWS_REGION'),
+            getenv('AWS_DEFAULT_REGION'),
+        ];
+
+        foreach ($regions as $region) {
+            if (is_string($region) && $region !== '') {
+                return $region;
+            }
+        }
+
+        return 'us-east-1';
+    }
+
+    /**
+     * Resolve a chave de acesso configurada para o SES.
+     *
+     * @return string|null Chave encontrada ou null quando ausente.
+     */
+    protected function resolveAccessKey(): ?string
+    {
+        $keys = [
+            getenv('aws.ses.accessKey'),
+            getenv('AWS_SES_ACCESS_KEY_ID'),
+            getenv('AWS_ACCESS_KEY_ID'),
+        ];
+
+        foreach ($keys as $key) {
+            if (is_string($key) && $key !== '') {
+                return $key;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolve o secret configurado para o SES.
+     *
+     * @return string|null Secret encontrado ou null quando ausente.
+     */
+    protected function resolveSecretKey(): ?string
+    {
+        $secrets = [
+            getenv('aws.ses.secretKey'),
+            getenv('AWS_SES_SECRET_ACCESS_KEY'),
+            getenv('AWS_SECRET_ACCESS_KEY'),
+        ];
+
+        foreach ($secrets as $secret) {
+            if (is_string($secret) && $secret !== '') {
+                return $secret;
+            }
+        }
+
+        return null;
     }
 
     /**
