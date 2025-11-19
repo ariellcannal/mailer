@@ -197,24 +197,31 @@ class ContactModel extends Model
      * 
      * @return array Resultado da importação
      */
-    public function importContacts(array $contacts): array
+    public function importContacts(array $contacts, array $listIds = []): array
     {
         $imported = 0;
         $skipped = 0;
         $errors = [];
+        $listIds = array_map('intval', array_unique(array_filter($listIds)));
+
+        $listMemberModel = new ContactListMemberModel();
+        $listModel = new ContactListModel();
 
         foreach ($contacts as $contact) {
             try {
                 // Verifica se email já existe
                 $existing = $this->where('email', $contact['email'])->first();
-                
+
                 if ($existing) {
+                    if (!empty($listIds)) {
+                        $this->syncContactLists((int) $existing['id'], $listIds, $listMemberModel, $listModel);
+                    }
+
                     $skipped++;
                     continue;
                 }
 
-                // Insere contato
-                $this->insert([
+                $contactId = $this->insert([
                     'email' => $contact['email'],
                     'name' => $contact['name'] ?? null,
                     'quality_score' => 3, // Score padrão
@@ -222,6 +229,10 @@ class ContactModel extends Model
                 ]);
 
                 $imported++;
+
+                if (!empty($listIds)) {
+                    $this->syncContactLists((int) $contactId, $listIds, $listMemberModel, $listModel);
+                }
             } catch (\Exception $e) {
                 $errors[] = [
                     'email' => $contact['email'],
@@ -235,6 +246,102 @@ class ContactModel extends Model
             'skipped' => $skipped,
             'errors' => $errors,
         ];
+    }
+
+    /**
+     * Vincula um conjunto de contatos a listas específicas.
+     *
+     * @param array<int> $contactIds Identificadores de contatos que devem ser vinculados.
+     * @param array<int> $listIds    Identificadores das listas selecionadas.
+     * @return void
+     */
+    public function assignContactsToLists(array $contactIds, array $listIds): void
+    {
+        $contactIds = array_map('intval', array_unique(array_filter($contactIds)));
+        $listIds = array_map('intval', array_unique(array_filter($listIds)));
+
+        if (empty($contactIds) || empty($listIds)) {
+            return;
+        }
+
+        $memberModel = new ContactListMemberModel();
+        $listModel = new ContactListModel();
+
+        foreach ($contactIds as $contactId) {
+            $this->syncContactLists($contactId, $listIds, $memberModel, $listModel);
+        }
+
+        $listModel->refreshCounters($listIds);
+    }
+
+    /**
+     * Sincroniza as listas de um contato.
+     *
+     * @param int $contactId Identificador do contato.
+     * @param array<int> $listIds Listas selecionadas.
+     * @param ContactListMemberModel|null $memberModel Modelo de membros para reutilização.
+     * @param ContactListModel|null $listModel Modelo de listas para atualizar contadores.
+     * @return void
+     */
+    public function syncContactLists(
+        int $contactId,
+        array $listIds,
+        ?ContactListMemberModel $memberModel = null,
+        ?ContactListModel $listModel = null
+    ): void {
+        $listIds = array_map('intval', array_unique(array_filter($listIds)));
+
+        if (empty($listIds)) {
+            return;
+        }
+
+        $memberModel ??= new ContactListMemberModel();
+        $listModel ??= new ContactListModel();
+
+        foreach ($listIds as $listId) {
+            $exists = $memberModel
+                ->where('contact_id', $contactId)
+                ->where('list_id', $listId)
+                ->first();
+
+            if ($exists !== null) {
+                continue;
+            }
+
+            $memberModel->insert([
+                'contact_id' => $contactId,
+                'list_id' => $listId,
+            ], false);
+        }
+
+        $listModel->refreshCounters($listIds);
+    }
+
+    /**
+     * Substitui todas as listas de um contato pelas selecionadas.
+     *
+     * @param int $contactId Identificador do contato.
+     * @param array<int> $listIds Listas desejadas.
+     * @return void
+     */
+    public function replaceContactLists(int $contactId, array $listIds): void
+    {
+        $memberModel = new ContactListMemberModel();
+        $listModel = new ContactListModel();
+
+        $currentListIds = $memberModel
+            ->where('contact_id', $contactId)
+            ->findColumn('list_id') ?? [];
+
+        $memberModel->where('contact_id', $contactId)->delete();
+
+        if (empty($listIds)) {
+            $listModel->refreshCounters($currentListIds);
+            return;
+        }
+
+        $this->syncContactLists($contactId, $listIds, $memberModel, $listModel);
+        $listModel->refreshCounters(array_unique(array_merge($listIds, $currentListIds)));
     }
 
     /**

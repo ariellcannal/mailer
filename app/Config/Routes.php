@@ -57,6 +57,15 @@ $routes->group('contacts', function($routes) {
     $routes->post('delete/(:num)', 'ContactController::delete/$1');
     $routes->get('import', 'ContactController::import');
     $routes->post('import-process', 'ContactController::importProcess');
+    $routes->post('bulk-assign', 'ContactController::bulkAssignLists');
+});
+
+// Contact Lists
+$routes->group('contact-lists', function($routes) {
+    $routes->get('/', 'ContactListController::index');
+    $routes->post('store', 'ContactListController::store');
+    $routes->post('update/(:num)', 'ContactListController::update/$1');
+    $routes->post('delete/(:num)', 'ContactListController::delete/$1');
 });
 
 // Templates
