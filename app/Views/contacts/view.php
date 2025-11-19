@@ -18,6 +18,13 @@
             </div>
         </div>
 
+        <?php if (session('contacts_success')): ?>
+            <div class="alert alert-success"><?= esc(session('contacts_success')) ?></div>
+        <?php endif; ?>
+        <?php if (session('contacts_error')): ?>
+            <div class="alert alert-danger"><?= esc(session('contacts_error')) ?></div>
+        <?php endif; ?>
+
         <div class="row g-4">
             <div class="col-md-6">
                 <div class="border rounded p-3 h-100">
@@ -39,6 +46,17 @@
                     <p class="mb-0"><strong>Tempo médio de abertura:</strong> <?= $contact['avg_open_time'] ? round($contact['avg_open_time'] / 60, 1) . ' min' : '-' ?></p>
                 </div>
             </div>
+        </div>
+
+        <div class="border rounded p-3 mt-4">
+            <h6>Listas</h6>
+            <?php if (!empty($lists)): ?>
+                <?php foreach ($lists as $list): ?>
+                    <span class="badge bg-secondary me-1 mb-1"><?= esc($list['name']) ?></span>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <span class="text-muted">Nenhuma lista associada.</span>
+            <?php endif; ?>
         </div>
     </div>
 </div>

@@ -16,6 +16,19 @@
                 <input type="email" class="form-control" name="email" value="<?= old('email') ?>" required>
             </div>
 
+            <?php if (!empty($lists)): ?>
+            <div class="mb-3">
+                <label class="form-label">Listas</label>
+                <select name="lists[]" class="form-select select2" multiple data-placeholder="Selecione as listas">
+                    <?php foreach ($lists as $list): ?>
+                        <option value="<?= $list['id'] ?>" <?= in_array($list['id'], old('lists', [])) ? 'selected' : '' ?>>
+                            <?= esc($list['name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <?php endif; ?>
+
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save"></i> Salvar
@@ -25,4 +38,18 @@
         </form>
     </div>
 </div>
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(function() {
+        $('.select2').select2({
+            width: '100%',
+            placeholder: $('.select2').data('placeholder') || 'Selecione',
+            allowClear: true
+        });
+    });
+</script>
 <?= $this->endSection() ?>

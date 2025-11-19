@@ -214,6 +214,32 @@ class SenderController extends BaseController
         $dkimTokens = $this->resolveDkimTokens($sender);
         $result = $validator->validateAll($sender['domain'], $dkimTokens);
 
+        $dkimVerifiedByAws = false;
+
+        try {
+            $service = new SESService();
+            $dkimAttributes = $service->getIdentityDkimAttributes($sender['domain']);
+
+            if (($dkimAttributes['success'] ?? false) === true) {
+                if (!empty($dkimAttributes['tokens'])) {
+                    $this->model->update($id, [
+                        'dkim_tokens' => json_encode($dkimAttributes['tokens']),
+                    ]);
+                }
+
+                if (($dkimAttributes['status'] ?? '') === 'Success') {
+                    $dkimVerifiedByAws = true;
+                }
+            }
+        } catch (Throwable $exception) {
+            log_message('error', 'Erro ao validar DKIM com AWS: ' . $exception->getMessage());
+        }
+
+        if ($dkimVerifiedByAws) {
+            $result['dkim']['valid'] = true;
+            $result['dkim']['message'] = 'DKIM validado pela AWS.';
+        }
+
         $this->model->update($id, [
             'spf_verified' => $result['spf']['valid'] ? 1 : 0,
             'dkim_verified' => $result['dkim']['valid'] ? 1 : 0,
