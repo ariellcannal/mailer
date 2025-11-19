@@ -126,7 +126,7 @@ if (!empty($dnsInstructions['dkim']) && is_array($dnsInstructions['dkim'])) {
                                 <span class="text-break"><?= esc($record['value'] ?? '-') ?></span>
                             </div>
                         </td>
-                        <td class="text-center text-muted small"><?= esc($record['description'] ?? '') ?></td>
+                        <td class="text-end text-muted small"><?= esc($record['description'] ?? '') ?></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
