@@ -103,7 +103,7 @@ if (!empty($dnsInstructions['dkim']) && is_array($dnsInstructions['dkim'])) {
                         <th class="text-uppercase">Tipo</th>
                         <th class="text-uppercase">Chave</th>
                         <th class="text-uppercase">Valor</th>
-                        <th class="text-uppercase text-center">Ações</th>
+                        <th class="text-uppercase text-center"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -111,19 +111,19 @@ if (!empty($dnsInstructions['dkim']) && is_array($dnsInstructions['dkim'])) {
                     <tr>
                         <td><span class="badge bg-primary"><?= esc($record['type'] ?? '-') ?></span></td>
                         <td>
-                            <div class="d-flex justify-content-between align-items-center gap-2">
-                                <span class="text-break"><?= esc($record['name'] ?? '-') ?></span>
+                            <div class="d-flex justify-content-start align-items-center gap-2">
                                 <button type="button" class="btn btn-sm btn-outline-primary" data-copy="<?= esc($record['name'] ?? '-', 'attr') ?>">
                                     <i class="fas fa-copy"></i>
                                 </button>
+                                <span class="text-break"><?= esc($record['name'] ?? '-') ?></span>
                             </div>
                         </td>
                         <td>
-                            <div class="d-flex justify-content-between align-items-center gap-2">
-                                <span class="text-break"><?= esc($record['value'] ?? '-') ?></span>
+                            <div class="d-flex justify-content-start align-items-center gap-2">
                                 <button type="button" class="btn btn-sm btn-outline-primary" data-copy="<?= esc($record['value'] ?? '-', 'attr') ?>">
                                     <i class="fas fa-copy"></i>
                                 </button>
+                                <span class="text-break"><?= esc($record['value'] ?? '-') ?></span>
                             </div>
                         </td>
                         <td class="text-center text-muted small"><?= esc($record['description'] ?? '') ?></td>
