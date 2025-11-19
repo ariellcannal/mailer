@@ -276,12 +276,22 @@ class SenderController extends BaseController
             }
 
             $dkimAttributes = $service->getIdentityDkimAttributes($sender['domain']);
-            if (($dkimAttributes['success'] ?? false) === true) {
-                if (!empty($dkimAttributes['tokens'])) {
-                    $updateData['dkim_tokens'] = json_encode($dkimAttributes['tokens']);
-                }
-            } else {
+            $verificationStatus = $service->getIdentityVerificationStatus($sender['domain']);
+
+            $dkimTokens = ($dkimAttributes['success'] ?? false) === true
+                ? $dkimAttributes['tokens'] ?? []
+                : [];
+
+            if (!empty($dkimTokens)) {
+                $updateData['dkim_tokens'] = json_encode($dkimTokens);
+            }
+
+            $shouldEnableDkim = ($verificationStatus['status'] ?? '') === 'NotFound'
+                || (($dkimAttributes['status'] ?? '') === 'NotStarted');
+
+            if ($shouldEnableDkim && empty($dkimTokens)) {
                 $dkimResult = $service->enableDKIM($sender['domain']);
+
                 if (($dkimResult['success'] ?? false) === true && !empty($dkimResult['dkimTokens'])) {
                     $updateData['dkim_tokens'] = json_encode($dkimResult['dkimTokens']);
                 }
@@ -293,7 +303,7 @@ class SenderController extends BaseController
                 $this->model->update($id, $updateData);
             }
 
-            $statusResult = $service->getIdentityVerificationStatus($sender['domain']);
+            $statusResult = $verificationStatus;
             if (($statusResult['verified'] ?? false) === true) {
                 $this->model->update($id, [
                     'ses_verified' => 1,
