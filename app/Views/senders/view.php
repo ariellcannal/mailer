@@ -5,7 +5,7 @@
     <div class="card-body">
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
             <div class="d-flex align-items-center gap-3">
-                <img src="<?= base_url('assets/images/icon.svg') ?>" alt="Ícone CANNAL" width="56" height="56">
+                <img src="<?= base_url('assets/images/icon.png') ?>" alt="Ícone CANNAL" width="56" height="56">
                 <div>
                     <h4 class="section-title mb-1 text-uppercase">Remetente</h4>
                     <span class="text-muted"><?= esc($sender['email']) ?></span>
