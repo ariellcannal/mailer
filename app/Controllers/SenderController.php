@@ -275,9 +275,14 @@ class SenderController extends BaseController
                 $updateData['ses_verification_token'] = $domainResult['verificationToken'] ?? null;
             }
 
-            $dkimResult = $service->enableDKIM($sender['domain']);
-            if (($dkimResult['success'] ?? false) === true && !empty($dkimResult['dkimTokens'])) {
-                $updateData['dkim_tokens'] = json_encode($dkimResult['dkimTokens']);
+            $dkimAttributes = $service->getIdentityDkimAttributes($sender['domain']);
+            if (($dkimAttributes['success'] ?? false) === true && !empty($dkimAttributes['tokens'])) {
+                $updateData['dkim_tokens'] = json_encode($dkimAttributes['tokens']);
+            } else {
+                $dkimResult = $service->enableDKIM($sender['domain']);
+                if (($dkimResult['success'] ?? false) === true && !empty($dkimResult['dkimTokens'])) {
+                    $updateData['dkim_tokens'] = json_encode($dkimResult['dkimTokens']);
+                }
             }
 
             $service->verifyEmail($sender['email']);
