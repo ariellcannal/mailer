@@ -67,6 +67,16 @@ class SettingsController extends BaseController
             $service = new SESService();
             $quota = $service->getSendQuota();
 
+            if (($quota['success'] ?? false) === true) {
+                return $this->response->setJSON([
+                    'success' => true,
+                    'max24HourSend' => number_format((float) $quota['max24HourSend'], 0, '.', ''),
+                    'maxSendRate' => number_format((float) $quota['maxSendRate'], 2, '.', ''),
+                    'sentLast24Hours' => number_format((float) $quota['sentLast24Hours'], 0, '.', ''),
+                    'remaining' => number_format((float) $quota['remaining'], 0, '.', ''),
+                ]);
+            }
+
             return $this->response->setJSON($quota);
         } catch (\Throwable $exception) {
             log_message('error', 'Erro ao consultar limites SES: ' . $exception->getMessage());

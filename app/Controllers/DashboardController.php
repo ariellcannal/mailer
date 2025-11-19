@@ -106,14 +106,16 @@ class DashboardController extends BaseController
         try {
             $sesService = new SESService();
             $quota = $sesService->getSendQuota();
-            
+
             if ($quota['success']) {
                 return [
-                    'max24Hour' => number_format($quota['max24HourSend'], 0, ',', '.'),
-                    'maxRate' => number_format($quota['maxSendRate'], 0, ',', '.'),
-                    'sentLast24Hours' => number_format($quota['sentLast24Hours'], 0, ',', '.'),
-                    'remaining' => number_format($quota['remaining'], 0, ',', '.'),
-                    'percentUsed' => round(($quota['sentLast24Hours'] / $quota['max24HourSend']) * 100, 1),
+                    'max24Hour' => number_format((float) $quota['max24HourSend'], 0, ',', '.'),
+                    'maxRate' => number_format((float) $quota['maxSendRate'], 2, ',', '.'),
+                    'sentLast24Hours' => number_format((float) $quota['sentLast24Hours'], 0, ',', '.'),
+                    'remaining' => number_format((float) $quota['remaining'], 0, ',', '.'),
+                    'percentUsed' => $quota['max24HourSend'] > 0
+                        ? round(($quota['sentLast24Hours'] / $quota['max24HourSend']) * 100, 1)
+                        : 0,
                 ];
             }
         } catch (\Exception $e) {

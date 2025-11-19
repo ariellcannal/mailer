@@ -326,12 +326,14 @@ class SESService
         try {
             $result = $this->client->getSendQuota();
 
+            $remaining = max(0, $result['Max24HourSend'] - $result['SentLast24Hours']);
+
             return [
                 'success' => true,
                 'max24HourSend' => $result['Max24HourSend'],
                 'maxSendRate' => $result['MaxSendRate'],
                 'sentLast24Hours' => $result['SentLast24Hours'],
-                'remaining' => $result['Max24HourSend'] - $result['SentLast24Hours'],
+                'remaining' => $remaining,
             ];
         } catch (AwsException $e) {
             return [

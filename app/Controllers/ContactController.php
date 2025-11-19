@@ -1,6 +1,8 @@
 <?php
 namespace App\Controllers;
 
+use App\Models\ContactListMemberModel;
+use App\Models\ContactListModel;
 use App\Models\ContactModel;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
@@ -15,20 +17,32 @@ class ContactController extends BaseController {
         ];
         
         $contacts = $model->getContacts($filters, 20);
-        
+
+        $contactIds = array_column($contacts, 'id');
+        $memberModel = new ContactListMemberModel();
+        $contactLists = $memberModel->getListsByContacts($contactIds);
+
+        $listModel = new ContactListModel();
+        $availableLists = $listModel->orderBy('name', 'ASC')->findAll();
+
         return view('contacts/index', [
             'contacts' => $contacts,
             'pager' => $model->pager,
             'filters' => $filters,
+            'contactLists' => $contactLists,
+            'lists' => $availableLists,
             'activeMenu' => 'contacts',
             'pageTitle' => 'Contatos'
         ]);
     }
     
     public function create() {
+        $listModel = new ContactListModel();
+
         return view('contacts/create', [
             'activeMenu' => 'contacts',
-            'pageTitle' => 'Novo Contato'
+            'pageTitle' => 'Novo Contato',
+            'lists' => $listModel->orderBy('name', 'ASC')->findAll(),
         ]);
     }
     
@@ -41,18 +55,24 @@ class ContactController extends BaseController {
             'is_active' => 1,
             'quality_score' => 3,
         ];
-        
-        if ($model->insert($data)) {
-            return redirect()->to('/contacts')->with('success', 'Contato criado!');
+        $listIds = (array) $this->request->getPost('lists');
+
+        if ($contactId = $model->insert($data)) {
+            $model->syncContactLists((int) $contactId, $listIds);
+
+            return redirect()->to('/contacts')->with('contacts_success', 'Contato criado!');
         }
-        
-        return redirect()->back()->with('error', 'Erro ao criar contato')->withInput();
+
+        return redirect()->back()->with('contacts_error', 'Erro ao criar contato')->withInput();
     }
     
     public function import() {
+        $listModel = new ContactListModel();
+
         return view('contacts/import', [
             'activeMenu' => 'contacts',
-            'pageTitle' => 'Importar Contatos'
+            'pageTitle' => 'Importar Contatos',
+            'lists' => $listModel->orderBy('name', 'ASC')->findAll(),
         ]);
     }
     
@@ -69,6 +89,7 @@ class ContactController extends BaseController {
             $rows = $sheet->toArray();
             
             $contacts = [];
+            $listIds = (array) $this->request->getPost('lists');
             foreach ($rows as $index => $row) {
                 if ($index === 0) continue; // Skip header
                 
@@ -81,25 +102,33 @@ class ContactController extends BaseController {
             }
             
             $model = new ContactModel();
-            $result = $model->importContacts($contacts);
-            
-            return redirect()->to('/contacts')->with('success', 
+            $result = $model->importContacts($contacts, $listIds);
+
+            return redirect()->to('/contacts')->with('contacts_success',
                 "Importados: {$result['imported']}, Ignorados: {$result['skipped']}");
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao importar: ' . $e->getMessage());
+            return redirect()->back()->with('contacts_error', 'Erro ao importar: ' . $e->getMessage());
         }
     }
     
     public function view($id) {
         $model = new ContactModel();
         $contact = $model->find($id);
-        
+
         if (!$contact) {
-            return redirect()->to('/contacts')->with('error', 'Contato não encontrado');
+            return redirect()->to('/contacts')->with('contacts_error', 'Contato não encontrado');
         }
-        
+
+        $memberModel = new ContactListMemberModel();
+        $lists = $memberModel
+            ->where('contact_id', $id)
+            ->join('contact_lists', 'contact_lists.id = contact_list_members.list_id')
+            ->select('contact_lists.*')
+            ->findAll();
+
         return view('contacts/view', [
             'contact' => $contact,
+            'lists' => $lists,
             'activeMenu' => 'contacts',
             'pageTitle' => $contact['name'] ?: $contact['email']
         ]);
@@ -108,13 +137,22 @@ class ContactController extends BaseController {
     public function edit($id) {
         $model = new ContactModel();
         $contact = $model->find($id);
-        
+
         if (!$contact) {
-            return redirect()->to('/contacts')->with('error', 'Contato não encontrado');
+            return redirect()->to('/contacts')->with('contacts_error', 'Contato não encontrado');
         }
-        
+
+        $listModel = new ContactListModel();
+        $memberModel = new ContactListMemberModel();
+
+        $selectedLists = $memberModel
+            ->where('contact_id', $id)
+            ->findColumn('list_id') ?? [];
+
         return view('contacts/edit', [
             'contact' => $contact,
+            'lists' => $listModel->orderBy('name', 'ASC')->findAll(),
+            'selectedLists' => $selectedLists,
             'activeMenu' => 'contacts',
             'pageTitle' => 'Editar Contato'
         ]);
@@ -122,26 +160,58 @@ class ContactController extends BaseController {
     
     public function update($id) {
         $model = new ContactModel();
-        
+
         $data = [
             'email' => $this->request->getPost('email'),
             'name' => $this->request->getPost('name'),
         ];
-        
+        $listIds = (array) $this->request->getPost('lists');
+
         if ($model->update($id, $data)) {
-            return redirect()->to('/contacts/view/' . $id)->with('success', 'Contato atualizado!');
+            $model->replaceContactLists($id, $listIds);
+
+            return redirect()->to('/contacts/view/' . $id)->with('contacts_success', 'Contato atualizado!');
         }
-        
-        return redirect()->back()->with('error', 'Erro ao atualizar')->withInput();
+
+        return redirect()->back()->with('contacts_error', 'Erro ao atualizar')->withInput();
+    }
+
+    /**
+     * Vincula múltiplos contatos a uma ou mais listas.
+     *
+     * @return \CodeIgniter\HTTP\RedirectResponse
+     */
+    public function bulkAssignLists()
+    {
+        $model = new ContactModel();
+
+        $contactIds = (array) $this->request->getPost('contacts');
+        $listIds = (array) $this->request->getPost('lists');
+
+        if (empty(array_filter($contactIds)) || empty(array_filter($listIds))) {
+            return redirect()->back()->with('contacts_error', 'Selecione ao menos um contato e uma lista.');
+        }
+
+        $model->assignContactsToLists($contactIds, $listIds);
+
+        return redirect()->to('/contacts')->with('contacts_success', 'Contatos adicionados às listas selecionadas.');
     }
     
     public function delete($id) {
         $model = new ContactModel();
-        
+        $memberModel = new ContactListMemberModel();
+        $listModel = new ContactListModel();
+
+        $listIds = $memberModel
+            ->where('contact_id', $id)
+            ->findColumn('list_id') ?? [];
+
         if ($model->delete($id)) {
-            return redirect()->to('/contacts')->with('success', 'Contato excluído!');
+            $listModel->refreshCounters($listIds);
+
+            return redirect()->to('/contacts')->with('contacts_success', 'Contato excluído!');
         }
-        
-        return redirect()->back()->with('error', 'Erro ao excluir');
+
+        return redirect()->back()->with('contacts_error', 'Erro ao excluir');
     }
 }
