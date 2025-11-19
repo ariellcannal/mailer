@@ -59,9 +59,13 @@ class SenderController extends BaseController
      */
     public function store(): RedirectResponse
     {
-        $email = (string) $this->request->getPost('email');
-        $name = (string) $this->request->getPost('name');
+        $email = $this->sanitizeEmail((string) $this->request->getPost('email'));
+        $name = trim((string) $this->request->getPost('name'));
         $domain = $this->extractDomainFromEmail($email);
+
+        if ($domain === '') {
+            return redirect()->back()->with('error', 'Informe um email válido para cadastrar o remetente.')->withInput();
+        }
 
         $data = [
             'email' => $email,
@@ -148,8 +152,8 @@ class SenderController extends BaseController
             return redirect()->to('/senders')->with('error', 'Remetente não encontrado');
         }
 
-        $email = (string) $this->request->getPost('email');
-        $name = (string) $this->request->getPost('name');
+        $email = $this->sanitizeEmail((string) $this->request->getPost('email'));
+        $name = trim((string) $this->request->getPost('name'));
         $domain = $this->extractDomainFromEmail($email) ?: $sender['domain'];
 
         $this->model->update($id, [
@@ -382,12 +386,26 @@ class SenderController extends BaseController
      */
     private function extractDomainFromEmail(string $email): string
     {
-        $atPosition = strrpos($email, '@');
+        $normalizedEmail = $this->sanitizeEmail($email);
+        $atPosition = strrpos($normalizedEmail, '@');
 
         if ($atPosition === false) {
             return '';
         }
 
-        return substr($email, $atPosition + 1);
+        $domain = substr($normalizedEmail, $atPosition + 1);
+
+        return strtolower(trim($domain));
+    }
+
+    /**
+     * Normaliza o endereço de email removendo espaços e caracteres invisíveis.
+     *
+     * @param string $email Endereço informado pelo usuário.
+     * @return string
+     */
+    private function sanitizeEmail(string $email): string
+    {
+        return trim($email);
     }
 }
