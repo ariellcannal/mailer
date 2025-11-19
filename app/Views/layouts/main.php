@@ -297,6 +297,11 @@
                 <i class="fas fa-users"></i>
                 <span>Contatos</span>
             </a>
+
+            <a href="<?= base_url('contact-lists') ?>" class="sidebar-menu-item <?= $activeMenu === 'contact_lists' ? 'active' : '' ?>">
+                <i class="fas fa-list-ul"></i>
+                <span>Listas</span>
+            </a>
             
             <a href="<?= base_url('templates') ?>" class="sidebar-menu-item <?= $activeMenu === 'templates' ? 'active' : '' ?>">
                 <i class="fas fa-file-code"></i>
