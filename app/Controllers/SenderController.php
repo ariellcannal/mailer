@@ -276,8 +276,10 @@ class SenderController extends BaseController
             }
 
             $dkimAttributes = $service->getIdentityDkimAttributes($sender['domain']);
-            if (($dkimAttributes['success'] ?? false) === true && !empty($dkimAttributes['tokens'])) {
-                $updateData['dkim_tokens'] = json_encode($dkimAttributes['tokens']);
+            if (($dkimAttributes['success'] ?? false) === true) {
+                if (!empty($dkimAttributes['tokens'])) {
+                    $updateData['dkim_tokens'] = json_encode($dkimAttributes['tokens']);
+                }
             } else {
                 $dkimResult = $service->enableDKIM($sender['domain']);
                 if (($dkimResult['success'] ?? false) === true && !empty($dkimResult['dkimTokens'])) {
