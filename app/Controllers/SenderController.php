@@ -274,13 +274,8 @@ class SenderController extends BaseController
             $service = new SESService();
             $updateData = [];
 
-            $domainResult = $service->verifyDomain($sender['domain']);
-            if (($domainResult['success'] ?? false) === true) {
-                $updateData['ses_verification_token'] = $domainResult['verificationToken'] ?? null;
-            }
-
-            $dkimAttributes = $service->getIdentityDkimAttributes($sender['domain']);
             $verificationStatus = $service->getIdentityVerificationStatus($sender['domain']);
+            $dkimAttributes = $service->getIdentityDkimAttributes($sender['domain']);
 
             $dkimTokens = ($dkimAttributes['success'] ?? false) === true
                 ? $dkimAttributes['tokens'] ?? []
@@ -290,8 +285,16 @@ class SenderController extends BaseController
                 $updateData['dkim_tokens'] = json_encode($dkimTokens);
             }
 
-            $shouldEnableDkim = ($verificationStatus['status'] ?? '') === 'NotFound'
-                || (($dkimAttributes['status'] ?? '') === 'NotStarted');
+            $identityNotFound = ($verificationStatus['status'] ?? '') === 'NotFound';
+            $shouldEnableDkim = $identityNotFound || (($dkimAttributes['status'] ?? '') === 'NotStarted');
+
+            if ($identityNotFound) {
+                $domainResult = $service->verifyDomain($sender['domain']);
+
+                if (($domainResult['success'] ?? false) === true) {
+                    $updateData['ses_verification_token'] = $domainResult['verificationToken'] ?? null;
+                }
+            }
 
             if ($shouldEnableDkim && empty($dkimTokens)) {
                 $dkimResult = $service->enableDKIM($sender['domain']);
@@ -301,13 +304,15 @@ class SenderController extends BaseController
                 }
             }
 
-            $service->verifyEmail($sender['email']);
+            if ($identityNotFound) {
+                $service->verifyEmail($sender['email']);
+            }
 
             if (!empty($updateData)) {
                 $this->model->update($id, $updateData);
             }
 
-            $statusResult = $verificationStatus;
+            $statusResult = $identityNotFound ? $service->getIdentityVerificationStatus($sender['domain']) : $verificationStatus;
             if (($statusResult['verified'] ?? false) === true) {
                 $this->model->update($id, [
                     'ses_verified' => 1,
