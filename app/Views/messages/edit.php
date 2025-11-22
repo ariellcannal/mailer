@@ -153,7 +153,7 @@
                                             <span class="badge bg-primary">Reenvio #<?= (int) $rule['resend_number'] ?></span>
                                             <span class="badge <?= $rule['status'] === 'pending' ? 'bg-info text-dark' : 'bg-secondary' ?>">Status: <?= esc($rule['status']) ?></span>
                                         </div>
-                                        <p class="mb-2">Assunto: <strong><?= esc($rule['subject_override']) ?></strong></p>
+                                        <p class="mb-2">Assunto: <strong><?= esc($rule['subject_override'] ?: $message['subject']) ?></strong></p>
                                         <p class="mb-3">Programado para <?= date('d/m/Y H:i', strtotime($rule['scheduled_at'])) ?></p>
                                         <div class="mb-2">
                                             <label class="form-label" for="resend-<?= $rule['id'] ?>">Novo agendamento</label>
@@ -166,6 +166,17 @@
                                                 <?= $isEditable ? '' : 'disabled' ?>
                                             >
                                             <small class="text-muted">Somente reenvios pendentes ainda não enfileirados podem ser alterados.</small>
+                                        </div>
+                                        <div class="mb-0">
+                                            <label class="form-label" for="resend-subject-<?= $rule['id'] ?>">Assunto do reenvio</label>
+                                            <input
+                                                type="text"
+                                                class="form-control"
+                                                id="resend-subject-<?= $rule['id'] ?>"
+                                                name="resends[<?= $rule['id'] ?>][subject]"
+                                                value="<?= esc($rule['subject_override'] ?: $message['subject']) ?>"
+                                                <?= $isEditable ? '' : 'disabled' ?>
+                                            >
                                         </div>
                                     </div>
                                 </div>

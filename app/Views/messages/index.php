@@ -51,6 +51,7 @@
                                 </td>
                                 <td><?= date('d/m/Y H:i', strtotime($message['created_at'])) ?></td>
                                 <td>
+                                    <?php $canDelete = in_array($message['status'], ['draft', 'scheduled'], true); ?>
                                     <a href="<?= base_url('messages/view/' . $message['id']) ?>" class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-eye"></i>
                                     </a>
@@ -63,6 +64,14 @@
                                             <i class="fas fa-copy"></i>
                                         </button>
                                     </form>
+                                    <?php if ($canDelete): ?>
+                                        <form action="<?= base_url('messages/delete/' . $message['id']) ?>" method="POST" class="d-inline" onsubmit="return confirm('Deseja realmente excluir esta mensagem?');">
+                                            <?= csrf_field() ?>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

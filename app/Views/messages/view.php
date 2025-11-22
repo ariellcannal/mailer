@@ -18,6 +18,14 @@
                         <i class="fas fa-copy"></i> Duplicar
                     </button>
                 </form>
+                <?php if (in_array($message['status'], ['draft', 'scheduled'], true)): ?>
+                    <form action="<?= base_url('messages/delete/' . $message['id']) ?>" method="POST" onsubmit="return confirm('Deseja realmente excluir esta mensagem?');">
+                        <?= csrf_field() ?>
+                        <button type="submit" class="btn btn-outline-danger">
+                            <i class="fas fa-trash"></i> Excluir
+                        </button>
+                    </form>
+                <?php endif; ?>
             </div>
         </div>
 

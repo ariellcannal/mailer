@@ -289,7 +289,7 @@ class MessageController extends BaseController {
             ]);
         }
 
-        $this->rescheduleResends($id, $resends);
+        $this->rescheduleResends($id, $resends, $data['subject'] ?? $message['subject']);
 
         return redirect()->to('/messages/view/' . $id)->with('success', 'Mensagem atualizada!');
     }
@@ -354,7 +354,43 @@ class MessageController extends BaseController {
 
         return redirect()->to('/messages/edit/' . $newId)->with('success', 'Mensagem duplicada!');
     }
-    
+
+    /**
+     * Remove uma mensagem rascunho ou agendada junto aos seus envios e reenvios.
+     *
+     * @param int $id ID da mensagem
+     *
+     * @return RedirectResponse
+     */
+    public function delete(int $id): RedirectResponse
+    {
+        $model = new MessageModel();
+        $message = $model->find($id);
+
+        if (!$message) {
+            return redirect()->to('/messages')->with('error', 'Mensagem não encontrada');
+        }
+
+        if (!in_array($message['status'], ['draft', 'scheduled'], true)) {
+            return redirect()->back()->with('error', 'Somente rascunhos ou mensagens agendadas podem ser excluídas.');
+        }
+
+        $db = \Config\Database::connect();
+        $db->transStart();
+
+        $db->table('message_sends')->where('message_id', $id)->delete();
+        $db->table('resend_rules')->where('message_id', $id)->delete();
+        $model->delete($id);
+
+        $db->transComplete();
+
+        if ($db->transStatus() === false) {
+            return redirect()->back()->with('error', 'Não foi possível excluir a mensagem.');
+        }
+
+        return redirect()->to('/messages')->with('success', 'Mensagem excluída com sucesso.');
+    }
+
     public function cancel($id) {
         $model = new MessageModel();
         
@@ -439,40 +475,23 @@ class MessageController extends BaseController {
         }
 
         $db = \Config\Database::connect();
-        $timezone = $this->getAppTimezone();
-
-        try {
-            $baseSchedule = !empty($firstScheduledAt)
-                ? Time::parse($firstScheduledAt, $timezone)
-                : Time::now($timezone);
-        } catch (\Exception $exception) {
-            log_message('error', 'Falha ao interpretar data inicial: ' . $exception->getMessage());
-            $baseSchedule = Time::now($timezone);
-        }
+        $defaultSubject = (string) $this->request->getPost('subject');
 
         foreach ($resends as $resend) {
-            if (empty($resend['subject'])) {
-                continue;
-            }
-
             $scheduledAt = $this->normalizeScheduleInput($resend['scheduled_at'] ?? '');
-
-            if (empty($scheduledAt) && !empty($resend['hours_after'])) {
-                $scheduledAt = $baseSchedule
-                    ->clone()
-                    ->addHours((int) $resend['hours_after'])
-                    ->toDateTimeString();
-            }
 
             if (empty($scheduledAt)) {
                 continue;
             }
 
+            $subject = trim((string) ($resend['subject'] ?? ''));
+            $subjectOverride = $subject !== '' ? $subject : null;
+
             $db->table('resend_rules')->insert([
                 'message_id' => $messageId,
                 'resend_number' => (int) $resend['number'],
-                'hours_after' => (int) ($resend['hours_after'] ?? 0),
-                'subject_override' => $resend['subject'],
+                'hours_after' => 0,
+                'subject_override' => $subjectOverride ?? $defaultSubject,
                 'status' => 'pending',
                 'scheduled_at' => $scheduledAt,
             ]);
@@ -558,12 +577,13 @@ class MessageController extends BaseController {
     /**
      * Atualiza datas de reenvio para regras ainda pendentes.
      *
-     * @param int   $messageId ID da mensagem
-     * @param array $resends   Dados enviados pelo formulário
+     * @param int    $messageId      ID da mensagem
+     * @param array  $resends        Dados enviados pelo formulário
+     * @param string $defaultSubject Assunto original da mensagem
      *
      * @return void
      */
-    protected function rescheduleResends(int $messageId, array $resends): void
+    protected function rescheduleResends(int $messageId, array $resends, string $defaultSubject): void
     {
         if (empty($resends)) {
             return;
@@ -605,10 +625,14 @@ class MessageController extends BaseController {
                 continue;
             }
 
+            $subject = trim((string) ($resend['subject'] ?? ''));
+            $subjectOverride = $subject !== '' ? $subject : $defaultSubject;
+
             $db->table('resend_rules')
                 ->where('id', (int) $ruleId)
                 ->update([
                     'scheduled_at' => $newSchedule,
+                    'subject_override' => $subjectOverride,
                 ]);
         }
     }
