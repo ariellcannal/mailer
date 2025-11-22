@@ -58,8 +58,61 @@
             </div>
 
             <hr>
+            <h5 class="mb-3">Destinatários</h5>
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <label class="form-label" for="contactListSelect">Listas de contato</label>
+                    <select
+                        id="contactListSelect"
+                        name="contact_lists[]"
+                        class="form-select"
+                        multiple
+                        data-placeholder="Selecione as listas"
+                        <?= $canEditRecipients ? '' : 'disabled' ?>
+                    >
+                        <?php foreach ($contactLists as $list): ?>
+                            <option
+                                value="<?= $list['id'] ?>"
+                                data-total="<?= $list['total_contacts'] ?? 0 ?>"
+                                <?= in_array((int) $list['id'], $selectedLists, true) ? 'selected' : '' ?>
+                            >
+                                <?= esc($list['name']) ?> <?= isset($list['total_contacts']) ? '(' . (int) $list['total_contacts'] . ' contatos)' : '' ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <?php if (!$canEditRecipients): ?>
+                        <small class="text-muted">Altere as listas apenas se o primeiro envio ainda não tiver sido processado.</small>
+                    <?php else: ?>
+                        <small class="text-muted">Se nenhuma lista for alterada, os destinatários atuais serão mantidos.</small>
+                    <?php endif; ?>
+                </div>
+                <div class="col-md-4">
+                    <div class="border rounded p-3 bg-light h-100">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-users text-primary me-2"></i>
+                            <div>
+                                <div class="fw-bold">Destinatários atuais</div>
+                                <div class="text-muted">Total: <?= (int) $currentRecipients ?></div>
+                            </div>
+                        </div>
+                        <?php if (!empty($recipientBreakdown)): ?>
+                            <ul class="list-unstyled mb-0 small">
+                                <?php foreach ($recipientBreakdown as $breakdown): ?>
+                                    <li>
+                                        <i class="fas fa-list-check text-secondary me-1"></i>
+                                        <?= esc($breakdown['name']) ?> — <?= (int) $breakdown['recipients'] ?> contatos
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php else: ?>
+                            <p class="text-muted small mb-0">Nenhuma lista detectada para os destinatários atuais.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
             <h5 class="mb-3">Agendamento</h5>
-            <?php $canReschedule = ($message['status'] === 'scheduled' && !empty($message['scheduled_at']) && strtotime($message['scheduled_at']) > time()); ?>
             <div class="row mb-4">
                 <div class="col-md-6">
                     <label class="form-label" for="scheduledAt">Primeiro envio</label>
@@ -71,7 +124,7 @@
                         value="<?= $message['scheduled_at'] ? date('Y-m-d\TH:i', strtotime($message['scheduled_at'])) : '' ?>"
                         <?= $canReschedule ? '' : 'disabled' ?>
                     >
-                    <small class="text-muted">Disponível apenas para mensagens com envio futuro.</small>
+                    <small class="text-muted">Disponível para reagendamento enquanto o primeiro envio não foi processado.</small>
                 </div>
                 <div class="col-md-6 d-flex align-items-end">
                     <div class="alert <?= $canReschedule ? 'alert-info' : 'alert-secondary' ?> mb-0 w-100" role="status">
@@ -81,7 +134,7 @@
                             Nenhum agendamento registrado.
                         <?php endif; ?>
                         <?php if (!$canReschedule && $message['scheduled_at']): ?>
-                            <br><strong>Reagendamento indisponível</strong>: apenas datas futuras podem ser alteradas.
+                            <br><strong>Reagendamento indisponível</strong>: permitido apenas antes do primeiro envio ser processado.
                         <?php endif; ?>
                     </div>
                 </div>
@@ -91,13 +144,8 @@
                 <div class="mb-4">
                     <h6 class="mb-2">Reenvios</h6>
                     <div class="row g-3">
-                        <?php $now = time(); ?>
                         <?php foreach ($resendRules as $rule): ?>
-                            <?php
-                                $isEditable = ($rule['status'] === 'pending'
-                                    && !empty($rule['scheduled_at'])
-                                    && strtotime($rule['scheduled_at']) > $now);
-                            ?>
+                            <?php $isEditable = ($rule['status'] === 'pending' && empty($resendLocks[$rule['id']] ?? false)); ?>
                             <div class="col-md-6">
                                 <div class="card h-100">
                                     <div class="card-body">
@@ -117,7 +165,7 @@
                                                 value="<?= $rule['scheduled_at'] ? date('Y-m-d\TH:i', strtotime($rule['scheduled_at'])) : '' ?>"
                                                 <?= $isEditable ? '' : 'disabled' ?>
                                             >
-                                            <small class="text-muted">Somente reenvios pendentes com data futura podem ser alterados.</small>
+                                            <small class="text-muted">Somente reenvios pendentes ainda não enfileirados podem ser alterados.</small>
                                         </div>
                                     </div>
                                 </div>
