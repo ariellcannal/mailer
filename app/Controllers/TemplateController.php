@@ -156,6 +156,8 @@ class TemplateController extends BaseController
 
     /**
      * Busca templates ativos para utilização no editor.
+     *
+     * @return ResponseInterface
      */
     public function search(): ResponseInterface
     {
