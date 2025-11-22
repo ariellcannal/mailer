@@ -161,6 +161,7 @@ class QueueManager
 
         $sent = 0;
         $failed = 0;
+        $skipped = 0;
         $errors = [];
 
         foreach ($pending as $send) {
@@ -176,9 +177,11 @@ class QueueManager
 
                 if ($result['success']) {
                     $sent++;
-                    
+
                     // Throttling
                     usleep(1000000 / $this->throttleRate); // Microsegundos
+                } elseif (($result['status'] ?? '') === 'skipped') {
+                    $skipped++;
                 } else {
                     $failed++;
                     $errors[] = $result['error'];
@@ -192,9 +195,10 @@ class QueueManager
 
         return [
             'success' => true,
-            'processed' => $sent + $failed,
+            'processed' => $sent + $failed + $skipped,
             'sent' => $sent,
             'failed' => $failed,
+            'skipped' => $skipped,
             'errors' => $errors,
         ];
     }
@@ -223,7 +227,12 @@ class QueueManager
         // Verifica se contato está ativo
         if (!$contact['is_active'] || $contact['opted_out'] || $contact['bounced']) {
             $this->sendModel->update($send['id'], ['status' => 'cancelled']);
-            return ['success' => false, 'error' => 'Contact inactive'];
+
+            return [
+                'success' => false,
+                'status' => 'skipped',
+                'error' => 'Contact inactive',
+            ];
         }
 
         // Prepara conteúdo do email
@@ -299,7 +308,7 @@ class QueueManager
         $htmlContent = str_replace('{{name}}', $contact['name'] ?? '', $htmlContent);
 
         // Adiciona pixel de tracking (abertura)
-        $baseUrl = getenv('app.baseURL');
+        $baseUrl = $this->getBaseUrl();
         $trackingPixel = '<img src="' . $baseUrl . 'track/open/' . $trackingHash . '" width="1" height="1" style="display:none;" />';
         
         // Insere pixel antes do </body>
@@ -335,7 +344,7 @@ class QueueManager
      */
     protected function replaceLinksWithTracking(string $html, string $trackingHash): string
     {
-        $baseUrl = getenv('app.baseURL');
+        $baseUrl = $this->getBaseUrl();
         
         // Regex para encontrar links
         $pattern = '/<a\s+(?:[^>]*?\s+)?href=(["\'])((?:(?!\1).)*)\1/i';
@@ -358,8 +367,28 @@ class QueueManager
             
             return '<a href=' . $quote . $trackingUrl . $quote;
         }, $html);
-        
+
         return $html;
+    }
+
+    /**
+     * Obtém a URL base absoluta para gerar links de tracking.
+     *
+     * @return string URL base com barra final.
+     */
+    protected function getBaseUrl(): string
+    {
+        $baseUrl = rtrim((string) (config('App')->baseURL ?? ''), '/');
+
+        if ($baseUrl === '') {
+            $baseUrl = rtrim((string) getenv('app.baseURL'), '/');
+        }
+
+        if ($baseUrl === '') {
+            return '/';
+        }
+
+        return $baseUrl . '/';
     }
 
     /**

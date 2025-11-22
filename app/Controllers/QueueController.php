@@ -57,6 +57,7 @@ class QueueController extends BaseController
             'Total processado: ' . ($result['processed'] ?? 0),
             'Enviados: ' . ($result['sent'] ?? 0),
             'Falhas: ' . ($result['failed'] ?? 0),
+            'Ignorados: ' . ($result['skipped'] ?? 0),
         ];
 
         if (!empty($result['errors'])) {
