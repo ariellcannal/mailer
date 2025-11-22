@@ -15,8 +15,13 @@ $height = $height ?? 500;
         window.richEditorInstances = [];
 
         document.addEventListener('DOMContentLoaded', function () {
+            if (!window.CKEDITOR || !window.CKEDITOR.ClassicEditor) {
+                console.error('CKEditor super build não pôde ser carregado.');
+                return;
+            }
+
             document.querySelectorAll('<?= $selectorJs ?>').forEach(function (element) {
-                ClassicEditor
+                CKEDITOR.ClassicEditor
                     .create(element, {
                         language: 'pt-br',
                         placeholder: 'Escreva o conteúdo do email...',
