@@ -13,6 +13,8 @@ class FileManagerController extends BaseController
 {
     /**
      * Lista arquivos disponíveis para utilização no editor.
+     *
+     * @return ResponseInterface
      */
     public function list(): ResponseInterface
     {
@@ -26,15 +28,38 @@ class FileManagerController extends BaseController
 
     /**
      * Realiza upload de um novo arquivo para o repositório público.
+     *
+     * @return ResponseInterface
      */
     public function upload(): ResponseInterface
     {
         $upload = $this->request->getFile('file');
 
-        if ($upload === null || !$upload->isValid()) {
+        if ($upload === null || !$upload->isValid() || $upload->hasMoved()) {
             return $this->response->setJSON([
                 'success' => false,
                 'error' => 'Arquivo inválido para upload.',
+            ])->setStatusCode(400);
+        }
+
+        if ($upload->getSizeByUnit('mb') > 5) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'Tamanho máximo permitido é 5MB.',
+            ])->setStatusCode(400);
+        }
+
+        $allowedMimeTypes = [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+        ];
+
+        if (!in_array($upload->getMimeType(), $allowedMimeTypes, true)) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'Tipo de arquivo não permitido. Envie apenas imagens.',
             ])->setStatusCode(400);
         }
 
