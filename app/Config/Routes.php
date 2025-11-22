@@ -109,8 +109,16 @@ $routes->group('settings', function($routes) {
     $routes->get('ses-limits', 'SettingsController::sesLimits');
 });
 
-// Queue processing (CLI or cron)
+// Processamento da fila (CLI ou cron)
 $routes->cli('queue/process', 'QueueController::process');
+
+if (ENVIRONMENT === 'development') {
+    $routes->get('queue/process', 'QueueController::process');
+} else {
+    $routes->get('queue/process', static function () {
+        throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+    });
+}
 
 // Auth routes (to be implemented)
 $routes->get('login', 'AuthController::login');
