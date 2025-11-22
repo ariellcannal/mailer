@@ -152,20 +152,7 @@
 
                         <div id="editorCreatePanel" class="editor-panel card shadow-sm">
                             <div class="card-body">
-                                <div class="btn-toolbar mb-3">
-                                    <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="insertVariable('{{nome}}')">
-                                        <i class="fas fa-user"></i> Inserir Nome
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="insertVariable('{{email}}')">
-                                        <i class="fas fa-envelope"></i> Inserir Email
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-warning me-2" onclick="insertWebviewLink()">
-                                        <i class="fas fa-external-link-alt"></i> Link Visualização
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="insertOptoutLink()">
-                                        <i class="fas fa-times-circle"></i> Link Opt-out *
-                                    </button>
-                                </div>
+                                <div class="text-muted small mb-2">Use a barra do CKEditor para inserir templates, imagens, tags e expandir para tela cheia.</div>
                                 <textarea id="messageEditor" name="html_content" class="form-control js-rich-editor" rows="15" required><?= old('html_content') ?></textarea>
                             </div>
                         </div>
@@ -371,30 +358,6 @@ function prevStep() {
 
     $('.step-content[data-step="' + currentStep + '"]').show();
     $('.step[data-step="' + currentStep + '"]').removeClass('completed').addClass('active');
-}
-
-function insertVariable(variable) {
-    if (typeof window.insertRichText === 'function') {
-        window.insertRichText(variable);
-    }
-}
-
-function insertWebviewLink() {
-    const html = '<a href="{{webview_link}}" style="color: #999; font-size: 12px;">Clique aqui se não estiver visualizando corretamente</a>';
-
-    if (typeof window.insertRichHtml === 'function') {
-        window.insertRichHtml(html);
-        alertify.success('Link de visualização inserido!');
-    }
-}
-
-function insertOptoutLink() {
-    const html = '<p style="text-align: center; margin-top: 20px;"><a href="{{optout_link}}" style="color: #666; font-size: 12px;">Descadastrar</a></p>';
-
-    if (typeof window.insertRichHtml === 'function') {
-        window.insertRichHtml(html);
-        alertify.success('Link de opt-out inserido!');
-    }
 }
 
 function switchEditorMode(mode) {
