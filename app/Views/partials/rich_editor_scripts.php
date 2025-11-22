@@ -9,7 +9,7 @@ $selectorJs = addslashes($selector);
 $height = $height ?? 500;
 ?>
 <?php if ($editorEngine === 'ckeditor'): ?>
-    <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+    <script src="https://cdn.ckeditor.com/ckeditor5/42.0.1/super-build/ckeditor.js"></script>
     <script>
         window.richEditorEngine = 'ckeditor';
         window.richEditorInstances = [];
@@ -19,30 +19,104 @@ $height = $height ?? 500;
                 ClassicEditor
                     .create(element, {
                         language: 'pt-br',
-                        toolbar: [
-                            'undo',
-                            'redo',
-                            '|',
-                            'heading',
-                            '|',
-                            'bold',
-                            'italic',
-                            'underline',
-                            '|',
-                            'bulletedList',
-                            'numberedList',
-                            '|',
-                            'link',
-                            'blockQuote',
-                            'insertTable'
-                        ],
+                        placeholder: 'Escreva o conteúdo do email...',
+                        toolbar: {
+                            items: [
+                                'undo',
+                                'redo',
+                                '|',
+                                'heading',
+                                'style',
+                                '|',
+                                'bold',
+                                'italic',
+                                'underline',
+                                'strikethrough',
+                                'subscript',
+                                'superscript',
+                                'highlight',
+                                'removeFormat',
+                                '|',
+                                'fontFamily',
+                                'fontSize',
+                                'fontColor',
+                                'fontBackgroundColor',
+                                '|',
+                                'bulletedList',
+                                'numberedList',
+                                'outdent',
+                                'indent',
+                                '|',
+                                'alignment',
+                                'link',
+                                'blockQuote',
+                                'horizontalLine',
+                                'insertTable',
+                                'specialCharacters',
+                                'htmlEmbed',
+                                'sourceEditing'
+                            ],
+                            shouldNotGroupWhenFull: true
+                        },
+                        link: {
+                            addTargetToExternalLinks: true,
+                            defaultProtocol: 'https://',
+                            decorators: {
+                                toggleDownload: {
+                                    mode: 'manual',
+                                    label: 'Marcar como download',
+                                    attributes: {
+                                        download: 'download'
+                                    }
+                                }
+                            }
+                        },
+                        list: {
+                            properties: {
+                                styles: true,
+                                startIndex: true,
+                                reversed: true
+                            }
+                        },
+                        table: {
+                            contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells', 'tableCellProperties', 'tableProperties']
+                        },
+                        htmlSupport: {
+                            allow: [
+                                {
+                                    name: /.*/,
+                                    attributes: true,
+                                    classes: true,
+                                    styles: true
+                                }
+                            ]
+                        },
+                        htmlEmbed: {
+                            showPreviews: true
+                        },
+                        removePlugins: [
+                            'CKBox',
+                            'CKFinder',
+                            'EasyImage',
+                            'RealTimeCollaborativeComments',
+                            'RealTimeCollaborativeTrackChanges',
+                            'RealTimeCollaborativeRevisionHistory',
+                            'PresenceList',
+                            'Comments',
+                            'TrackChanges',
+                            'TrackChangesData',
+                            'RevisionHistory',
+                            'Pagination',
+                            'WProofreader',
+                            'MathType'
+                        ]
                     })
                     .then(function (editor) {
                         editor.editing.view.change(function (writer) {
                             writer.setStyle('min-height', '<?= (int) $height ?>px', editor.editing.view.document.getRoot());
                         });
 
-                        window.richEditorInstances.push({editor: editor, element: element});
+                        window.richEditorInstances.push({ editor: editor, element: element });
                     })
                     .catch(function (error) {
                         console.error('Erro ao inicializar CKEditor.', error);
