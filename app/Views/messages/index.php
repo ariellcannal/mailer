@@ -80,7 +80,7 @@
             </table>
         </div>
 
-        <?= $pager->links() ?>
+        <?= $pager->links('default', 'bootstrap_full') ?>
     </div>
 </div>
 <?= $this->endSection() ?>

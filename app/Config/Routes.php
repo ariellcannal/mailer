@@ -64,9 +64,11 @@ $routes->group('contacts', function($routes) {
 // Contact Lists
 $routes->group('contact-lists', function($routes) {
     $routes->get('/', 'ContactListController::index');
+    $routes->get('view/(:num)', 'ContactListController::view/$1');
     $routes->post('store', 'ContactListController::store');
     $routes->post('update/(:num)', 'ContactListController::update/$1');
     $routes->post('delete/(:num)', 'ContactListController::delete/$1');
+    $routes->post('detach-contact/(:num)/(:num)', 'ContactListController::detachContact/$1/$2');
     $routes->post('buscar-contatos', 'ContactListController::buscarContatos');
 });
 

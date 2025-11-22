@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Models\ContactListModel;
 use App\Models\ContactListMemberModel;
+use App\Models\ContactModel;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\ResponseInterface;
 
@@ -150,5 +151,61 @@ class ContactListController extends BaseController
             'total_contacts' => count($contatosUnicos),
             'lists' => $listas,
         ]);
+    }
+
+    /**
+     * Exibe uma lista e seus contatos.
+     *
+     * @param int $id Identificador da lista.
+     * @return string|RedirectResponse
+     */
+    public function view(int $id)
+    {
+        $listModel = new ContactListModel();
+        $contactModel = new ContactModel();
+
+        $list = $listModel->find($id);
+
+        if (!$list) {
+            return redirect()->to('/contact-lists')->with('contact_lists_error', 'Lista não encontrada.');
+        }
+
+        $filters = [
+            'email' => (string) $this->request->getGet('email'),
+            'name' => (string) $this->request->getGet('name'),
+        ];
+
+        $contacts = $contactModel->getContactsForList($id, $filters, 20);
+
+        return view('contact_lists/view', [
+            'list' => $list,
+            'contacts' => $contacts,
+            'filters' => $filters,
+            'pager' => $contactModel->pager,
+            'activeMenu' => 'contact_lists',
+            'pageTitle' => 'Contatos da Lista',
+        ]);
+    }
+
+    /**
+     * Remove um contato específico da lista.
+     *
+     * @param int $listId    Identificador da lista.
+     * @param int $contactId Identificador do contato.
+     * @return RedirectResponse
+     */
+    public function detachContact(int $listId, int $contactId): RedirectResponse
+    {
+        $memberModel = new ContactListMemberModel();
+        $listModel = new ContactListModel();
+
+        $memberModel
+            ->where('list_id', $listId)
+            ->where('contact_id', $contactId)
+            ->delete();
+
+        $listModel->refreshCounters([$listId]);
+
+        return redirect()->back()->with('contact_lists_success', 'Contato removido da lista.');
     }
 }
