@@ -11,6 +11,7 @@ use App\Models\MessageSendModel;
 use App\Models\ContactModel;
 use App\Models\ContactListModel;
 use App\Libraries\Email\QueueManager;
+use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\HTTP\RedirectResponse;
 
 class MessageController extends BaseController {
@@ -118,7 +119,12 @@ class MessageController extends BaseController {
         ]);
     }
 
-    public function store() {
+    /**
+     * Persiste uma nova mensagem e agenda os envios.
+     *
+     * @return ResponseInterface
+     */
+    public function store(): ResponseInterface {
         $model = new MessageModel();
         
         // Validar opt-out link
@@ -132,6 +138,25 @@ class MessageController extends BaseController {
             ]);
         }
         
+        $scheduledAt = $this->request->getPost('scheduled_at');
+        $contactLists = (array) $this->request->getPost('contact_lists');
+
+        if (empty($contactLists)) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'Selecione ao menos uma lista de contatos para agendar o envio.',
+            ]);
+        }
+
+        $contactIds = $this->getContactsFromLists($contactLists);
+
+        if (empty($contactIds)) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'Nenhum contato válido encontrado nas listas selecionadas.',
+            ]);
+        }
+
         $data = [
             'campaign_id' => $this->request->getPost('campaign_id'),
             'sender_id' => $this->request->getPost('sender_id'),
@@ -141,13 +166,20 @@ class MessageController extends BaseController {
             'html_content' => $htmlContent,
             'has_optout_link' => $validation['has_optout'],
             'optout_link_visible' => $validation['is_visible'],
-            'status' => 'draft',
+            'status' => 'scheduled',
+            'scheduled_at' => $scheduledAt ?: date('Y-m-d H:i:s'),
         ];
-        
+
         if ($messageId = $model->insert($data)) {
-            // Salvar configurações de reenvio
-            $this->saveResendConfig($messageId);
-            
+            $queue = new QueueManager();
+            $queue->queueMessage($messageId, $contactIds, 0);
+
+            $model->update($messageId, [
+                'total_recipients' => count($contactIds),
+            ]);
+
+            $this->saveResendRules($messageId, $data['scheduled_at']);
+
             return $this->response->setJSON([
                 'success' => true,
                 'message_id' => $messageId
@@ -325,25 +357,70 @@ class MessageController extends BaseController {
         ];
     }
     
-    protected function saveResendConfig($messageId) {
+    /**
+     * Calcula e persiste regras de reenvio vinculadas à mensagem.
+     *
+     * @param int         $messageId        ID da mensagem
+     * @param string|null $firstScheduledAt Data e hora do primeiro disparo
+     */
+    protected function saveResendRules(int $messageId, ?string $firstScheduledAt): void
+    {
         $resends = $this->request->getPost('resends');
-        
+
         if (empty($resends)) {
             return;
         }
-        
+
         $db = \Config\Database::connect();
-        
+        $baseSchedule = $firstScheduledAt ?: date('Y-m-d H:i:s');
+
         foreach ($resends as $resend) {
-            if (!empty($resend['hours_after']) && !empty($resend['subject'])) {
-                $db->table('message_resends')->insert([
-                    'message_id' => $messageId,
-                    'resend_number' => $resend['number'],
-                    'hours_after' => $resend['hours_after'],
-                    'subject' => $resend['subject'],
-                    'is_active' => 1,
-                ]);
+            if (empty($resend['subject'])) {
+                continue;
             }
+
+            $scheduledAt = $resend['scheduled_at'] ?? '';
+            if (empty($scheduledAt) && !empty($resend['hours_after'])) {
+                $scheduledAt = date('Y-m-d H:i:s', strtotime($baseSchedule . ' +' . (int) $resend['hours_after'] . ' hours'));
+            }
+
+            if (empty($scheduledAt)) {
+                continue;
+            }
+
+            $db->table('resend_rules')->insert([
+                'message_id' => $messageId,
+                'resend_number' => (int) $resend['number'],
+                'hours_after' => (int) ($resend['hours_after'] ?? 0),
+                'subject_override' => $resend['subject'],
+                'status' => 'pending',
+                'scheduled_at' => $scheduledAt,
+            ]);
         }
+    }
+
+    /**
+     * Retorna IDs de contatos ativos pertencentes às listas selecionadas.
+     *
+     * @param array $contactLists IDs das listas selecionadas
+     *
+     * @return array
+     */
+    protected function getContactsFromLists(array $contactLists): array
+    {
+        $contactModel = new ContactModel();
+
+        $builder = $contactModel->builder();
+        $builder->select('contacts.id')
+            ->join('contact_list_members', 'contact_list_members.contact_id = contacts.id')
+            ->whereIn('contact_list_members.list_id', $contactLists)
+            ->where('contacts.is_active', 1)
+            ->where('contacts.opted_out', 0)
+            ->where('contacts.bounced', 0)
+            ->groupBy('contacts.id');
+
+        $result = $builder->get()->getResultArray();
+
+        return array_column($result, 'id');
     }
 }
