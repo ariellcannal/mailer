@@ -508,7 +508,8 @@ class QueueManager
     protected function getMessageContacts(int $messageId): array
     {
         $rows = $this->sendModel
-            ->select('DISTINCT contact_id')
+            ->distinct()
+            ->select('contact_id')
             ->where('message_id', $messageId)
             ->where('resend_number', 0)
             ->get()
