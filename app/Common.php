@@ -1,5 +1,6 @@
 <?php
 
+use Config\App as AppConfig;
 use CodeIgniter\I18n\Time;
 
 /**
@@ -16,6 +17,6 @@ use CodeIgniter\I18n\Time;
  * @see: https://codeigniter.com/user_guide/extending/common.html
  */
 
-$appTimezone = config('App')->appTimezone ?? 'America/Sao_Paulo';
+$appTimezone = (new AppConfig())->appTimezone ?? 'America/Sao_Paulo';
 date_default_timezone_set($appTimezone);
 Time::setDefaultTimezone($appTimezone);
