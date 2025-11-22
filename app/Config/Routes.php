@@ -44,6 +44,7 @@ $routes->group('messages', function($routes) {
     $routes->post('cancel/(:num)', 'MessageController::cancel/$1');
     $routes->post('reschedule/(:num)', 'MessageController::reschedule/$1');
     $routes->post('send/(:num)', 'MessageController::send/$1');
+    $routes->post('delete/(:num)', 'MessageController::delete/$1');
 });
 
 // Contacts

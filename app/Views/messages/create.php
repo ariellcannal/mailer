@@ -242,10 +242,6 @@
                     </div>
                 </div>
 
-                <div class="alert alert-secondary">
-                    Ajuste o primeiro envio agora e configure os reenvios na etapa seguinte. Caso um horário específico seja informado para cada reenvio, ele prevalecerá sobre o intervalo em horas.
-                </div>
-
                 <button type="button" class="btn btn-secondary me-2" onclick="prevStep()">
                     <i class="fas fa-arrow-left"></i> Anterior
                 </button>
@@ -265,17 +261,13 @@
                             <h6>Reenvio 1</h6>
                             <div class="row">
                                 <div class="col-md-4">
-                                    <label class="form-label">Horas após envio</label>
-                                    <input type="number" class="form-control" name="resends[0][hours_after]" placeholder="48">
-                                    <input type="hidden" name="resends[0][number]" value="1">
-                                </div>
-                                <div class="col-md-4">
                                     <label class="form-label">Agendar em</label>
                                     <input type="datetime-local" class="form-control" name="resends[0][scheduled_at]">
+                                    <input type="hidden" name="resends[0][number]" value="1">
                                 </div>
                                 <div class="col-md-8">
                                     <label class="form-label">Novo assunto</label>
-                                    <input type="text" class="form-control" name="resends[0][subject]" placeholder="[LEMBRETE] Assunto original">
+                                    <input type="text" class="form-control" name="resends[0][subject]" placeholder="Assunto da mensagem" value="<?= esc($message['subject'] ?? '') ?>">
                                 </div>
                             </div>
                         </div>
@@ -286,17 +278,13 @@
                             <h6>Reenvio 2</h6>
                             <div class="row">
                                 <div class="col-md-4">
-                                    <label class="form-label">Horas após envio anterior</label>
-                                    <input type="number" class="form-control" name="resends[1][hours_after]" placeholder="72">
-                                    <input type="hidden" name="resends[1][number]" value="2">
-                                </div>
-                                <div class="col-md-4">
                                     <label class="form-label">Agendar em</label>
                                     <input type="datetime-local" class="form-control" name="resends[1][scheduled_at]">
+                                    <input type="hidden" name="resends[1][number]" value="2">
                                 </div>
                                 <div class="col-md-8">
                                     <label class="form-label">Novo assunto</label>
-                                    <input type="text" class="form-control" name="resends[1][subject]" placeholder="[ÚLTIMA CHANCE] Assunto original">
+                                    <input type="text" class="form-control" name="resends[1][subject]" placeholder="Assunto da mensagem" value="<?= esc($message['subject'] ?? '') ?>">
                                 </div>
                             </div>
                         </div>
@@ -307,17 +295,13 @@
                             <h6>Reenvio 3</h6>
                             <div class="row">
                                 <div class="col-md-4">
-                                    <label class="form-label">Horas após envio anterior</label>
-                                    <input type="number" class="form-control" name="resends[2][hours_after]" placeholder="96">
-                                    <input type="hidden" name="resends[2][number]" value="3">
-                                </div>
-                                <div class="col-md-4">
                                     <label class="form-label">Agendar em</label>
                                     <input type="datetime-local" class="form-control" name="resends[2][scheduled_at]">
+                                    <input type="hidden" name="resends[2][number]" value="3">
                                 </div>
                                 <div class="col-md-8">
                                     <label class="form-label">Novo assunto</label>
-                                    <input type="text" class="form-control" name="resends[2][subject]" placeholder="[URGENTE] Assunto original">
+                                    <input type="text" class="form-control" name="resends[2][subject]" placeholder="Assunto da mensagem" value="<?= esc($message['subject'] ?? '') ?>">
                                 </div>
                             </div>
                         </div>
@@ -471,7 +455,27 @@ function updateScheduleSummary() {
     const totalRecipients = $('#recipientTotal').text();
     const scheduledAt = $('#scheduledAt').val();
 
-    $('#scheduleSummary').html(`<strong>Resumo:</strong> ${selectedListsText}<br>Total estimado: <strong>${totalRecipients}</strong><br>Envio inicial: <strong>${scheduledAt || 'não definido'}</strong>`);
+    const formattedSchedule = (() => {
+        if (!scheduledAt) {
+            return 'não definido';
+        }
+
+        const date = new Date(scheduledAt);
+
+        if (Number.isNaN(date.getTime())) {
+            return 'não definido';
+        }
+
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = String(date.getFullYear()).slice(-2);
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+
+        return `${day}/${month}/${year} ${hours}:${minutes}`;
+    })();
+
+    $('#scheduleSummary').html(`<strong>Resumo:</strong> ${selectedListsText}<br>Total estimado: <strong>${totalRecipients}</strong><br>Envio inicial: <strong>${formattedSchedule}</strong>`);
 }
 
 $('#messageForm').on('submit', function(e) {

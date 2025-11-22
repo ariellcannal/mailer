@@ -163,6 +163,7 @@ class QueueManager
         $failed = 0;
         $skipped = 0;
         $errors = [];
+        $processedMessages = [];
 
         foreach ($pending as $send) {
             try {
@@ -171,6 +172,8 @@ class QueueManager
                         'status' => 'sending',
                     ]);
                 }
+
+                $processedMessages[] = (int) $send['message_id'];
 
                 // Envia email
                 $result = $this->sendEmail($send);
@@ -192,6 +195,8 @@ class QueueManager
                 log_message('error', 'Queue processing error: ' . $e->getMessage());
             }
         }
+
+        $this->finalizeMessageStatuses($processedMessages);
 
         return [
             'success' => true,
@@ -378,17 +383,31 @@ class QueueManager
      */
     protected function getBaseUrl(): string
     {
+        $trackingBase = rtrim((string) getenv('app.trackingBaseURL'), '/');
+
+        if ($trackingBase !== '') {
+            return $trackingBase . '/';
+        }
+
         $baseUrl = rtrim((string) (config('App')->baseURL ?? ''), '/');
 
         if ($baseUrl === '') {
             $baseUrl = rtrim((string) getenv('app.baseURL'), '/');
         }
 
-        if ($baseUrl === '') {
-            return '/';
+        if ($baseUrl !== '') {
+            return $baseUrl . '/';
         }
 
-        return $baseUrl . '/';
+        $request = service('request');
+        $host = $request?->getServer('HTTP_HOST');
+        $scheme = ($request && $request->isSecure()) ? 'https' : 'http';
+
+        if (!empty($host)) {
+            return $scheme . '://' . $host . '/';
+        }
+
+        return '/';
     }
 
     /**
@@ -528,5 +547,48 @@ class QueueManager
         }
 
         return Time::now($this->timezone)->toDateTimeString();
+    }
+
+    /**
+     * Atualiza o status das mensagens quando não restam envios ou reenvios pendentes.
+     *
+     * @param array<int> $messageIds IDs das mensagens processadas
+     *
+     * @return void
+     */
+    protected function finalizeMessageStatuses(array $messageIds): void
+    {
+        if (empty($messageIds)) {
+            return;
+        }
+
+        $uniqueIds = array_unique(array_map('intval', $messageIds));
+        $db = \Config\Database::connect();
+        $now = $this->now();
+
+        foreach ($uniqueIds as $messageId) {
+            $pendingSends = $this->sendModel->builder()
+                ->where('message_id', $messageId)
+                ->whereIn('status', ['pending', 'sending'])
+                ->countAllResults();
+
+            if ($pendingSends > 0) {
+                continue;
+            }
+
+            $pendingRules = $db->table('resend_rules')
+                ->where('message_id', $messageId)
+                ->where('status', 'pending')
+                ->countAllResults();
+
+            if ($pendingRules > 0) {
+                continue;
+            }
+
+            $this->messageModel->update($messageId, [
+                'status' => 'sent',
+                'sent_at' => $now,
+            ]);
+        }
     }
 }
