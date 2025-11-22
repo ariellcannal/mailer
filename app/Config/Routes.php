@@ -111,14 +111,7 @@ $routes->group('settings', function($routes) {
 
 // Processamento da fila (CLI ou cron)
 $routes->cli('queue/process', 'QueueController::process');
-
-if (ENVIRONMENT === 'development') {
-    $routes->get('queue/process', 'QueueController::process');
-} else {
-    $routes->get('queue/process', static function () {
-        throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
-    });
-}
+$routes->get('queue/process', 'QueueController::process');
 
 // Auth routes (to be implemented)
 $routes->get('login', 'AuthController::login');

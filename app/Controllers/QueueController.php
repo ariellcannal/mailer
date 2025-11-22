@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Libraries\Email\QueueManager;
 use CodeIgniter\CLI\CLI;
+use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
@@ -20,6 +21,10 @@ class QueueController extends BaseController
      */
     public function process(): ResponseInterface
     {
+        if (! is_cli() && ENVIRONMENT !== 'development') {
+            throw PageNotFoundException::forPageNotFound();
+        }
+
         $batchSize = (int) ($this->request->getGet('batch') ?? 100);
         $queue = new QueueManager();
         $result = $queue->processQueue($batchSize);
