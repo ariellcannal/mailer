@@ -6,31 +6,62 @@ namespace App\Controllers;
 
 use App\Libraries\Email\QueueManager;
 use CodeIgniter\CLI\CLI;
+use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * Controlador CLI responsável por processar a fila de envio.
+ * Controlador responsável por processar a fila de envio.
  */
 class QueueController extends BaseController
 {
     /**
-     * Processa a fila de envios pendentes.
+     * Processa a fila de envios pendentes, permitindo execução via CLI ou navegador em desenvolvimento.
+     *
+     * @return ResponseInterface Resposta com o resumo do processamento.
      */
-    public function process(): void
+    public function process(): ResponseInterface
     {
         $batchSize = (int) ($this->request->getGet('batch') ?? 100);
         $queue = new QueueManager();
         $result = $queue->processQueue($batchSize);
 
-        CLI::write('Processamento finalizado:' . PHP_EOL);
-        CLI::write('Total processado: ' . ($result['processed'] ?? 0) . PHP_EOL);
-        CLI::write('Enviados: ' . ($result['sent'] ?? 0) . PHP_EOL);
-        CLI::write('Falhas: ' . ($result['failed'] ?? 0) . PHP_EOL);
+        $output = $this->buildOutput($result);
+
+        if (is_cli()) {
+            CLI::write($output . PHP_EOL);
+
+            return $this->response->setBody('');
+        }
+
+        return $this->response
+            ->setContentType('text/plain')
+            ->setBody($output . PHP_EOL);
+    }
+
+    /**
+     * Monta o resumo do processamento da fila.
+     *
+     * @param array<string, mixed> $result Resultado do processamento.
+     *
+     * @return string Texto com os totais e eventuais erros.
+     */
+    private function buildOutput(array $result): string
+    {
+        $lines = [
+            'Processamento finalizado:',
+            '',
+            'Total processado: ' . ($result['processed'] ?? 0),
+            'Enviados: ' . ($result['sent'] ?? 0),
+            'Falhas: ' . ($result['failed'] ?? 0),
+        ];
 
         if (!empty($result['errors'])) {
-            CLI::write('Erros:' . PHP_EOL);
+            $lines[] = '';
+            $lines[] = 'Erros:';
             foreach ($result['errors'] as $error) {
-                CLI::write('- ' . $error . PHP_EOL);
+                $lines[] = '- ' . $error;
             }
         }
+
+        return implode(PHP_EOL, $lines);
     }
 }
