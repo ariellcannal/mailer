@@ -6,6 +6,7 @@ use App\Libraries\AWS\SESService;
 use App\Models\MessageSendModel;
 use App\Models\ContactModel;
 use App\Models\MessageModel;
+use CodeIgniter\I18n\Time;
 
 /**
  * Queue Manager
@@ -39,6 +40,13 @@ class QueueManager
     protected $messageModel;
 
     /**
+     * Fuso horário padrão utilizado para os agendamentos.
+     *
+     * @var string
+     */
+    protected string $timezone = 'America/Sao_Paulo';
+
+    /**
      * Taxa de throttling (emails por segundo)
      * 
      * @var int
@@ -54,7 +62,9 @@ class QueueManager
         $this->sendModel = new MessageSendModel();
         $this->contactModel = new ContactModel();
         $this->messageModel = new MessageModel();
-        
+
+        $this->timezone = config('App')->appTimezone ?? $this->timezone;
+
         $this->throttleRate = (int) getenv('app.throttleRate') ?: 14;
     }
 
@@ -124,11 +134,11 @@ class QueueManager
                 ->orGroupStart()
                     ->where('message_sends.resend_number >', 0)
                     ->where('resend_rules.status', 'pending')
-                    ->where('resend_rules.scheduled_at <=', date('Y-m-d H:i:s'))
+                    ->where('resend_rules.scheduled_at <=', $this->now())
                 ->groupEnd()
             ->groupEnd()
             ->groupStart()
-                ->where('messages.scheduled_at <=', date('Y-m-d H:i:s'))
+                ->where('messages.scheduled_at <=', $this->now())
                 ->orWhere('messages.scheduled_at', null)
             ->groupEnd()
             ->orderBy('message_sends.id', 'ASC')
@@ -248,7 +258,7 @@ class QueueManager
             // Atualiza status do envio
             $this->sendModel->update($send['id'], [
                 'status' => 'sent',
-                'sent_at' => date('Y-m-d H:i:s'),
+                'sent_at' => $this->now(),
             ]);
 
             // Atualiza contadores da mensagem
@@ -371,7 +381,7 @@ class QueueManager
 
         $rules = $db->table('resend_rules')
             ->where('status', 'pending')
-            ->where('scheduled_at <=', date('Y-m-d H:i:s'))
+            ->where('scheduled_at <=', $this->now())
             ->get()
             ->getResultArray();
 
@@ -450,11 +460,23 @@ class QueueManager
      */
     public function cleanOldSends(int $days = 90): int
     {
-        $date = date('Y-m-d H:i:s', strtotime("-{$days} days"));
-        
+        $date = Time::now($this->timezone)
+            ->subDays($days)
+            ->toDateTimeString();
+
         return $this->sendModel
             ->where('sent_at <', $date)
             ->where('status', 'sent')
             ->delete();
+    }
+
+    /**
+     * Recupera a data/hora atual no fuso configurado.
+     *
+     * @return string
+     */
+    protected function now(): string
+    {
+        return Time::now($this->timezone)->toDateTimeString();
     }
 }

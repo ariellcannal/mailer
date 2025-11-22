@@ -11,10 +11,18 @@ use App\Models\MessageSendModel;
 use App\Models\ContactModel;
 use App\Models\ContactListModel;
 use App\Libraries\Email\QueueManager;
+use CodeIgniter\I18n\Time;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\HTTP\RedirectResponse;
 
 class MessageController extends BaseController {
+    /**
+     * Fuso horário padrão configurado para os agendamentos.
+     *
+     * @var string
+     */
+    protected string $appTimezone = 'America/Sao_Paulo';
+
     public function index(): string {
         $model = new MessageModel();
         $messages = $model->orderBy('created_at', 'DESC')->paginate(20);
@@ -139,7 +147,7 @@ class MessageController extends BaseController {
             ]);
         }
         
-        $scheduledAt = $this->request->getPost('scheduled_at');
+        $scheduledAt = $this->normalizeScheduleInput($this->request->getPost('scheduled_at'));
         $contactLists = (array) $this->request->getPost('contact_lists');
 
         if (empty($contactLists)) {
@@ -168,7 +176,7 @@ class MessageController extends BaseController {
             'has_optout_link' => $validation['has_optout'],
             'optout_link_visible' => $validation['is_visible'],
             'status' => 'scheduled',
-            'scheduled_at' => $scheduledAt ?: date('Y-m-d H:i:s'),
+            'scheduled_at' => $scheduledAt ?: $this->getCurrentDateTime(),
         ];
 
         if ($messageId = $model->insert($data)) {
@@ -223,7 +231,7 @@ class MessageController extends BaseController {
             'optout_link_visible' => $validation['is_visible'],
         ];
 
-        $scheduledAt = $this->request->getPost('scheduled_at');
+        $scheduledAt = $this->normalizeScheduleInput($this->request->getPost('scheduled_at'));
         $resends = (array) $this->request->getPost('resends');
 
         if ($this->canRescheduleMessage($message) && !empty($scheduledAt)) {
@@ -309,8 +317,8 @@ class MessageController extends BaseController {
     
     public function reschedule($id) {
         $model = new MessageModel();
-        $scheduledAt = $this->request->getPost('scheduled_at');
-        
+        $scheduledAt = $this->normalizeScheduleInput($this->request->getPost('scheduled_at'));
+
         if ($model->update($id, ['scheduled_at' => $scheduledAt, 'status' => 'scheduled'])) {
             return redirect()->back()->with('success', 'Reagendado com sucesso!');
         }
@@ -381,16 +389,29 @@ class MessageController extends BaseController {
         }
 
         $db = \Config\Database::connect();
-        $baseSchedule = $firstScheduledAt ?: date('Y-m-d H:i:s');
+        $timezone = $this->getAppTimezone();
+
+        try {
+            $baseSchedule = !empty($firstScheduledAt)
+                ? Time::parse($firstScheduledAt, $timezone)
+                : Time::now($timezone);
+        } catch (\Exception $exception) {
+            log_message('error', 'Falha ao interpretar data inicial: ' . $exception->getMessage());
+            $baseSchedule = Time::now($timezone);
+        }
 
         foreach ($resends as $resend) {
             if (empty($resend['subject'])) {
                 continue;
             }
 
-            $scheduledAt = $resend['scheduled_at'] ?? '';
+            $scheduledAt = $this->normalizeScheduleInput($resend['scheduled_at'] ?? '');
+
             if (empty($scheduledAt) && !empty($resend['hours_after'])) {
-                $scheduledAt = date('Y-m-d H:i:s', strtotime($baseSchedule . ' +' . (int) $resend['hours_after'] . ' hours'));
+                $scheduledAt = $baseSchedule
+                    ->clone()
+                    ->addHours((int) $resend['hours_after'])
+                    ->toDateTimeString();
             }
 
             if (empty($scheduledAt)) {
@@ -464,7 +485,20 @@ class MessageController extends BaseController {
             return false;
         }
 
-        return !empty($message['scheduled_at']) && strtotime($message['scheduled_at']) > time();
+        if (empty($message['scheduled_at'])) {
+            return false;
+        }
+
+        try {
+            $timezone = $this->getAppTimezone();
+            $scheduledAt = Time::parse($message['scheduled_at'], $timezone);
+
+            return $scheduledAt->getTimestamp() > Time::now($timezone)->getTimestamp();
+        } catch (\Exception $exception) {
+            log_message('error', 'Falha ao avaliar reagendamento: ' . $exception->getMessage());
+
+            return false;
+        }
     }
 
     /**
@@ -483,8 +517,13 @@ class MessageController extends BaseController {
 
         $db = \Config\Database::connect();
 
+        $timezone = $this->getAppTimezone();
+        $now = Time::now($timezone);
+
         foreach ($resends as $ruleId => $resend) {
-            if (empty($resend['scheduled_at'])) {
+            $newSchedule = $this->normalizeScheduleInput($resend['scheduled_at'] ?? '');
+
+            if (empty($newSchedule)) {
                 continue;
             }
 
@@ -502,19 +541,64 @@ class MessageController extends BaseController {
                 continue;
             }
 
-            if (strtotime($current['scheduled_at']) <= time()) {
+            $currentScheduled = Time::parse($current['scheduled_at'], $timezone);
+            $newScheduled = Time::parse($newSchedule, $timezone);
+
+            if ($currentScheduled->getTimestamp() <= $now->getTimestamp()) {
                 continue;
             }
 
-            if (strtotime($resend['scheduled_at']) <= time()) {
+            if ($newScheduled->getTimestamp() <= $now->getTimestamp()) {
                 continue;
             }
 
             $db->table('resend_rules')
                 ->where('id', (int) $ruleId)
                 ->update([
-                    'scheduled_at' => $resend['scheduled_at'],
+                    'scheduled_at' => $newSchedule,
                 ]);
         }
+    }
+
+    /**
+     * Obtém o fuso horário configurado para a aplicação.
+     *
+     * @return string
+     */
+    protected function getAppTimezone(): string
+    {
+        return config('App')->appTimezone ?? $this->appTimezone;
+    }
+
+    /**
+     * Converte a entrada de data/hora para string padronizada no fuso de São Paulo.
+     *
+     * @param string|null $dateTime Valor bruto recebido do formulário
+     *
+     * @return string|null
+     */
+    protected function normalizeScheduleInput(?string $dateTime): ?string
+    {
+        if (empty($dateTime)) {
+            return null;
+        }
+
+        try {
+            return Time::parse($dateTime, $this->getAppTimezone())->toDateTimeString();
+        } catch (\Exception $exception) {
+            log_message('error', 'Data/hora inválida informada: ' . $exception->getMessage());
+
+            return null;
+        }
+    }
+
+    /**
+     * Recupera a data/hora atual no fuso de São Paulo.
+     *
+     * @return string
+     */
+    protected function getCurrentDateTime(): string
+    {
+        return Time::now($this->getAppTimezone())->toDateTimeString();
     }
 }
