@@ -21,7 +21,7 @@
                 <label class="form-label">Listas</label>
                 <select name="lists[]" class="form-select select2" multiple data-placeholder="Selecione as listas">
                     <?php foreach ($lists as $list): ?>
-                        <option value="<?= $list['id'] ?>" <?= in_array($list['id'], old('lists', [])) ? 'selected' : '' ?>>
+                        <option value="<?= $list['id'] ?>" <?= in_array($list['id'], old('lists', $selectedLists ?? [])) ? 'selected' : '' ?>>
                             <?= esc($list['name']) ?>
                         </option>
                     <?php endforeach; ?>

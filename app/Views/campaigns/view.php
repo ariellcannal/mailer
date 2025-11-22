@@ -55,7 +55,7 @@
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0"><i class="fas fa-envelope"></i> Mensagens da Campanha</h5>
-            <a href="<?= base_url('messages/create') ?>" class="btn btn-sm btn-primary">
+            <a href="<?= base_url('messages/create?campaign_id=' . $campaign['id']) ?>" class="btn btn-sm btn-primary">
                 <i class="fas fa-plus"></i> Nova Mensagem
             </a>
         </div>

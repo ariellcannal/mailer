@@ -87,8 +87,13 @@
                         <label class="form-label">Campanha *</label>
                         <select class="form-select" name="campaign_id" required>
                             <option value="">Selecione...</option>
+                            <?php
+                                $campaignDefault = old('campaign_id', $selectedCampaignId ?? '');
+                            ?>
                             <?php foreach ($campaigns as $campaign): ?>
-                                <option value="<?= $campaign['id'] ?>"><?= esc($campaign['name']) ?></option>
+                                <option value="<?= $campaign['id'] ?>" <?= (string) $campaignDefault === (string) $campaign['id'] ? 'selected' : '' ?>>
+                                    <?= esc($campaign['name']) ?>
+                                </option>
                             <?php endforeach; ?>
                         </select>
                     </div>

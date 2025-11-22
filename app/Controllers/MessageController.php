@@ -55,6 +55,8 @@ class MessageController extends BaseController {
         $senderModel = new SenderModel();
         $contactListModel = new ContactListModel();
 
+        $defaultCampaignId = (int) $this->request->getGet('campaign_id');
+
         return view('messages/create', [
             'campaigns' => $campaignModel->where('is_active', 1)->findAll(),
             'senders' => $senderModel->where('is_active', 1)->where('ses_verified', 1)->findAll(),
@@ -62,6 +64,7 @@ class MessageController extends BaseController {
             'activeMenu' => 'messages',
             'pageTitle' => 'Nova Mensagem',
             'editorEngine' => get_system_setting('editor_engine', 'tinymce'),
+            'selectedCampaignId' => $defaultCampaignId > 0 ? $defaultCampaignId : null,
         ]);
     }
 

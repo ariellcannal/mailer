@@ -28,6 +28,10 @@
         <?php if (!empty($lists)): ?>
         <form id="bulkListsForm" action="<?= base_url('contacts/bulk-assign') ?>" method="POST" class="mb-3">
             <?= csrf_field() ?>
+            <input type="hidden" name="select_all" id="selectAllFlag" value="0">
+            <input type="hidden" name="filters[email]" value="<?= esc($filters['email']) ?>">
+            <input type="hidden" name="filters[name]" value="<?= esc($filters['name']) ?>">
+            <input type="hidden" name="filters[quality_score]" value="<?= esc($filters['quality_score']) ?>">
             <div class="row g-2 align-items-end">
                 <div class="col-md-8">
                     <label class="form-label">Adicionar selecionados às listas</label>
@@ -48,10 +52,15 @@
         <?php endif; ?>
 
         <div class="table-responsive">
+            <div id="selectAllNotice" class="alert alert-info d-none">Deseja selecionar todos os <?= (int) $totalContacts ?> contatos? <a href="#" id="confirmSelectAll">Clique aqui</a>.</div>
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th class="text-center" style="width: 60px;"><input type="checkbox" id="selectAll"></th>
+                        <th class="text-center" style="width: 60px;">
+                            <div class="form-check d-flex justify-content-center mb-0">
+                                <input type="checkbox" id="selectAll" class="form-check-input">
+                            </div>
+                        </th>
                         <th>Email</th>
                         <th>Nome</th>
                         <th>Listas</th>
@@ -72,7 +81,7 @@
                         <?php foreach ($contacts as $contact): ?>
                             <tr>
                                 <td class="text-center">
-                                    <input type="checkbox" name="contacts[]" value="<?= $contact['id'] ?>" form="bulkListsForm" class="form-check-input">
+                                    <input type="checkbox" name="contacts[]" value="<?= $contact['id'] ?>" form="bulkListsForm" class="form-check-input contact-checkbox">
                                 </td>
                                 <td><?= esc($contact['email']) ?></td>
                                 <td><?= esc($contact['name']) ?></td>
@@ -113,7 +122,7 @@
             </table>
         </div>
 
-        <?= $pager->links() ?>
+        <?= $pager->links('default', 'bootstrap_full') ?>
     </div>
 </div>
 <?= $this->endSection() ?>
@@ -132,9 +141,42 @@
             });
         });
 
+        const toggleSelectAllNotice = function(visible) {
+            const notice = $('#selectAllNotice');
+            if (!notice.length) return;
+
+            if (visible) {
+                notice.removeClass('d-none');
+            } else {
+                notice.addClass('d-none');
+            }
+        };
+
         $('#selectAll').on('change', function() {
             const checked = $(this).is(':checked');
-            $('input[name="contacts[]"]').prop('checked', checked);
+            $('input.contact-checkbox').prop('checked', checked);
+            $('#selectAllFlag').val('0');
+
+            if (checked) {
+                toggleSelectAllNotice(true);
+            } else {
+                toggleSelectAllNotice(false);
+            }
+        });
+
+        $('#confirmSelectAll').on('click', function(e) {
+            e.preventDefault();
+            $('#selectAllFlag').val('1');
+            toggleSelectAllNotice(false);
+            $('input.contact-checkbox').prop('checked', true);
+        });
+
+        $('input.contact-checkbox').on('change', function() {
+            if (!$(this).is(':checked')) {
+                $('#selectAll').prop('checked', false);
+                $('#selectAllFlag').val('0');
+                toggleSelectAllNotice(false);
+            }
         });
     });
 </script>
