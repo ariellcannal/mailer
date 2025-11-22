@@ -52,7 +52,27 @@
                 </div>
 
                 <div class="col-12 mb-3">
-                    <label class="form-label">HTML</label>
+                    <div class="d-flex flex-wrap align-items-center justify-content-between mb-2 gap-2">
+                        <label class="form-label mb-0">HTML</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="openTemplateModal">
+                                <i class="fas fa-file-import"></i> Importar template
+                            </button>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-image"></i> Adicionar imagem
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><button class="dropdown-item" type="button" id="uploadFromComputer"><i class="fas fa-upload"></i> Upload do computador</button></li>
+                                    <li><button class="dropdown-item" type="button" id="insertFromUrl"><i class="fas fa-link"></i> Inserir via URL</button></li>
+                                    <li><button class="dropdown-item" type="button" id="insertFromManager"><i class="fas fa-folder-open"></i> Inserir via File Manager</button></li>
+                                </ul>
+                            </div>
+                            <button type="button" class="btn btn-outline-info btn-sm" id="openFileManager">
+                                <i class="fas fa-folder"></i> File Manager
+                            </button>
+                        </div>
+                    </div>
                     <textarea name="html_content" class="form-control js-rich-editor" rows="12" required><?= old('html_content', $message['html_content']) ?></textarea>
                 </div>
             </div>
@@ -195,6 +215,80 @@
         </form>
     </div>
 </div>
+
+<div class="modal fade" id="templateModal" tabindex="-1" aria-labelledby="templateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="templateModalLabel">Importar template</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="templateSearch" class="form-label">Buscar template</label>
+                    <input type="text" class="form-control" id="templateSearch" placeholder="Filtrar por nome ou descrição">
+                </div>
+                <div id="templateFeedback" class="alert alert-info d-none" role="status"></div>
+                <div class="row g-3" id="templateList"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="confirmTemplateImport" disabled>Inserir no conteúdo</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="imageUrlModal" tabindex="-1" aria-labelledby="imageUrlModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageUrlModalLabel">Inserir imagem via URL</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="imageUrlInput" class="form-label">URL da imagem</label>
+                    <input type="url" class="form-control" id="imageUrlInput" placeholder="https://exemplo.com/imagem.jpg">
+                </div>
+                <div class="mb-0">
+                    <label for="imageAltInput" class="form-label">Texto alternativo</label>
+                    <input type="text" class="form-control" id="imageAltInput" placeholder="Descrição da imagem">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="insertImageUrl">Inserir imagem</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="fileManagerModal" tabindex="-1" aria-labelledby="fileManagerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="fileManagerModalLabel">Biblioteca de arquivos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <input type="file" class="form-control" id="fileUploadInput" accept="image/*" hidden>
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="triggerFileUpload">
+                        <i class="fas fa-upload"></i> Enviar novo arquivo
+                    </button>
+                    <div class="flex-grow-1"></div>
+                    <div id="fileManagerStatus" class="text-muted small"></div>
+                </div>
+                <div class="row g-3" id="fileManagerList"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" id="insertSelectedFile" disabled>Inserir no conteúdo</button>
+            </div>
+        </div>
+    </div>
+</div>
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
@@ -206,6 +300,246 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.querySelector('form');
+        const templateModal = new bootstrap.Modal('#templateModal');
+        const fileManagerModal = new bootstrap.Modal('#fileManagerModal');
+        const imageUrlModal = new bootstrap.Modal('#imageUrlModal');
+
+        const templateSearchInput = document.getElementById('templateSearch');
+        const templateList = document.getElementById('templateList');
+        const templateFeedback = document.getElementById('templateFeedback');
+        const confirmTemplateImport = document.getElementById('confirmTemplateImport');
+        let selectedTemplateContent = '';
+
+        const fileManagerList = document.getElementById('fileManagerList');
+        const fileManagerStatus = document.getElementById('fileManagerStatus');
+        const insertSelectedFile = document.getElementById('insertSelectedFile');
+        const fileUploadInput = document.getElementById('fileUploadInput');
+        let selectedFileUrl = '';
+
+        const debounce = (fn, delay = 300) => {
+            let timer;
+
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn(...args), delay);
+            };
+        };
+
+        const renderTemplateCards = (templates) => {
+            templateList.innerHTML = '';
+            confirmTemplateImport.disabled = true;
+            selectedTemplateContent = '';
+
+            if (!templates.length) {
+                templateFeedback.classList.remove('d-none');
+                templateFeedback.textContent = 'Nenhum template encontrado para o filtro aplicado.';
+                return;
+            }
+
+            templateFeedback.classList.add('d-none');
+
+            templates.forEach((template) => {
+                const col = document.createElement('div');
+                col.className = 'col-md-6';
+
+                const card = document.createElement('div');
+                card.className = 'card h-100 template-card';
+                card.innerHTML = `
+                    <div class="card-body">
+                        <h6 class="card-title d-flex justify-content-between align-items-start">
+                            <span>${template.name}</span>
+                            <span class="badge bg-light text-dark">ID ${template.id}</span>
+                        </h6>
+                        <p class="card-text small mb-2 text-muted">${template.description || 'Sem descrição'}</p>
+                        <div class="small text-muted">Atualizado em: ${template.updated_at ?? 'Data não informada'}</div>
+                    </div>
+                `;
+
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('.template-card').forEach((item) => item.classList.remove('border-primary'));
+                    card.classList.add('border-primary');
+                    selectedTemplateContent = template.html_content;
+                    confirmTemplateImport.disabled = false;
+                });
+
+                col.appendChild(card);
+                templateList.appendChild(col);
+            });
+        };
+
+        const fetchTemplates = (query = '') => {
+            templateFeedback.classList.remove('d-none');
+            templateFeedback.textContent = 'Carregando templates disponíveis...';
+
+            fetch(`<?= base_url('templates/search') ?>?q=${encodeURIComponent(query)}`)
+                .then((response) => response.json())
+                .then((data) => {
+                    if (!data.success) {
+                        templateFeedback.classList.remove('d-none');
+                        templateFeedback.textContent = 'Não foi possível carregar os templates no momento.';
+                        return;
+                    }
+
+                    renderTemplateCards(data.templates || []);
+                })
+                .catch(() => {
+                    templateFeedback.classList.remove('d-none');
+                    templateFeedback.textContent = 'Erro ao buscar templates. Tente novamente.';
+                });
+        };
+
+        document.getElementById('openTemplateModal').addEventListener('click', () => {
+            fetchTemplates('');
+            templateSearchInput.value = '';
+            templateModal.show();
+        });
+
+        templateSearchInput.addEventListener('input', debounce((event) => {
+            fetchTemplates(event.target.value);
+        }, 400));
+
+        confirmTemplateImport.addEventListener('click', () => {
+            if (selectedTemplateContent && typeof window.insertRichHtml === 'function') {
+                window.insertRichHtml(selectedTemplateContent);
+                templateModal.hide();
+            }
+        });
+
+        const renderFileCards = (files) => {
+            fileManagerList.innerHTML = '';
+            insertSelectedFile.disabled = true;
+            selectedFileUrl = '';
+
+            if (!files.length) {
+                fileManagerList.innerHTML = '<div class="col-12 text-muted">Nenhum arquivo disponível até o momento.</div>';
+                return;
+            }
+
+            files.forEach((file) => {
+                const col = document.createElement('div');
+                col.className = 'col-md-4';
+
+                const card = document.createElement('div');
+                card.className = 'card h-100 file-card';
+                card.innerHTML = `
+                    <img src="${file.url}" class="card-img-top" alt="${file.name}">
+                    <div class="card-body">
+                        <h6 class="card-title text-truncate" title="${file.name}">${file.name}</h6>
+                        <p class="card-text small mb-1">${(file.size / 1024).toFixed(1)} KB</p>
+                        <p class="card-text small text-muted">${file.updated_at}</p>
+                    </div>
+                `;
+
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('.file-card').forEach((item) => item.classList.remove('border-primary'));
+                    card.classList.add('border-primary');
+                    selectedFileUrl = file.url;
+                    insertSelectedFile.disabled = false;
+                });
+
+                col.appendChild(card);
+                fileManagerList.appendChild(col);
+            });
+        };
+
+        const loadFiles = () => {
+            fileManagerStatus.textContent = 'Carregando biblioteca...';
+
+            fetch('<?= base_url('files/list') ?>')
+                .then((response) => response.json())
+                .then((data) => {
+                    if (!data.success) {
+                        fileManagerStatus.textContent = 'Não foi possível carregar os arquivos.';
+                        return;
+                    }
+
+                    fileManagerStatus.textContent = `${data.files.length} arquivo(s) disponíveis.`;
+                    renderFileCards(data.files);
+                })
+                .catch(() => {
+                    fileManagerStatus.textContent = 'Erro ao consultar arquivos.';
+                });
+        };
+
+        document.getElementById('openFileManager').addEventListener('click', () => {
+            loadFiles();
+            fileManagerModal.show();
+        });
+
+        document.getElementById('insertFromManager').addEventListener('click', () => {
+            loadFiles();
+            fileManagerModal.show();
+        });
+
+        insertSelectedFile.addEventListener('click', () => {
+            if (selectedFileUrl && typeof window.insertRichHtml === 'function') {
+                window.insertRichHtml(`<img src="${selectedFileUrl}" alt="Imagem da biblioteca" style="max-width: 100%; height: auto;">`);
+                fileManagerModal.hide();
+            }
+        });
+
+        const uploadFile = (file) => {
+            const formData = new FormData();
+            formData.append('file', file);
+            fileManagerStatus.textContent = 'Enviando arquivo...';
+
+            fetch('<?= base_url('files/upload') ?>', {
+                method: 'POST',
+                body: formData,
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    if (!data.success) {
+                        fileManagerStatus.textContent = data.error || 'Não foi possível enviar o arquivo.';
+                        return;
+                    }
+
+                    fileManagerStatus.textContent = 'Upload concluído. Atualizando lista...';
+                    loadFiles();
+                })
+                .catch(() => {
+                    fileManagerStatus.textContent = 'Falha ao enviar o arquivo.';
+                });
+        };
+
+        document.getElementById('triggerFileUpload').addEventListener('click', () => {
+            fileUploadInput.click();
+        });
+
+        fileUploadInput.addEventListener('change', (event) => {
+            const [file] = event.target.files;
+
+            if (file) {
+                uploadFile(file);
+            }
+
+            event.target.value = '';
+        });
+
+        document.getElementById('uploadFromComputer').addEventListener('click', () => {
+            fileUploadInput.click();
+        });
+
+        document.getElementById('insertFromUrl').addEventListener('click', () => {
+            imageUrlModal.show();
+        });
+
+        document.getElementById('insertImageUrl').addEventListener('click', () => {
+            const url = document.getElementById('imageUrlInput').value.trim();
+            const alt = document.getElementById('imageAltInput').value.trim();
+
+            if (!url) {
+                return;
+            }
+
+            if (typeof window.insertRichHtml === 'function') {
+                window.insertRichHtml(`<img src="${url}" alt="${alt || 'Imagem externa'}" style="max-width: 100%; height: auto;">`);
+            }
+
+            imageUrlModal.hide();
+            document.getElementById('imageUrlInput').value = '';
+            document.getElementById('imageAltInput').value = '';
+        });
 
         if (form) {
             form.addEventListener('submit', function() {
