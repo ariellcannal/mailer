@@ -7,9 +7,10 @@ $editorEngine = $editorEngine ?? 'tinymce';
 $selector = $selector ?? '.js-rich-editor';
 $selectorJs = addslashes($selector);
 $height = $height ?? 500;
+$ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
 ?>
 <?php if ($editorEngine === 'ckeditor'): ?>
-    <script src="https://cdn.ckeditor.com/ckeditor5/42.0.1/super-build/ckeditor.js"></script>
+    <script src="https://cdn.ckeditor.com/ckeditor5/42.0.1/super-build/ckeditor.js<?= $ckeditorCacheBuster ?>"></script>
     <script>
         window.richEditorEngine = 'ckeditor';
         window.richEditorInstances = [];
