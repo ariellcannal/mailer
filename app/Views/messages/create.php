@@ -133,12 +133,37 @@
             
             <!-- Step 3: Destinatários -->
             <div class="step-content" data-step="3" style="display:none;">
-                <p>Selecione os contatos que receberão esta mensagem:</p>
-                <!-- Implementar seleção de contatos/listas -->
-                <div class="alert alert-info">
-                    Funcionalidade de seleção de contatos será implementada aqui.
+                <p>Selecione as listas de contato que receberão esta mensagem:</p>
+
+                <div class="mb-3">
+                    <label class="form-label" for="contactListSelect">Listas de contato</label>
+                    <select id="contactListSelect" name="contact_lists[]" class="form-select" multiple data-placeholder="Selecione as listas">
+                        <?php foreach ($contactLists as $list): ?>
+                            <option value="<?= $list['id'] ?>" data-total="<?= $list['total_contacts'] ?? 0 ?>">
+                                <?= esc($list['name']) ?> (<?= (int) ($list['total_contacts'] ?? 0) ?> contatos)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <?php if (empty($contactLists)): ?>
+                        <div class="alert alert-warning mt-2" role="status">
+                            Nenhuma lista de contato encontrada. Crie uma lista antes de continuar.
+                        </div>
+                    <?php endif; ?>
+                    <small class="text-muted">É possível combinar múltiplas listas; os contatos duplicados serão removidos automaticamente.</small>
                 </div>
-                
+
+                <div id="recipientSummary" class="p-3 border rounded bg-light" aria-live="polite">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-list-check text-primary me-2"></i>
+                        <strong>Listas selecionadas</strong>
+                    </div>
+                    <div id="selectedLists" class="mb-2 text-muted">Nenhuma lista selecionada.</div>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-users text-success me-2"></i>
+                        <span>Total estimado de destinatários: <strong id="recipientTotal">0</strong></span>
+                    </div>
+                </div>
+
                 <button type="button" class="btn btn-secondary me-2" onclick="prevStep()">
                     <i class="fas fa-arrow-left"></i> Anterior
                 </button>
@@ -232,6 +257,8 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <?= view('partials/rich_editor_scripts', [
     'editorEngine' => $editorEngine ?? 'tinymce',
     'selector' => '#messageEditor',
@@ -243,6 +270,14 @@ let currentStep = 1;
 function nextStep() {
     if (currentStep === 2 && typeof window.syncRichEditors === 'function') {
         window.syncRichEditors();
+    }
+
+    const listasSelecionadas = $('#contactListSelect').val() || [];
+    const nenhumaListaDisponivel = $('#contactListSelect option').length === 0;
+
+    if (currentStep === 3 && !nenhumaListaDisponivel && listasSelecionadas.length === 0) {
+        alertify.error('Selecione pelo menos uma lista de contato.');
+        return;
     }
 
     $('.step-content[data-step="' + currentStep + '"]').hide();
@@ -299,6 +334,11 @@ function updateReview() {
 
     const htmlContent = $('#messageEditor').val();
     $('#review-content').html(htmlContent);
+
+    const selectedListsText = $('#selectedLists').html();
+    const totalRecipients = $('#recipientTotal').text();
+
+    $('#review-content').append(`<div class="alert alert-info mt-3"><strong>Destinatários:</strong> ${selectedListsText}<br><strong>Total estimado:</strong> ${totalRecipients}</div>`);
 }
 
 $('#messageForm').on('submit', function(e) {
@@ -329,5 +369,50 @@ $('#messageForm').on('submit', function(e) {
         }
     });
 });
+
+$(function() {
+    $('#contactListSelect').select2({
+        width: '100%',
+        placeholder: $('#contactListSelect').data('placeholder') || 'Selecione as listas'
+    });
+
+    $('#contactListSelect').on('change', function() {
+        atualizarDestinatariosPorLista();
+    });
+
+    atualizarDestinatariosPorLista();
+});
+
+function atualizarDestinatariosPorLista() {
+    const listasSelecionadas = $('#contactListSelect').val() || [];
+
+    if (listasSelecionadas.length === 0) {
+        $('#selectedLists').text('Nenhuma lista selecionada.');
+        $('#recipientTotal').text('0');
+        return;
+    }
+
+    $.ajax({
+        url: '<?= base_url('contact-lists/buscar-contatos') ?>',
+        method: 'POST',
+        data: { listas: listasSelecionadas },
+        success: function(response) {
+            if (!response.success) {
+                alertify.error(response.error || 'Não foi possível carregar os contatos.');
+                return;
+            }
+
+            const listaResumo = response.lists
+                .map(lista => `<span class="badge bg-secondary me-1 mb-1">${lista.name} (${lista.contacts})</span>`)
+                .join(' ');
+
+            $('#selectedLists').html(listaResumo || 'Nenhuma lista selecionada.');
+            $('#recipientTotal').text(response.total_contacts || 0);
+        },
+        error: function() {
+            alertify.error('Erro ao buscar contatos das listas.');
+        }
+    });
+}
 </script>
 <?= $this->endSection() ?>
