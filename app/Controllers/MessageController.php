@@ -125,12 +125,29 @@ class MessageController extends BaseController {
 
         $campaignModel = new CampaignModel();
         $senderModel = new SenderModel();
+        $contactListModel = new ContactListModel();
+
+        $preselectedLists = $this->getPreselectedLists($id);
+        $canEditRecipients = $this->canModifyRecipients($message);
+        $resendRules = $this->getResendRules($id);
+        $resendLocks = [];
+
+        foreach ($resendRules as $rule) {
+            $resendLocks[(int) $rule['id']] = $this->hasQueuedResend($id, (int) $rule['resend_number']);
+        }
 
         return view('messages/edit', [
             'message' => $message,
             'campaigns' => $campaignModel->where('is_active', 1)->findAll(),
             'senders' => $senderModel->where('is_active', 1)->where('ses_verified', 1)->findAll(),
-            'resendRules' => $this->getResendRules($id),
+            'resendRules' => $resendRules,
+            'contactLists' => $contactListModel->orderBy('name', 'ASC')->findAll(),
+            'selectedLists' => $preselectedLists,
+            'recipientBreakdown' => $this->getRecipientListBreakdown($id),
+            'canEditRecipients' => $canEditRecipients,
+            'currentRecipients' => $this->countMessageRecipients($id),
+            'canReschedule' => $this->canRescheduleMessage($message),
+            'resendLocks' => $resendLocks,
             'activeMenu' => 'messages',
             'pageTitle' => 'Editar Mensagem',
             'editorEngine' => get_system_setting('editor_engine', 'tinymce'),
@@ -242,6 +259,9 @@ class MessageController extends BaseController {
 
         $scheduledAt = $this->normalizeScheduleInput($this->request->getPost('scheduled_at'));
         $resends = (array) $this->request->getPost('resends');
+        $contactLists = (array) $this->request->getPost('contact_lists');
+
+        $canUpdateRecipients = $this->canModifyRecipients($message) && $this->request->getPost('contact_lists') !== null;
 
         if ($this->canRescheduleMessage($message) && !empty($scheduledAt)) {
             $data['scheduled_at'] = $scheduledAt;
@@ -249,6 +269,25 @@ class MessageController extends BaseController {
         }
 
         $model->update($id, $data);
+
+        if ($canUpdateRecipients) {
+            if (empty($contactLists)) {
+                return redirect()->back()->withInput()->with('error', 'Selecione ao menos uma lista de contatos para reagendar.');
+            }
+
+            $contactIds = $this->getContactsFromLists($contactLists);
+
+            if (empty($contactIds)) {
+                return redirect()->back()->withInput()->with('error', 'Nenhum contato válido encontrado nas listas selecionadas.');
+            }
+
+            $this->refreshMessageRecipients($id, $contactIds);
+
+            $model->update($id, [
+                'total_recipients' => count($contactIds),
+                'total_sent' => 0,
+            ]);
+        }
 
         $this->rescheduleResends($id, $resends);
 
@@ -308,9 +347,11 @@ class MessageController extends BaseController {
         $message['total_sent'] = 0;
         $message['total_opens'] = 0;
         $message['total_clicks'] = 0;
-        
+        $message['scheduled_at'] = null;
+        $message['sent_at'] = null;
+
         $newId = $model->insert($message);
-        
+
         return redirect()->to('/messages/edit/' . $newId)->with('success', 'Mensagem duplicada!');
     }
     
@@ -490,12 +531,16 @@ class MessageController extends BaseController {
      */
     protected function canRescheduleMessage(array $message): bool
     {
-        if (($message['status'] ?? '') !== 'scheduled') {
+        if (empty($message['scheduled_at'])) {
             return false;
         }
 
-        if (empty($message['scheduled_at'])) {
+        if (in_array($message['status'] ?? '', ['sent', 'cancelled'], true)) {
             return false;
+        }
+
+        if ($this->originalSendsPending((int) $message['id'])) {
+            return true;
         }
 
         try {
@@ -550,14 +595,13 @@ class MessageController extends BaseController {
                 continue;
             }
 
-            $currentScheduled = Time::parse($current['scheduled_at'], $timezone);
-            $newScheduled = Time::parse($newSchedule, $timezone);
-
-            if ($currentScheduled->getTimestamp() <= $now->getTimestamp()) {
+            if ($this->hasQueuedResend($messageId, (int) $current['resend_number'])) {
                 continue;
             }
 
-            if ($newScheduled->getTimestamp() <= $now->getTimestamp()) {
+            $newScheduled = Time::parse($newSchedule, $timezone);
+
+            if ($newScheduled->getTimestamp() < $now->getTimestamp()) {
                 continue;
             }
 
@@ -609,5 +653,146 @@ class MessageController extends BaseController {
     protected function getCurrentDateTime(): string
     {
         return Time::now($this->getAppTimezone())->toDateTimeString();
+    }
+
+    /**
+     * Indica se a mensagem permite alterar destinatários e horários.
+     *
+     * @param array $message Dados da mensagem
+     * @return bool
+     */
+    protected function canModifyRecipients(array $message): bool
+    {
+        if (empty($message['id'])) {
+            return false;
+        }
+
+        if (in_array($message['status'] ?? '', ['sent', 'cancelled'], true)) {
+            return false;
+        }
+
+        return $this->originalSendsPending((int) $message['id']);
+    }
+
+    /**
+     * Verifica se os envios originais ainda estão pendentes.
+     *
+     * @param int $messageId ID da mensagem
+     * @return bool
+     */
+    protected function originalSendsPending(int $messageId): bool
+    {
+        $sendModel = new MessageSendModel();
+
+        $nonPending = $sendModel
+            ->where('message_id', $messageId)
+            ->where('resend_number', 0)
+            ->where('status !=', 'pending')
+            ->countAllResults();
+
+        return $nonPending === 0;
+    }
+
+    /**
+     * Recria os destinatários de uma mensagem ainda não enviada.
+     *
+     * @param int   $messageId  ID da mensagem
+     * @param array $contactIds IDs dos contatos permitidos
+     * @return void
+     */
+    protected function refreshMessageRecipients(int $messageId, array $contactIds): void
+    {
+        $sendModel = new MessageSendModel();
+
+        $sendModel->where('message_id', $messageId)->delete();
+
+        $queue = new QueueManager();
+        $queue->queueMessage($messageId, $contactIds, 0);
+    }
+
+    /**
+     * Calcula listas que cobrem integralmente os destinatários atuais.
+     *
+     * @param int $messageId ID da mensagem
+     * @return array<int>
+     */
+    protected function getPreselectedLists(int $messageId): array
+    {
+        $db = \Config\Database::connect();
+
+        $rows = $db->table('contact_lists')
+            ->select('contact_lists.id, contact_lists.total_contacts, COUNT(DISTINCT message_sends.contact_id) AS recipients')
+            ->join('contact_list_members', 'contact_list_members.list_id = contact_lists.id')
+            ->join('message_sends', 'message_sends.contact_id = contact_list_members.contact_id')
+            ->where('message_sends.message_id', $messageId)
+            ->where('message_sends.resend_number', 0)
+            ->groupBy('contact_lists.id, contact_lists.total_contacts')
+            ->get()
+            ->getResultArray();
+
+        $preselected = [];
+
+        foreach ($rows as $row) {
+            if ((int) ($row['total_contacts'] ?? 0) > 0 && (int) $row['total_contacts'] === (int) $row['recipients']) {
+                $preselected[] = (int) $row['id'];
+            }
+        }
+
+        return $preselected;
+    }
+
+    /**
+     * Quebra destinatários atuais por lista de origem.
+     *
+     * @param int $messageId ID da mensagem
+     * @return array<int, array<string, mixed>>
+     */
+    protected function getRecipientListBreakdown(int $messageId): array
+    {
+        $db = \Config\Database::connect();
+
+        return $db->table('contact_lists')
+            ->select('contact_lists.id, contact_lists.name, COUNT(DISTINCT message_sends.contact_id) AS recipients')
+            ->join('contact_list_members', 'contact_list_members.list_id = contact_lists.id')
+            ->join('message_sends', 'message_sends.contact_id = contact_list_members.contact_id')
+            ->where('message_sends.message_id', $messageId)
+            ->where('message_sends.resend_number', 0)
+            ->groupBy('contact_lists.id, contact_lists.name')
+            ->orderBy('contact_lists.name', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
+    /**
+     * Total de destinatários atuais da mensagem.
+     *
+     * @param int $messageId ID da mensagem
+     * @return int
+     */
+    protected function countMessageRecipients(int $messageId): int
+    {
+        $sendModel = new MessageSendModel();
+
+        return $sendModel
+            ->where('message_id', $messageId)
+            ->where('resend_number', 0)
+            ->countAllResults();
+    }
+
+    /**
+     * Verifica se um reenvio já possui fila criada.
+     *
+     * @param int $messageId ID da mensagem
+     * @param int $resendNumber Número do reenvio
+     * @return bool
+     */
+    protected function hasQueuedResend(int $messageId, int $resendNumber): bool
+    {
+        $sendModel = new MessageSendModel();
+
+        return $sendModel
+            ->where('message_id', $messageId)
+            ->where('resend_number', $resendNumber)
+            ->countAllResults() > 0;
     }
 }
