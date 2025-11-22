@@ -19,6 +19,8 @@ $ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
             'https://cdn.ckeditor.com/ckeditor5/38.1.1/super-build/ckeditor.js'
         ];
 
+        window.CKEDITOR_LICENSE_KEY = 'GPL';
+
         function loadCkeditorScript(source) {
             return new Promise(function (resolve, reject) {
                 const script = document.createElement('script');
