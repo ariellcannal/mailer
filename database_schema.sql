@@ -117,6 +117,7 @@ CREATE TABLE IF NOT EXISTS senders (
     dkim_verified TINYINT(1) DEFAULT 0,
     spf_verified TINYINT(1) DEFAULT 0,
     dmarc_verified TINYINT(1) DEFAULT 0,
+    bounce_flow_verified TINYINT(1) DEFAULT NULL,
     is_active TINYINT(1) DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

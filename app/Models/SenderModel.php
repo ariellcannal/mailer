@@ -32,6 +32,7 @@ class SenderModel extends Model
         'dkim_verified',
         'spf_verified',
         'dmarc_verified',
+        'bounce_flow_verified',
         'is_active',
     ];
 

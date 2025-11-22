@@ -2,6 +2,7 @@
 
 namespace App\Libraries\Email;
 
+use App\Libraries\AWS\BounceNotificationService;
 use App\Libraries\AWS\SESService;
 use App\Models\MessageSendModel;
 use App\Models\ContactModel;
@@ -23,6 +24,11 @@ class QueueManager
      * @var SESService
      */
     protected $sesService;
+
+    /**
+     * @var BounceNotificationService
+     */
+    protected BounceNotificationService $bounceService;
 
     /**
      * @var MessageSendModel
@@ -59,6 +65,7 @@ class QueueManager
     public function __construct()
     {
         $this->sesService = new SESService();
+        $this->bounceService = new BounceNotificationService();
         $this->sendModel = new MessageSendModel();
         $this->contactModel = new ContactModel();
         $this->messageModel = new MessageModel();
@@ -250,9 +257,24 @@ class QueueManager
         // Busca dados do remetente
         $senderModel = new \App\Models\SenderModel();
         $sender = $senderModel->find($message['sender_id']);
-        
+
         if (!$sender) {
             return ['success' => false, 'error' => 'Sender not found'];
+        }
+
+        if (empty($sender['bounce_flow_verified'])) {
+            $flowResult = $this->bounceService->ensureBounceFlow($sender['domain']);
+
+            $senderModel->update((int) $sender['id'], [
+                'bounce_flow_verified' => $flowResult['success'] ? 1 : 0,
+            ]);
+
+            if (($flowResult['success'] ?? false) === false) {
+                return [
+                    'success' => false,
+                    'error' => 'Bounce flow not configured: ' . ($flowResult['error'] ?? 'unknown error'),
+                ];
+            }
         }
 
         $emailSubject = $message['subject'];

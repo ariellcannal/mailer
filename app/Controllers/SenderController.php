@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Libraries\AWS\BounceNotificationService;
 use App\Libraries\AWS\SESService;
 use App\Libraries\DNS\DNSValidator;
 use App\Models\SenderModel;
@@ -319,8 +320,31 @@ class SenderController extends BaseController
                     'is_active' => 1,
                 ]);
             }
+
+            $this->ensureBounceFlow($sender);
         } catch (Throwable $exception) {
             log_message('error', 'Error verifying sender: ' . $exception->getMessage());
+        }
+    }
+
+    /**
+     * Provisiona o fluxo SES → SNS → SQS para bounces e persiste o status.
+     *
+     * @param array $sender Dados do remetente.
+     *
+     * @return void
+     */
+    private function ensureBounceFlow(array $sender): void
+    {
+        try {
+            $service = new BounceNotificationService();
+            $result = $service->ensureBounceFlow($sender['domain']);
+
+            $this->model->update((int) $sender['id'], [
+                'bounce_flow_verified' => $result['success'] ? 1 : 0,
+            ]);
+        } catch (Throwable $exception) {
+            log_message('error', 'Erro ao provisionar fluxo de bounces: ' . $exception->getMessage());
         }
     }
 
