@@ -55,6 +55,7 @@ $ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
                     .create(element, {
                         language: 'pt-br',
                         placeholder: 'Escreva o conteúdo do email...',
+                        licenseKey: 'GPL',
                         toolbar: {
                             items: [
                                 'undo',
