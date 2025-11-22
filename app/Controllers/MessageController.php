@@ -9,6 +9,7 @@ use App\Models\CampaignModel;
 use App\Models\SenderModel;
 use App\Models\MessageSendModel;
 use App\Models\ContactModel;
+use App\Models\ContactListModel;
 use App\Libraries\Email\QueueManager;
 use CodeIgniter\HTTP\RedirectResponse;
 
@@ -43,10 +44,12 @@ class MessageController extends BaseController {
     public function create(): string {
         $campaignModel = new CampaignModel();
         $senderModel = new SenderModel();
+        $contactListModel = new ContactListModel();
 
         return view('messages/create', [
             'campaigns' => $campaignModel->where('is_active', 1)->findAll(),
             'senders' => $senderModel->where('is_active', 1)->where('ses_verified', 1)->findAll(),
+            'contactLists' => $contactListModel->orderBy('name', 'ASC')->findAll(),
             'activeMenu' => 'messages',
             'pageTitle' => 'Nova Mensagem',
             'editorEngine' => get_system_setting('editor_engine', 'tinymce'),

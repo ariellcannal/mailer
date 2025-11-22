@@ -66,6 +66,7 @@ $routes->group('contact-lists', function($routes) {
     $routes->post('store', 'ContactListController::store');
     $routes->post('update/(:num)', 'ContactListController::update/$1');
     $routes->post('delete/(:num)', 'ContactListController::delete/$1');
+    $routes->post('buscar-contatos', 'ContactListController::buscarContatos');
 });
 
 // Templates
