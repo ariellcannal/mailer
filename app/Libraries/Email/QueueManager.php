@@ -51,7 +51,7 @@ class QueueManager
      * 
      * @var int
      */
-    protected $throttleRate = 14;
+    protected int $throttleRate = 14;
 
     /**
      * Construtor
@@ -121,7 +121,9 @@ class QueueManager
      */
     public function processQueue(int $batchSize = 100): array
     {
-        $this->queueResendsDue();
+        $now = $this->now();
+
+        $this->queueResendsDue($now);
 
         // Busca envios pendentes respeitando agendamentos
         $pending = $this->sendModel
@@ -136,14 +138,14 @@ class QueueManager
                     ->groupStart()
                         ->groupStart()
                             ->where('resend_rules.status', 'pending')
-                            ->where('resend_rules.scheduled_at <=', $this->now())
+                            ->where('resend_rules.scheduled_at <=', $now)
                         ->groupEnd()
                         ->orWhere('resend_rules.status', 'completed')
                     ->groupEnd()
                 ->groupEnd()
             ->groupEnd()
             ->groupStart()
-                ->where('messages.scheduled_at <=', $this->now())
+                ->where('messages.scheduled_at <=', $now)
                 ->orWhere('messages.scheduled_at', null)
             ->groupEnd()
             ->orderBy('message_sends.id', 'ASC')
@@ -378,15 +380,17 @@ class QueueManager
     /**
      * Gera filas para os reenvios que chegaram na data agendada.
      *
+     * @param string $now Data/hora atual na zona configurada
+     *
      * @return void
      */
-    protected function queueResendsDue(): void
+    protected function queueResendsDue(string $now): void
     {
         $db = \Config\Database::connect();
 
         $rules = $db->table('resend_rules')
             ->where('status', 'pending')
-            ->where('scheduled_at <=', $this->now())
+            ->where('scheduled_at <=', $now)
             ->get()
             ->getResultArray();
 
@@ -482,6 +486,18 @@ class QueueManager
      */
     protected function now(): string
     {
+        try {
+            $result = $this->sendModel->db()
+                ->query('SELECT NOW() AS current_time')
+                ->getRow();
+
+            if (!empty($result->current_time)) {
+                return Time::parse($result->current_time, $this->timezone)->toDateTimeString();
+            }
+        } catch (\Throwable $exception) {
+            log_message('error', 'Falha ao obter horário do banco: ' . $exception->getMessage());
+        }
+
         return Time::now($this->timezone)->toDateTimeString();
     }
 }
