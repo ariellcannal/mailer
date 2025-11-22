@@ -123,6 +123,7 @@ $ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
                             showPreviews: true
                         },
                         removePlugins: [
+                            'DocumentOutline',
                             'CKBox',
                             'CKFinder',
                             'EasyImage',
