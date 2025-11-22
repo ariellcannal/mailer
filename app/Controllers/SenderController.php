@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Libraries\AWS\BounceNotificationService;
 use App\Libraries\AWS\SESService;
 use App\Libraries\DNS\DNSValidator;
 use App\Models\SenderModel;
@@ -59,9 +60,13 @@ class SenderController extends BaseController
      */
     public function store(): RedirectResponse
     {
-        $email = (string) $this->request->getPost('email');
-        $name = (string) $this->request->getPost('name');
+        $email = $this->sanitizeEmail((string) $this->request->getPost('email'));
+        $name = trim((string) $this->request->getPost('name'));
         $domain = $this->extractDomainFromEmail($email);
+
+        if ($domain === '') {
+            return redirect()->back()->with('error', 'Informe um email válido para cadastrar o remetente.')->withInput();
+        }
 
         $data = [
             'email' => $email,
@@ -148,8 +153,8 @@ class SenderController extends BaseController
             return redirect()->to('/senders')->with('error', 'Remetente não encontrado');
         }
 
-        $email = (string) $this->request->getPost('email');
-        $name = (string) $this->request->getPost('name');
+        $email = $this->sanitizeEmail((string) $this->request->getPost('email'));
+        $name = trim((string) $this->request->getPost('name'));
         $domain = $this->extractDomainFromEmail($email) ?: $sender['domain'];
 
         $this->model->update($id, [
@@ -270,31 +275,76 @@ class SenderController extends BaseController
             $service = new SESService();
             $updateData = [];
 
-            $domainResult = $service->verifyDomain($sender['domain']);
-            if (($domainResult['success'] ?? false) === true) {
-                $updateData['ses_verification_token'] = $domainResult['verificationToken'] ?? null;
+            $verificationStatus = $service->getIdentityVerificationStatus($sender['domain']);
+            $dkimAttributes = $service->getIdentityDkimAttributes($sender['domain']);
+
+            $dkimTokens = ($dkimAttributes['success'] ?? false) === true
+                ? $dkimAttributes['tokens'] ?? []
+                : [];
+
+            if (!empty($dkimTokens)) {
+                $updateData['dkim_tokens'] = json_encode($dkimTokens);
             }
 
-            $dkimResult = $service->enableDKIM($sender['domain']);
-            if (($dkimResult['success'] ?? false) === true && !empty($dkimResult['dkimTokens'])) {
-                $updateData['dkim_tokens'] = json_encode($dkimResult['dkimTokens']);
+            $identityNotFound = ($verificationStatus['status'] ?? '') === 'NotFound';
+            $shouldEnableDkim = $identityNotFound || (($dkimAttributes['status'] ?? '') === 'NotStarted');
+
+            if ($identityNotFound) {
+                $domainResult = $service->verifyDomain($sender['domain']);
+
+                if (($domainResult['success'] ?? false) === true) {
+                    $updateData['ses_verification_token'] = $domainResult['verificationToken'] ?? null;
+                }
             }
 
-            $service->verifyEmail($sender['email']);
+            if ($shouldEnableDkim && empty($dkimTokens)) {
+                $dkimResult = $service->enableDKIM($sender['domain']);
+
+                if (($dkimResult['success'] ?? false) === true && !empty($dkimResult['dkimTokens'])) {
+                    $updateData['dkim_tokens'] = json_encode($dkimResult['dkimTokens']);
+                }
+            }
+
+            if ($identityNotFound) {
+                $service->verifyEmail($sender['email']);
+            }
 
             if (!empty($updateData)) {
                 $this->model->update($id, $updateData);
             }
 
-            $statusResult = $service->getIdentityVerificationStatus($sender['domain']);
+            $statusResult = $identityNotFound ? $service->getIdentityVerificationStatus($sender['domain']) : $verificationStatus;
             if (($statusResult['verified'] ?? false) === true) {
                 $this->model->update($id, [
                     'ses_verified' => 1,
                     'is_active' => 1,
                 ]);
             }
+
+            $this->ensureBounceFlow($sender);
         } catch (Throwable $exception) {
             log_message('error', 'Error verifying sender: ' . $exception->getMessage());
+        }
+    }
+
+    /**
+     * Provisiona o fluxo SES → SNS → SQS para bounces e persiste o status.
+     *
+     * @param array $sender Dados do remetente.
+     *
+     * @return void
+     */
+    private function ensureBounceFlow(array $sender): void
+    {
+        try {
+            $service = new BounceNotificationService();
+            $result = $service->ensureBounceFlow($sender['domain']);
+
+            $this->model->update((int) $sender['id'], [
+                'bounce_flow_verified' => $result['success'] ? 1 : 0,
+            ]);
+        } catch (Throwable $exception) {
+            log_message('error', 'Erro ao provisionar fluxo de bounces: ' . $exception->getMessage());
         }
     }
 
@@ -365,12 +415,26 @@ class SenderController extends BaseController
      */
     private function extractDomainFromEmail(string $email): string
     {
-        $atPosition = strrpos($email, '@');
+        $normalizedEmail = $this->sanitizeEmail($email);
+        $atPosition = strrpos($normalizedEmail, '@');
 
         if ($atPosition === false) {
             return '';
         }
 
-        return substr($email, $atPosition + 1);
+        $domain = substr($normalizedEmail, $atPosition + 1);
+
+        return strtolower(trim($domain));
+    }
+
+    /**
+     * Normaliza o endereço de email removendo espaços e caracteres invisíveis.
+     *
+     * @param string $email Endereço informado pelo usuário.
+     * @return string
+     */
+    private function sanitizeEmail(string $email): string
+    {
+        return trim($email);
     }
 }

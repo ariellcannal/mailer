@@ -7,47 +7,168 @@ $editorEngine = $editorEngine ?? 'tinymce';
 $selector = $selector ?? '.js-rich-editor';
 $selectorJs = addslashes($selector);
 $height = $height ?? 500;
+$ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
 ?>
 <?php if ($editorEngine === 'ckeditor'): ?>
-    <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
     <script>
         window.richEditorEngine = 'ckeditor';
         window.richEditorInstances = [];
 
-        document.addEventListener('DOMContentLoaded', function () {
+        const ckeditorSources = [
+            'https://cdn.ckeditor.com/ckeditor5/42.0.1/super-build/ckeditor.js<?= $ckeditorCacheBuster ?>',
+            'https://cdn.ckeditor.com/ckeditor5/38.1.1/super-build/ckeditor.js'
+        ];
+
+        window.CKEDITOR_LICENSE_KEY = 'GPL';
+
+        function loadCkeditorScript(source) {
+            return new Promise(function (resolve, reject) {
+                const script = document.createElement('script');
+                script.src = source;
+                script.onload = function () { resolve(source); };
+                script.onerror = function () { reject(new Error('Falha ao carregar ' + source)); };
+                document.head.appendChild(script);
+            });
+        }
+
+        function loadCkeditorSequentially(sources) {
+            return sources.reduce(function (promise, source) {
+                return promise.catch(function () {
+                    return loadCkeditorScript(source);
+                });
+            }, Promise.reject());
+        }
+
+        function initializeCkeditor() {
+            if (!window.CKEDITOR || !window.CKEDITOR.ClassicEditor) {
+                console.error('CKEditor super build não pôde ser carregado.');
+                return;
+            }
+
             document.querySelectorAll('<?= $selectorJs ?>').forEach(function (element) {
-                ClassicEditor
+                CKEDITOR.ClassicEditor
                     .create(element, {
                         language: 'pt-br',
-                        toolbar: [
-                            'undo',
-                            'redo',
-                            '|',
-                            'heading',
-                            '|',
-                            'bold',
-                            'italic',
-                            'underline',
-                            '|',
-                            'bulletedList',
-                            'numberedList',
-                            '|',
-                            'link',
-                            'blockQuote',
-                            'insertTable'
-                        ],
+                        placeholder: 'Escreva o conteúdo do email...',
+                        licenseKey: 'GPL',
+                        toolbar: {
+                            items: [
+                                'undo',
+                                'redo',
+                                '|',
+                                'heading',
+                                'style',
+                                '|',
+                                'bold',
+                                'italic',
+                                'underline',
+                                'strikethrough',
+                                'subscript',
+                                'superscript',
+                                'highlight',
+                                'removeFormat',
+                                '|',
+                                'fontFamily',
+                                'fontSize',
+                                'fontColor',
+                                'fontBackgroundColor',
+                                '|',
+                                'bulletedList',
+                                'numberedList',
+                                'outdent',
+                                'indent',
+                                '|',
+                                'alignment',
+                                'link',
+                                'blockQuote',
+                                'horizontalLine',
+                                'insertTable',
+                                'specialCharacters',
+                                'htmlEmbed',
+                                'sourceEditing'
+                            ],
+                            shouldNotGroupWhenFull: true
+                        },
+                        link: {
+                            addTargetToExternalLinks: true,
+                            defaultProtocol: 'https://',
+                            decorators: {
+                                toggleDownload: {
+                                    mode: 'manual',
+                                    label: 'Marcar como download',
+                                    attributes: {
+                                        download: 'download'
+                                    }
+                                }
+                            }
+                        },
+                        list: {
+                            properties: {
+                                styles: true,
+                                startIndex: true,
+                                reversed: true
+                            }
+                        },
+                        table: {
+                            contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells', 'tableCellProperties', 'tableProperties']
+                        },
+                        htmlSupport: {
+                            allow: [
+                                {
+                                    name: /.*/,
+                                    attributes: true,
+                                    classes: true,
+                                    styles: true
+                                }
+                            ]
+                        },
+                        htmlEmbed: {
+                            showPreviews: true
+                        },
+                        removePlugins: [
+                            'CKBox',
+                            'CKFinder',
+                            'EasyImage',
+                            'RealTimeCollaborativeComments',
+                            'RealTimeCollaborativeTrackChanges',
+                            'RealTimeCollaborativeRevisionHistory',
+                            'PresenceList',
+                            'Comments',
+                            'TrackChanges',
+                            'TrackChangesData',
+                            'RevisionHistory',
+                            'Pagination',
+                            'WProofreader',
+                            'MathType',
+                            'DocumentOutline',
+                            'TableOfContents',
+                            'TableOfContentsUI',
+                            'FormatPainter',
+                            'Template',
+                            'SlashCommand'
+                        ]
                     })
                     .then(function (editor) {
                         editor.editing.view.change(function (writer) {
                             writer.setStyle('min-height', '<?= (int) $height ?>px', editor.editing.view.document.getRoot());
                         });
 
-                        window.richEditorInstances.push({editor: editor, element: element});
+                        window.richEditorInstances.push({ editor: editor, element: element });
                     })
                     .catch(function (error) {
                         console.error('Erro ao inicializar CKEditor.', error);
                     });
             });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadCkeditorSequentially(ckeditorSources)
+                .then(function () {
+                    initializeCkeditor();
+                })
+                .catch(function (error) {
+                    console.error('CKEditor super build não pôde ser carregado.', error);
+                });
         });
 
         window.syncRichEditors = function () {
@@ -81,6 +202,14 @@ $height = $height ?? 500;
                 var modelFragment = instance.editor.data.toModel(viewFragment);
                 instance.editor.model.insertContent(modelFragment, instance.editor.model.document.selection);
             });
+        };
+
+        window.getRichEditorData = function () {
+            if (!window.richEditorInstances.length) {
+                return '';
+            }
+
+            return window.richEditorInstances[0].editor.getData();
         };
     </script>
 <?php else: ?>
@@ -124,6 +253,16 @@ $height = $height ?? 500;
             if (editor) {
                 editor.insertContent(html);
             }
+        };
+
+        window.getRichEditorData = function () {
+            var editor = tinymce.activeEditor || window.richEditorInstances[0];
+
+            if (!editor) {
+                return '';
+            }
+
+            return editor.getContent();
         };
     </script>
 <?php endif; ?>

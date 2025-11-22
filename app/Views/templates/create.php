@@ -15,7 +15,7 @@
             </div>
         <?php endif; ?>
 
-        <form action="<?= base_url('templates/store') ?>" method="POST">
+        <form id="templateForm" action="<?= base_url('templates/store') ?>" method="POST">
             <?= csrf_field() ?>
 
             <div class="mb-3">
@@ -28,9 +28,12 @@
                 <textarea name="description" class="form-control" rows="3"><?= old('description') ?></textarea>
             </div>
 
-            <div class="mb-3">
-                <label class="form-label">HTML</label>
-                <textarea name="html_content" class="form-control js-rich-editor" rows="10" required><?= old('html_content') ?></textarea>
+            <div class="row g-3 mb-3">
+                <div class="col-12">
+                    <label class="form-label">HTML</label>
+                    <textarea name="html_content" class="form-control js-rich-editor" rows="10"><?= old('html_content') ?></textarea>
+                    <div id="htmlContentFeedback" class="text-danger small d-none mt-2">O HTML do template é obrigatório.</div>
+                </div>
             </div>
 
             <div class="mb-3">
@@ -62,12 +65,39 @@
 ]) ?>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const form = document.querySelector('form');
+        const form = document.getElementById('templateForm');
+        const htmlField = form ? form.querySelector('textarea[name="html_content"]') : null;
+        const feedback = document.getElementById('htmlContentFeedback');
+
+        const validateHtmlContent = function () {
+            if (typeof window.syncRichEditors === 'function') {
+                window.syncRichEditors();
+            }
+
+            if (!htmlField) {
+                return true;
+            }
+
+            const value = (htmlField.value || '').trim();
+
+            if (value === '') {
+                if (feedback) {
+                    feedback.classList.remove('d-none');
+                }
+                return false;
+            }
+
+            if (feedback) {
+                feedback.classList.add('d-none');
+            }
+
+            return true;
+        };
 
         if (form) {
-            form.addEventListener('submit', function() {
-                if (typeof window.syncRichEditors === 'function') {
-                    window.syncRichEditors();
+            form.addEventListener('submit', function(event) {
+                if (!validateHtmlContent()) {
+                    event.preventDefault();
                 }
             });
         }

@@ -90,8 +90,8 @@ class SESService
      * @param string $htmlBody  Corpo do email em HTML
      * @param string|null $replyTo Email de resposta
      * @param array  $tags      Tags para rastreamento
-     * 
-     * @return array Resultado do envio com MessageId
+     *
+     * @return array<string, mixed> Resultado do envio com MessageId e RequestId opcional
      * @throws AwsException Se houver erro no envio
      */
     public function sendEmail(
@@ -136,11 +136,14 @@ class SESService
 
         try {
             $result = $this->client->sendEmail($params);
-            
+
+            $metadata = is_array($result['@metadata'] ?? null) ? $result['@metadata'] : [];
+            $requestId = $metadata['requestId'] ?? null;
+
             return [
                 'success' => true,
                 'messageId' => $result['MessageId'],
-                'requestId' => $result['@metadata']['requestId'],
+                'requestId' => $requestId,
             ];
         } catch (AwsException $e) {
             log_message('error', 'AWS SES Error: ' . $e->getMessage());

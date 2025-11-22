@@ -31,6 +31,7 @@ class ContactController extends BaseController {
             'filters' => $filters,
             'contactLists' => $contactLists,
             'lists' => $availableLists,
+            'totalContacts' => $model->pager?->getTotal() ?? 0,
             'activeMenu' => 'contacts',
             'pageTitle' => 'Contatos'
         ]);
@@ -39,16 +40,33 @@ class ContactController extends BaseController {
     public function create() {
         $listModel = new ContactListModel();
 
+        $selectedLists = [];
+        $listParam = $this->request->getGet('list_id');
+        $listArray = $this->request->getGet('lists');
+
+        if ($listParam !== null) {
+            $selectedLists[] = (int) $listParam;
+        }
+
+        if (!empty($listArray)) {
+            foreach ((array) $listArray as $id) {
+                $selectedLists[] = (int) $id;
+            }
+        }
+
+        $selectedLists = array_values(array_unique(array_filter($selectedLists)));
+
         return view('contacts/create', [
             'activeMenu' => 'contacts',
             'pageTitle' => 'Novo Contato',
             'lists' => $listModel->orderBy('name', 'ASC')->findAll(),
+            'selectedLists' => $selectedLists,
         ]);
     }
     
     public function store() {
         $model = new ContactModel();
-        
+
         $data = [
             'email' => $this->request->getPost('email'),
             'name' => $this->request->getPost('name'),
@@ -56,6 +74,25 @@ class ContactController extends BaseController {
             'quality_score' => 3,
         ];
         $listIds = (array) $this->request->getPost('lists');
+
+        $existing = $model->where('email', $data['email'])->first();
+
+        if ($existing) {
+            $updates = [];
+            if (!empty($data['name']) && $data['name'] !== ($existing['name'] ?? '')) {
+                $updates['name'] = $data['name'];
+            }
+
+            if (!empty($updates)) {
+                $model->skipValidation(true)->update((int) $existing['id'], $updates);
+            }
+
+            if (!empty($listIds)) {
+                $model->syncContactLists((int) $existing['id'], $listIds);
+            }
+
+            return redirect()->to('/contacts')->with('contacts_success', 'Contato atualizado e vinculado às listas.');
+        }
 
         if ($contactId = $model->insert($data)) {
             $model->syncContactLists((int) $contactId, $listIds);
@@ -187,6 +224,12 @@ class ContactController extends BaseController {
 
         $contactIds = (array) $this->request->getPost('contacts');
         $listIds = (array) $this->request->getPost('lists');
+        $selectAll = (bool) $this->request->getPost('select_all');
+        $filters = (array) $this->request->getPost('filters');
+
+        if ($selectAll) {
+            $contactIds = $model->getAllContactIds($filters);
+        }
 
         if (empty(array_filter($contactIds)) || empty(array_filter($listIds))) {
             return redirect()->back()->with('contacts_error', 'Selecione ao menos um contato e uma lista.');

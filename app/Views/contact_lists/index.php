@@ -63,6 +63,9 @@
                                 <td><?= esc($list['description']) ?></td>
                                 <td><span class="badge bg-primary"><?= (int) $list['total_contacts'] ?></span></td>
                                 <td class="text-end">
+                                    <a href="<?= base_url('contact-lists/view/' . $list['id']) ?>" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
                                     <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#edit-list-<?= $list['id'] ?>">
                                         <i class="fas fa-pen"></i>
                                     </button>
