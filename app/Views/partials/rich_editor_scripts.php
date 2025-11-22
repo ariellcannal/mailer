@@ -10,12 +10,34 @@ $height = $height ?? 500;
 $ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
 ?>
 <?php if ($editorEngine === 'ckeditor'): ?>
-    <script src="https://cdn.ckeditor.com/ckeditor5/42.0.1/super-build/ckeditor.js<?= $ckeditorCacheBuster ?>"></script>
     <script>
         window.richEditorEngine = 'ckeditor';
         window.richEditorInstances = [];
 
-        document.addEventListener('DOMContentLoaded', function () {
+        const ckeditorSources = [
+            'https://cdn.ckeditor.com/ckeditor5/42.0.1/super-build/ckeditor.js<?= $ckeditorCacheBuster ?>',
+            'https://cdn.ckeditor.com/ckeditor5/38.1.1/super-build/ckeditor.js'
+        ];
+
+        function loadCkeditorScript(source) {
+            return new Promise(function (resolve, reject) {
+                const script = document.createElement('script');
+                script.src = source;
+                script.onload = function () { resolve(source); };
+                script.onerror = function () { reject(new Error('Falha ao carregar ' + source)); };
+                document.head.appendChild(script);
+            });
+        }
+
+        function loadCkeditorSequentially(sources) {
+            return sources.reduce(function (promise, source) {
+                return promise.catch(function () {
+                    return loadCkeditorScript(source);
+                });
+            }, Promise.reject());
+        }
+
+        function initializeCkeditor() {
             if (!window.CKEDITOR || !window.CKEDITOR.ClassicEditor) {
                 console.error('CKEditor super build não pôde ser carregado.');
                 return;
@@ -128,6 +150,16 @@ $ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
                         console.error('Erro ao inicializar CKEditor.', error);
                     });
             });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadCkeditorSequentially(ckeditorSources)
+                .then(function () {
+                    initializeCkeditor();
+                })
+                .catch(function (error) {
+                    console.error('CKEditor super build não pôde ser carregado.', error);
+                });
         });
 
         window.syncRichEditors = function () {
