@@ -636,8 +636,8 @@ class QueueManager
             ->join('resend_rules', 'resend_rules.message_id = messages.id', 'left')
             ->whereIn('messages.status', ['sending', 'scheduled'])
             ->groupBy('messages.id')
-            ->having('SUM(CASE WHEN message_sends.status IN("pending","sending") THEN 1 ELSE 0 END)', 0)
-            ->having('SUM(CASE WHEN resend_rules.status = "pending" THEN 1 ELSE 0 END)', 0);
+            ->having('SUM(CASE WHEN message_sends.status IN("pending","sending") THEN 1 ELSE 0 END) =', 0, false)
+            ->having('SUM(CASE WHEN resend_rules.status = "pending" THEN 1 ELSE 0 END) =', 0, false);
 
         $rows = $builder->get()->getResultArray();
 

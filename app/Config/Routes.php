@@ -81,6 +81,13 @@ $routes->group('templates', function($routes) {
     $routes->get('edit/(:num)', 'TemplateController::edit/$1');
     $routes->post('update/(:num)', 'TemplateController::update/$1');
     $routes->post('delete/(:num)', 'TemplateController::delete/$1');
+    $routes->get('search', 'TemplateController::search');
+});
+
+// Gerenciador de arquivos
+$routes->group('files', function($routes) {
+    $routes->get('list', 'FileManagerController::list');
+    $routes->post('upload', 'FileManagerController::upload');
 });
 
 // Senders

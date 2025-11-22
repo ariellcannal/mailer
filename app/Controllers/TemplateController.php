@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Models\TemplateModel;
 use CodeIgniter\HTTP\RedirectResponse;
+use CodeIgniter\HTTP\ResponseInterface;
 
 /**
  * Controlador responsável pelo gerenciamento de templates.
@@ -151,5 +152,40 @@ class TemplateController extends BaseController
         $model->delete($id);
 
         return redirect()->to('/templates')->with('success', 'Template excluído com sucesso!');
+    }
+
+    /**
+     * Busca templates ativos para utilização no editor.
+     */
+    public function search(): ResponseInterface
+    {
+        $query = (string) $this->request->getGet('q');
+        $model = new TemplateModel();
+
+        $builder = $model->where('is_active', 1);
+
+        if ($query !== '') {
+            $builder = $builder
+                ->groupStart()
+                ->like('name', $query)
+                ->orLike('description', $query)
+                ->groupEnd();
+        }
+
+        $templates = $builder
+            ->orderBy('created_at', 'DESC')
+            ->limit(20)
+            ->find();
+
+        return $this->response->setJSON([
+            'success' => true,
+            'templates' => array_map(static fn(array $template): array => [
+                'id' => (int) $template['id'],
+                'name' => $template['name'],
+                'description' => $template['description'] ?? '',
+                'html_content' => $template['html_content'],
+                'updated_at' => $template['updated_at'] ?? $template['created_at'] ?? null,
+            ], $templates),
+        ]);
     }
 }
