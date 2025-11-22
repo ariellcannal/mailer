@@ -47,6 +47,16 @@
                             <?php endif; ?>
                         </td>
                     </tr>
+                    <tr>
+                        <th class="text-uppercase">Bounces AWS</th>
+                        <td>
+                            <?php if ((int) ($sender['bounce_flow_verified'] ?? 0) === 1): ?>
+                                <span class="badge bg-success">Fluxo ativo</span>
+                            <?php else: ?>
+                                <span class="badge bg-warning">Configuração pendente</span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
                 </table>
             </div>
             <div class="col-lg-6">

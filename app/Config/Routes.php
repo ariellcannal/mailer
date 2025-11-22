@@ -44,6 +44,7 @@ $routes->group('messages', function($routes) {
     $routes->post('cancel/(:num)', 'MessageController::cancel/$1');
     $routes->post('reschedule/(:num)', 'MessageController::reschedule/$1');
     $routes->post('send/(:num)', 'MessageController::send/$1');
+    $routes->post('delete/(:num)', 'MessageController::delete/$1');
 });
 
 // Contacts
@@ -63,9 +64,12 @@ $routes->group('contacts', function($routes) {
 // Contact Lists
 $routes->group('contact-lists', function($routes) {
     $routes->get('/', 'ContactListController::index');
+    $routes->get('view/(:num)', 'ContactListController::view/$1');
     $routes->post('store', 'ContactListController::store');
     $routes->post('update/(:num)', 'ContactListController::update/$1');
     $routes->post('delete/(:num)', 'ContactListController::delete/$1');
+    $routes->post('detach-contact/(:num)/(:num)', 'ContactListController::detachContact/$1/$2');
+    $routes->post('buscar-contatos', 'ContactListController::buscarContatos');
 });
 
 // Templates
@@ -108,8 +112,9 @@ $routes->group('settings', function($routes) {
     $routes->get('ses-limits', 'SettingsController::sesLimits');
 });
 
-// Queue processing (CLI or cron)
+// Processamento da fila (CLI ou cron)
 $routes->cli('queue/process', 'QueueController::process');
+$routes->get('queue/process', 'QueueController::process');
 
 // Auth routes (to be implemented)
 $routes->get('login', 'AuthController::login');

@@ -48,6 +48,11 @@
             color: var(--color-primary);
         }
 
+        .btn {
+            text-transform: capitalize;
+            font-size: 0.95rem;
+        }
+
         .text-primary {
             color: var(--color-primary) !important;
         }

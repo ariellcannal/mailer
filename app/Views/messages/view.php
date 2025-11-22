@@ -18,6 +18,14 @@
                         <i class="fas fa-copy"></i> Duplicar
                     </button>
                 </form>
+                <?php if (in_array($message['status'], ['draft', 'scheduled'], true)): ?>
+                    <form action="<?= base_url('messages/delete/' . $message['id']) ?>" method="POST" onsubmit="return confirm('Deseja realmente excluir esta mensagem?');">
+                        <?= csrf_field() ?>
+                        <button type="submit" class="btn btn-outline-danger">
+                            <i class="fas fa-trash"></i> Excluir
+                        </button>
+                    </form>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -31,7 +39,7 @@
                     <h6>Detalhes do Remetente</h6>
                     <p class="mb-1"><strong>Nome:</strong> <?= esc($message['from_name']) ?></p>
                     <p class="mb-1"><strong>Reply-To:</strong> <?= esc($message['reply_to']) ?: 'Não definido' ?></p>
-                    <p class="mb-0"><strong>Campanha:</strong> <?= esc($message['campaign_id']) ?: '-' ?></p>
+                    <p class="mb-0"><strong>Campanha:</strong> <?= esc($campaignName ?: '-') ?></p>
                 </div>
             </div>
             <div class="col-md-8">

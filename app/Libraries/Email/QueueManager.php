@@ -2,10 +2,12 @@
 
 namespace App\Libraries\Email;
 
+use App\Libraries\AWS\BounceNotificationService;
 use App\Libraries\AWS\SESService;
 use App\Models\MessageSendModel;
 use App\Models\ContactModel;
 use App\Models\MessageModel;
+use CodeIgniter\I18n\Time;
 
 /**
  * Queue Manager
@@ -24,6 +26,11 @@ class QueueManager
     protected $sesService;
 
     /**
+     * @var BounceNotificationService
+     */
+    protected BounceNotificationService $bounceService;
+
+    /**
      * @var MessageSendModel
      */
     protected $sendModel;
@@ -39,11 +46,18 @@ class QueueManager
     protected $messageModel;
 
     /**
+     * Fuso horário padrão utilizado para os agendamentos.
+     *
+     * @var string
+     */
+    protected string $timezone = 'America/Sao_Paulo';
+
+    /**
      * Taxa de throttling (emails por segundo)
      * 
      * @var int
      */
-    protected $throttleRate = 14;
+    protected int $throttleRate = 14;
 
     /**
      * Construtor
@@ -51,10 +65,13 @@ class QueueManager
     public function __construct()
     {
         $this->sesService = new SESService();
+        $this->bounceService = new BounceNotificationService();
         $this->sendModel = new MessageSendModel();
         $this->contactModel = new ContactModel();
         $this->messageModel = new MessageModel();
-        
+
+        $this->timezone = config('App')->appTimezone ?? $this->timezone;
+
         $this->throttleRate = (int) getenv('app.throttleRate') ?: 14;
     }
 
@@ -83,6 +100,10 @@ class QueueManager
                     'contact_id' => $contactId,
                     'resend_number' => $resendNumber,
                     'tracking_hash' => $trackingHash,
+                    'opened' => 0,
+                    'total_opens' => 0,
+                    'clicked' => 0,
+                    'total_clicks' => 0,
                     'status' => 'pending',
                 ]);
 
@@ -111,10 +132,36 @@ class QueueManager
      */
     public function processQueue(int $batchSize = 100): array
     {
-        // Busca envios pendentes
+        $now = $this->now();
+
+        $this->queueResendsDue($now);
+
+        $this->finalizeMessageStatuses($this->collectFinishedMessages());
+
+        // Busca envios pendentes respeitando agendamentos
         $pending = $this->sendModel
-            ->where('status', 'pending')
-            ->orderBy('id', 'ASC')
+            ->select('message_sends.*, messages.scheduled_at, messages.status AS message_status, resend_rules.subject_override')
+            ->join('messages', 'messages.id = message_sends.message_id')
+            ->join('resend_rules', 'resend_rules.message_id = message_sends.message_id AND resend_rules.resend_number = message_sends.resend_number', 'left')
+            ->where('message_sends.status', 'pending')
+            ->groupStart()
+                ->where('message_sends.resend_number', 0)
+                ->orGroupStart()
+                    ->where('message_sends.resend_number >', 0)
+                    ->groupStart()
+                        ->groupStart()
+                            ->where('resend_rules.status', 'pending')
+                            ->where('resend_rules.scheduled_at <=', $now)
+                        ->groupEnd()
+                        ->orWhere('resend_rules.status', 'completed')
+                    ->groupEnd()
+                ->groupEnd()
+            ->groupEnd()
+            ->groupStart()
+                ->where('messages.scheduled_at <=', $now)
+                ->orWhere('messages.scheduled_at', null)
+            ->groupEnd()
+            ->orderBy('message_sends.id', 'ASC')
             ->findAll($batchSize);
 
         if (empty($pending)) {
@@ -127,18 +174,30 @@ class QueueManager
 
         $sent = 0;
         $failed = 0;
+        $skipped = 0;
         $errors = [];
+        $processedMessages = [];
 
         foreach ($pending as $send) {
             try {
+                if (($send['message_status'] ?? '') === 'scheduled') {
+                    $this->messageModel->update($send['message_id'], [
+                        'status' => 'sending',
+                    ]);
+                }
+
+                $processedMessages[] = (int) $send['message_id'];
+
                 // Envia email
                 $result = $this->sendEmail($send);
 
                 if ($result['success']) {
                     $sent++;
-                    
+
                     // Throttling
                     usleep(1000000 / $this->throttleRate); // Microsegundos
+                } elseif (($result['status'] ?? '') === 'skipped') {
+                    $skipped++;
                 } else {
                     $failed++;
                     $errors[] = $result['error'];
@@ -150,11 +209,14 @@ class QueueManager
             }
         }
 
+        $this->finalizeMessageStatuses($processedMessages);
+
         return [
             'success' => true,
-            'processed' => $sent + $failed,
+            'processed' => $sent + $failed + $skipped,
             'sent' => $sent,
             'failed' => $failed,
+            'skipped' => $skipped,
             'errors' => $errors,
         ];
     }
@@ -183,7 +245,12 @@ class QueueManager
         // Verifica se contato está ativo
         if (!$contact['is_active'] || $contact['opted_out'] || $contact['bounced']) {
             $this->sendModel->update($send['id'], ['status' => 'cancelled']);
-            return ['success' => false, 'error' => 'Contact inactive'];
+
+            return [
+                'success' => false,
+                'status' => 'skipped',
+                'error' => 'Contact inactive',
+            ];
         }
 
         // Prepara conteúdo do email
@@ -196,9 +263,30 @@ class QueueManager
         // Busca dados do remetente
         $senderModel = new \App\Models\SenderModel();
         $sender = $senderModel->find($message['sender_id']);
-        
+
         if (!$sender) {
             return ['success' => false, 'error' => 'Sender not found'];
+        }
+
+        if (empty($sender['bounce_flow_verified'])) {
+            $flowResult = $this->bounceService->ensureBounceFlow($sender['domain']);
+
+            $senderModel->update((int) $sender['id'], [
+                'bounce_flow_verified' => $flowResult['success'] ? 1 : 0,
+            ]);
+
+            if (($flowResult['success'] ?? false) === false) {
+                return [
+                    'success' => false,
+                    'error' => 'Bounce flow not configured: ' . ($flowResult['error'] ?? 'unknown error'),
+                ];
+            }
+        }
+
+        $emailSubject = $message['subject'];
+
+        if (!empty($send['subject_override'])) {
+            $emailSubject = $send['subject_override'];
         }
 
         // Envia via AWS SES
@@ -206,7 +294,7 @@ class QueueManager
             from: $sender['email'],
             fromName: $message['from_name'],
             to: $contact['email'],
-            subject: $message['subject'],
+            subject: $emailSubject,
             htmlBody: $htmlBody,
             replyTo: $message['reply_to'],
             tags: [
@@ -219,7 +307,7 @@ class QueueManager
             // Atualiza status do envio
             $this->sendModel->update($send['id'], [
                 'status' => 'sent',
-                'sent_at' => date('Y-m-d H:i:s'),
+                'sent_at' => $this->now(),
             ]);
 
             // Atualiza contadores da mensagem
@@ -253,7 +341,7 @@ class QueueManager
         $htmlContent = str_replace('{{name}}', $contact['name'] ?? '', $htmlContent);
 
         // Adiciona pixel de tracking (abertura)
-        $baseUrl = getenv('app.baseURL');
+        $baseUrl = $this->getBaseUrl();
         $trackingPixel = '<img src="' . $baseUrl . 'track/open/' . $trackingHash . '" width="1" height="1" style="display:none;" />';
         
         // Insere pixel antes do </body>
@@ -289,7 +377,7 @@ class QueueManager
      */
     protected function replaceLinksWithTracking(string $html, string $trackingHash): string
     {
-        $baseUrl = getenv('app.baseURL');
+        $baseUrl = $this->getBaseUrl();
         
         // Regex para encontrar links
         $pattern = '/<a\s+(?:[^>]*?\s+)?href=(["\'])((?:(?!\1).)*)\1/i';
@@ -312,8 +400,42 @@ class QueueManager
             
             return '<a href=' . $quote . $trackingUrl . $quote;
         }, $html);
-        
+
         return $html;
+    }
+
+    /**
+     * Obtém a URL base absoluta para gerar links de tracking.
+     *
+     * @return string URL base com barra final.
+     */
+    protected function getBaseUrl(): string
+    {
+        $trackingBase = rtrim((string) getenv('app.trackingBaseURL'), '/');
+
+        if ($trackingBase !== '') {
+            return $trackingBase . '/';
+        }
+
+        $baseUrl = rtrim((string) (config('App')->baseURL ?? ''), '/');
+
+        if ($baseUrl === '') {
+            $baseUrl = rtrim((string) getenv('app.baseURL'), '/');
+        }
+
+        if ($baseUrl !== '') {
+            return $baseUrl . '/';
+        }
+
+        $request = service('request');
+        $host = $request?->getServer('HTTP_HOST');
+        $scheme = ($request && $request->isSecure()) ? 'https' : 'http';
+
+        if (!empty($host)) {
+            return $scheme . '://' . $host . '/';
+        }
+
+        return '/';
     }
 
     /**
@@ -329,6 +451,71 @@ class QueueManager
     {
         $data = $messageId . '-' . $contactId . '-' . $resendNumber . '-' . time() . '-' . rand(1000, 9999);
         return hash('sha256', $data);
+    }
+
+    /**
+     * Gera filas para os reenvios que chegaram na data agendada.
+     *
+     * @param string $now Data/hora atual na zona configurada
+     *
+     * @return void
+     */
+    protected function queueResendsDue(string $now): void
+    {
+        $db = \Config\Database::connect();
+
+        $rules = $db->table('resend_rules')
+            ->where('status', 'pending')
+            ->where('scheduled_at <=', $now)
+            ->get()
+            ->getResultArray();
+
+        if (empty($rules)) {
+            return;
+        }
+
+        foreach ($rules as $rule) {
+            $contacts = $this->getMessageContacts((int) $rule['message_id']);
+
+            if (empty($contacts)) {
+                continue;
+            }
+
+            $existing = $this->sendModel
+                ->where('message_id', $rule['message_id'])
+                ->where('resend_number', $rule['resend_number'])
+                ->countAllResults();
+
+            if ($existing > 0) {
+                continue;
+            }
+
+            $this->queueMessage((int) $rule['message_id'], $contacts, (int) $rule['resend_number']);
+
+            $db->table('resend_rules')
+                ->where('id', $rule['id'])
+                ->update(['status' => 'completed']);
+        }
+    }
+
+    /**
+     * Recupera contatos já vinculados à mensagem original.
+     *
+     * @param int $messageId ID da mensagem
+     *
+     * @return array
+     */
+    protected function getMessageContacts(int $messageId): array
+    {
+        $rows = $this->sendModel
+            ->distinct()
+            ->select('contact_id')
+            ->where('message_id', $messageId)
+            ->where('resend_number', 0)
+            ->get()
+            ->getResultArray();
+
+        return array_column($rows, 'contact_id');
     }
 
     /**
@@ -359,11 +546,101 @@ class QueueManager
      */
     public function cleanOldSends(int $days = 90): int
     {
-        $date = date('Y-m-d H:i:s', strtotime("-{$days} days"));
-        
+        $date = Time::now($this->timezone)
+            ->subDays($days)
+            ->toDateTimeString();
+
         return $this->sendModel
             ->where('sent_at <', $date)
             ->where('status', 'sent')
             ->delete();
+    }
+
+    /**
+     * Recupera a data/hora atual no fuso configurado.
+     *
+     * @return string
+     */
+    protected function now(): string
+    {
+        try {
+            $result = $this->sendModel->db()
+                ->query('SELECT NOW() AS current_time')
+                ->getRow();
+
+            if (!empty($result->current_time)) {
+                return Time::parse($result->current_time, $this->timezone)->toDateTimeString();
+            }
+        } catch (\Throwable $exception) {
+            log_message('error', 'Falha ao obter horário do banco: ' . $exception->getMessage());
+        }
+
+        return Time::now($this->timezone)->toDateTimeString();
+    }
+
+    /**
+     * Atualiza o status das mensagens quando não restam envios ou reenvios pendentes.
+     *
+     * @param array<int> $messageIds IDs das mensagens processadas
+     *
+     * @return void
+     */
+    protected function finalizeMessageStatuses(array $messageIds): void
+    {
+        if (empty($messageIds)) {
+            return;
+        }
+
+        $uniqueIds = array_unique(array_map('intval', $messageIds));
+        $db = \Config\Database::connect();
+        $now = $this->now();
+
+        foreach ($uniqueIds as $messageId) {
+            $pendingSends = $this->sendModel->builder()
+                ->where('message_id', $messageId)
+                ->whereIn('status', ['pending', 'sending'])
+                ->countAllResults();
+
+            if ($pendingSends > 0) {
+                continue;
+            }
+
+            $pendingRules = $db->table('resend_rules')
+                ->where('message_id', $messageId)
+                ->where('status', 'pending')
+                ->countAllResults();
+
+            if ($pendingRules > 0) {
+                continue;
+            }
+
+            $this->messageModel->update($messageId, [
+                'status' => 'sent',
+                'sent_at' => $now,
+            ]);
+        }
+    }
+
+    /**
+     * Recupera mensagens sem envios ou reenvios pendentes.
+     *
+     * @return array<int> IDs de mensagens finalizáveis
+     */
+    protected function collectFinishedMessages(): array
+    {
+        $db = \Config\Database::connect();
+
+        $builder = $db->table('messages')
+            ->select('messages.id')
+            ->join('message_sends', 'message_sends.message_id = messages.id', 'left')
+            ->join('resend_rules', 'resend_rules.message_id = messages.id', 'left')
+            ->whereIn('messages.status', ['sending', 'scheduled'])
+            ->groupBy('messages.id')
+            ->having('SUM(CASE WHEN message_sends.status IN("pending","sending") THEN 1 ELSE 0 END)', 0)
+            ->having('SUM(CASE WHEN resend_rules.status = "pending" THEN 1 ELSE 0 END)', 0);
+
+        $rows = $builder->get()->getResultArray();
+
+        return array_map(static fn(array $row) => (int) $row['id'], $rows);
     }
 }

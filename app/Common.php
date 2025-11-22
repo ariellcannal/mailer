@@ -1,5 +1,7 @@
 <?php
 
+use CodeIgniter\I18n\Time;
+
 /**
  * The goal of this file is to allow developers a location
  * where they can overwrite core procedural functions and
@@ -13,3 +15,13 @@
  *
  * @see: https://codeigniter.com/user_guide/extending/common.html
  */
+
+$applicationTimezone = getenv('appTimezone') ?: 'America/Sao_Paulo';
+
+if ($applicationTimezone) {
+    date_default_timezone_set($applicationTimezone);
+
+    if (class_exists(Time::class)) {
+        Time::setDefaultTimezone($applicationTimezone);
+    }
+}

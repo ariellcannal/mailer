@@ -17,6 +17,7 @@
                         <th>Assunto</th>
                         <th>Campanha</th>
                         <th>Remetente</th>
+                        <th>Envio</th>
                         <th>Status</th>
                         <th>Criada em</th>
                         <th>Ações</th>
@@ -37,6 +38,12 @@
                                 <td><?= esc($campaignMap[$message['campaign_id']] ?? '-') ?></td>
                                 <td><?= esc($senderMap[$message['sender_id']] ?? $message['from_name']) ?></td>
                                 <td>
+                                    <?php $progress = $messageProgress[$message['id']] ?? ['percentage' => 0, 'sent' => 0, 'total' => 0]; ?>
+                                    <div class="small text-muted">
+                                        <?= $progress['sent'] ?> / <?= $progress['total'] ?> (<?= $progress['percentage'] ?>%)
+                                    </div>
+                                </td>
+                                <td>
                                     <?php if ($message['status'] === 'sent'): ?>
                                         <span class="badge bg-success">Enviada</span>
                                     <?php elseif ($message['status'] === 'sending'): ?>
@@ -51,18 +58,30 @@
                                 </td>
                                 <td><?= date('d/m/Y H:i', strtotime($message['created_at'])) ?></td>
                                 <td>
+                                    <?php $canDelete = in_array($message['status'], ['draft', 'scheduled'], true); ?>
+                                    <?php $canEdit = !in_array($message['status'], ['sending', 'sent'], true); ?>
                                     <a href="<?= base_url('messages/view/' . $message['id']) ?>" class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="<?= base_url('messages/edit/' . $message['id']) ?>" class="btn btn-sm btn-outline-secondary">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
+                                    <?php if ($canEdit): ?>
+                                        <a href="<?= base_url('messages/edit/' . $message['id']) ?>" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    <?php endif; ?>
                                     <form action="<?= base_url('messages/duplicate/' . $message['id']) ?>" method="POST" class="d-inline">
                                         <?= csrf_field() ?>
                                         <button type="submit" class="btn btn-sm btn-outline-info">
                                             <i class="fas fa-copy"></i>
                                         </button>
                                     </form>
+                                    <?php if ($canDelete): ?>
+                                        <form action="<?= base_url('messages/delete/' . $message['id']) ?>" method="POST" class="d-inline" onsubmit="return confirm('Deseja realmente excluir esta mensagem?');">
+                                            <?= csrf_field() ?>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -71,7 +90,7 @@
             </table>
         </div>
 
-        <?= $pager->links() ?>
+        <?= $pager->links('default', 'bootstrap_full') ?>
     </div>
 </div>
 <?= $this->endSection() ?>

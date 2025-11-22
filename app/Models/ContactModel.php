@@ -70,37 +70,75 @@ class ContactModel extends Model
     {
         $this->select('*');
 
-        // Filtro por email
+        $this->applyFilters($filters);
+
+        return $this->paginate($perPage);
+    }
+
+    /**
+     * Retorna todos os IDs de contatos aplicando filtros.
+     *
+     * @param array $filters Filtros opcionais.
+     * @return array<int>
+     */
+    public function getAllContactIds(array $filters = []): array
+    {
+        $this->select('id');
+        $this->applyFilters($filters);
+
+        return $this->findColumn('id') ?? [];
+    }
+
+    /**
+     * Busca contatos pertencentes a uma lista específica com paginação.
+     *
+     * @param int   $listId   Identificador da lista.
+     * @param array $filters  Filtros de pesquisa.
+     * @param int   $perPage  Quantidade por página.
+     * @return array
+     */
+    public function getContactsForList(int $listId, array $filters = [], int $perPage = 20): array
+    {
+        $this->select('contacts.*')
+            ->join('contact_list_members', 'contact_list_members.contact_id = contacts.id')
+            ->where('contact_list_members.list_id', $listId);
+
+        $this->applyFilters($filters);
+
+        return $this->paginate($perPage);
+    }
+
+    /**
+     * Aplica filtros reutilizáveis nas consultas de contatos.
+     *
+     * @param array $filters Filtros a serem aplicados.
+     * @return void
+     */
+    protected function applyFilters(array $filters): void
+    {
         if (!empty($filters['email'])) {
             $this->like('email', $filters['email']);
         }
 
-        // Filtro por nome
         if (!empty($filters['name'])) {
             $this->like('name', $filters['name']);
         }
 
-        // Filtro por qualidade
         if (!empty($filters['quality_score'])) {
             $this->where('quality_score', $filters['quality_score']);
         }
 
-        // Filtro por status
         if (isset($filters['is_active'])) {
             $this->where('is_active', $filters['is_active']);
         }
 
-        // Filtro por opted_out
         if (isset($filters['opted_out'])) {
             $this->where('opted_out', $filters['opted_out']);
         }
 
-        // Filtro por bounced
         if (isset($filters['bounced'])) {
             $this->where('bounced', $filters['bounced']);
         }
-
-        return $this->paginate($perPage);
     }
 
     /**
