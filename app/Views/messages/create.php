@@ -54,7 +54,7 @@
             </div>
             <div class="step" data-step="5">
                 <i class="fas fa-check"></i><br>
-                Revisar
+                Agendamento
             </div>
         </div>
         
@@ -187,6 +187,10 @@
                                     <input type="number" class="form-control" name="resends[0][hours_after]" placeholder="48">
                                     <input type="hidden" name="resends[0][number]" value="1">
                                 </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Agendar em</label>
+                                    <input type="datetime-local" class="form-control" name="resends[0][scheduled_at]">
+                                </div>
                                 <div class="col-md-8">
                                     <label class="form-label">Novo assunto</label>
                                     <input type="text" class="form-control" name="resends[0][subject]" placeholder="[LEMBRETE] Assunto original">
@@ -203,6 +207,10 @@
                                     <label class="form-label">Horas após envio anterior</label>
                                     <input type="number" class="form-control" name="resends[1][hours_after]" placeholder="72">
                                     <input type="hidden" name="resends[1][number]" value="2">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Agendar em</label>
+                                    <input type="datetime-local" class="form-control" name="resends[1][scheduled_at]">
                                 </div>
                                 <div class="col-md-8">
                                     <label class="form-label">Novo assunto</label>
@@ -221,6 +229,10 @@
                                     <input type="number" class="form-control" name="resends[2][hours_after]" placeholder="96">
                                     <input type="hidden" name="resends[2][number]" value="3">
                                 </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Agendar em</label>
+                                    <input type="datetime-local" class="form-control" name="resends[2][scheduled_at]">
+                                </div>
                                 <div class="col-md-8">
                                     <label class="form-label">Novo assunto</label>
                                     <input type="text" class="form-control" name="resends[2][subject]" placeholder="[URGENTE] Assunto original">
@@ -238,11 +250,26 @@
                 </button>
             </div>
             
-            <!-- Step 5: Revisar -->
+            <!-- Step 5: Agendamento -->
             <div class="step-content" data-step="5" style="display:none;">
-                <h5 class="mb-3">Revisar Mensagem</h5>
-                <div id="review-content"></div>
-                
+                <h5 class="mb-3">Agendamento</h5>
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label" for="scheduledAt">Primeiro envio *</label>
+                        <input type="datetime-local" id="scheduledAt" name="scheduled_at" class="form-control" value="<?= date('Y-m-d\TH:i') ?>" required>
+                        <small class="text-muted">A aplicação iniciará o disparo automaticamente neste horário.</small>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div class="alert alert-info mb-0 w-100" id="scheduleSummary" aria-live="polite">
+                            Defina a data e hora para iniciar o envio.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-secondary">
+                    Os reenvios seguirão os agendamentos definidos nas etapas anteriores. Caso um horário específico seja informado para cada reenvio, ele prevalecerá sobre o intervalo em horas.
+                </div>
+
                 <button type="button" class="btn btn-secondary me-2" onclick="prevStep()">
                     <i class="fas fa-arrow-left"></i> Anterior
                 </button>
@@ -286,7 +313,7 @@ function nextStep() {
     currentStep++;
 
     if (currentStep === 5) {
-        updateReview();
+        updateScheduleSummary();
     }
 
     $('.step-content[data-step="' + currentStep + '"]').show();
@@ -327,18 +354,12 @@ function insertOptoutLink() {
     }
 }
 
-function updateReview() {
-    if (typeof window.syncRichEditors === 'function') {
-        window.syncRichEditors();
-    }
-
-    const htmlContent = $('#messageEditor').val();
-    $('#review-content').html(htmlContent);
-
-    const selectedListsText = $('#selectedLists').html();
+function updateScheduleSummary() {
+    const selectedListsText = $('#selectedLists').text() || 'Nenhuma lista selecionada.';
     const totalRecipients = $('#recipientTotal').text();
+    const scheduledAt = $('#scheduledAt').val();
 
-    $('#review-content').append(`<div class="alert alert-info mt-3"><strong>Destinatários:</strong> ${selectedListsText}<br><strong>Total estimado:</strong> ${totalRecipients}</div>`);
+    $('#scheduleSummary').html(`<strong>Resumo:</strong> ${selectedListsText}<br>Total estimado: <strong>${totalRecipients}</strong><br>Envio inicial: <strong>${scheduledAt || 'não definido'}</strong>`);
 }
 
 $('#messageForm').on('submit', function(e) {
@@ -378,9 +399,15 @@ $(function() {
 
     $('#contactListSelect').on('change', function() {
         atualizarDestinatariosPorLista();
+        updateScheduleSummary();
+    });
+
+    $('#scheduledAt').on('change', function() {
+        updateScheduleSummary();
     });
 
     atualizarDestinatariosPorLista();
+    updateScheduleSummary();
 });
 
 function atualizarDestinatariosPorLista() {

@@ -111,10 +111,27 @@ class QueueManager
      */
     public function processQueue(int $batchSize = 100): array
     {
-        // Busca envios pendentes
+        $this->queueResendsDue();
+
+        // Busca envios pendentes respeitando agendamentos
         $pending = $this->sendModel
-            ->where('status', 'pending')
-            ->orderBy('id', 'ASC')
+            ->select('message_sends.*, messages.scheduled_at, messages.status AS message_status, resend_rules.subject_override')
+            ->join('messages', 'messages.id = message_sends.message_id')
+            ->join('resend_rules', 'resend_rules.message_id = message_sends.message_id AND resend_rules.resend_number = message_sends.resend_number', 'left')
+            ->where('message_sends.status', 'pending')
+            ->groupStart()
+                ->where('message_sends.resend_number', 0)
+                ->orGroupStart()
+                    ->where('message_sends.resend_number >', 0)
+                    ->where('resend_rules.status', 'pending')
+                    ->where('resend_rules.scheduled_at <=', date('Y-m-d H:i:s'))
+                ->groupEnd()
+            ->groupEnd()
+            ->groupStart()
+                ->where('messages.scheduled_at <=', date('Y-m-d H:i:s'))
+                ->orWhere('messages.scheduled_at', null)
+            ->groupEnd()
+            ->orderBy('message_sends.id', 'ASC')
             ->findAll($batchSize);
 
         if (empty($pending)) {
@@ -131,6 +148,12 @@ class QueueManager
 
         foreach ($pending as $send) {
             try {
+                if (($send['message_status'] ?? '') === 'scheduled') {
+                    $this->messageModel->update($send['message_id'], [
+                        'status' => 'sending',
+                    ]);
+                }
+
                 // Envia email
                 $result = $this->sendEmail($send);
 
@@ -201,12 +224,18 @@ class QueueManager
             return ['success' => false, 'error' => 'Sender not found'];
         }
 
+        $emailSubject = $message['subject'];
+
+        if (!empty($send['subject_override'])) {
+            $emailSubject = $send['subject_override'];
+        }
+
         // Envia via AWS SES
         $result = $this->sesService->sendEmail(
             from: $sender['email'],
             fromName: $message['from_name'],
             to: $contact['email'],
-            subject: $message['subject'],
+            subject: $emailSubject,
             htmlBody: $htmlBody,
             replyTo: $message['reply_to'],
             tags: [
@@ -329,6 +358,68 @@ class QueueManager
     {
         $data = $messageId . '-' . $contactId . '-' . $resendNumber . '-' . time() . '-' . rand(1000, 9999);
         return hash('sha256', $data);
+    }
+
+    /**
+     * Gera filas para os reenvios que chegaram na data agendada.
+     *
+     * @return void
+     */
+    protected function queueResendsDue(): void
+    {
+        $db = \Config\Database::connect();
+
+        $rules = $db->table('resend_rules')
+            ->where('status', 'pending')
+            ->where('scheduled_at <=', date('Y-m-d H:i:s'))
+            ->get()
+            ->getResultArray();
+
+        if (empty($rules)) {
+            return;
+        }
+
+        foreach ($rules as $rule) {
+            $contacts = $this->getMessageContacts((int) $rule['message_id']);
+
+            if (empty($contacts)) {
+                continue;
+            }
+
+            $existing = $this->sendModel
+                ->where('message_id', $rule['message_id'])
+                ->where('resend_number', $rule['resend_number'])
+                ->countAllResults();
+
+            if ($existing > 0) {
+                continue;
+            }
+
+            $this->queueMessage((int) $rule['message_id'], $contacts, (int) $rule['resend_number']);
+
+            $db->table('resend_rules')
+                ->where('id', $rule['id'])
+                ->update(['status' => 'completed']);
+        }
+    }
+
+    /**
+     * Recupera contatos já vinculados à mensagem original.
+     *
+     * @param int $messageId ID da mensagem
+     *
+     * @return array
+     */
+    protected function getMessageContacts(int $messageId): array
+    {
+        $rows = $this->sendModel
+            ->select('DISTINCT contact_id')
+            ->where('message_id', $messageId)
+            ->where('resend_number', 0)
+            ->get()
+            ->getResultArray();
+
+        return array_column($rows, 'contact_id');
     }
 
     /**
