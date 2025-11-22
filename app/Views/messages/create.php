@@ -34,11 +34,6 @@
     background: #fff;
 }
 
-.editor-outline {
-    position: sticky;
-    top: 20px;
-}
-
 .editor-fullscreen {
     position: fixed;
     inset: 0;
@@ -132,7 +127,7 @@
             <!-- Step 2: Editor GrapesJS -->
             <div class="step-content" data-step="2" style="display:none;">
                 <div class="row g-3" id="editorWrapper" aria-live="polite">
-                    <div class="col-lg-9">
+                    <div class="col-12">
                         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
                             <div class="btn-group" role="group" aria-label="Alternar modo do editor">
                                 <button type="button" class="btn btn-outline-primary active" id="editorModeCreate" onclick="switchEditorMode('create')">
@@ -177,18 +172,6 @@
                                     <span class="badge bg-secondary">Leitura somente</span>
                                 </div>
                                 <div id="editorPreviewContent" class="border rounded p-3 bg-white" style="min-height: 400px;"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-3">
-                        <div class="card shadow-sm h-100 editor-outline">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center mb-3">
-                                    <i class="fas fa-list-alt text-primary me-2"></i>
-                                    <h6 class="mb-0">Estrutura do documento</h6>
-                                </div>
-                                <div data-document-outline class="border rounded p-2" style="min-height: 300px;"></div>
                             </div>
                         </div>
                     </div>
