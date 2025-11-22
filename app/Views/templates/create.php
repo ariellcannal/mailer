@@ -1,5 +1,14 @@
 <?= $this->extend('layouts/main') ?>
 
+<?= $this->section('styles') ?>
+<style>
+    .editor-outline {
+        position: sticky;
+        top: 20px;
+    }
+</style>
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="card">
     <div class="card-body">
@@ -28,9 +37,22 @@
                 <textarea name="description" class="form-control" rows="3"><?= old('description') ?></textarea>
             </div>
 
-            <div class="mb-3">
-                <label class="form-label">HTML</label>
-                <textarea name="html_content" class="form-control js-rich-editor" rows="10" required><?= old('html_content') ?></textarea>
+            <div class="row g-3 mb-3">
+                <div class="col-lg-9">
+                    <label class="form-label">HTML</label>
+                    <textarea name="html_content" class="form-control js-rich-editor" rows="10" required><?= old('html_content') ?></textarea>
+                </div>
+                <div class="col-lg-3">
+                    <div class="card h-100 shadow-sm editor-outline">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-list-alt text-primary me-2"></i>
+                                <h6 class="mb-0">Estrutura do documento</h6>
+                            </div>
+                            <div data-document-outline class="border rounded p-2" style="min-height: 300px;"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="mb-3">
