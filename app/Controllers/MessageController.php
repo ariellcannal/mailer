@@ -27,6 +27,25 @@ class MessageController extends BaseController {
         $model = new MessageModel();
         $messages = $model->orderBy('created_at', 'DESC')->paginate(20);
 
+        $sendModel = new MessageSendModel();
+        $stats = $sendModel
+            ->select('message_id, COUNT(*) AS total, SUM(CASE WHEN status = "sent" THEN 1 ELSE 0 END) AS sent')
+            ->groupBy('message_id')
+            ->findAll();
+
+        $messageProgress = [];
+
+        foreach ($stats as $stat) {
+            $total = (int) ($stat['total'] ?? 0);
+            $sent = (int) ($stat['sent'] ?? 0);
+
+            $messageProgress[(int) $stat['message_id']] = [
+                'total' => $total,
+                'sent' => $sent,
+                'percentage' => $total > 0 ? round(($sent / $total) * 100) : 0,
+            ];
+        }
+
         $campaignModel = new CampaignModel();
         $senderModel = new SenderModel();
 
@@ -45,6 +64,7 @@ class MessageController extends BaseController {
             'pager' => $model->pager,
             'campaignMap' => $campaignMap,
             'senderMap' => $senderMap,
+            'messageProgress' => $messageProgress,
             'activeMenu' => 'messages',
             'pageTitle' => 'Mensagens'
         ]);
@@ -78,6 +98,10 @@ class MessageController extends BaseController {
 
         if (!$message) {
             return redirect()->to('/messages')->with('error', 'Mensagem não encontrada');
+        }
+
+        if (in_array($message['status'], ['sending', 'sent'], true)) {
+            return redirect()->to('/messages')->with('error', 'Mensagens em envio ou já enviadas não podem ser editadas.');
         }
 
         $sendModel = new MessageSendModel();
@@ -240,6 +264,10 @@ class MessageController extends BaseController {
 
         if (!$message) {
             return redirect()->to('/messages')->with('error', 'Mensagem não encontrada');
+        }
+
+        if (in_array($message['status'], ['sending', 'sent'], true)) {
+            return redirect()->to('/messages')->with('error', 'Mensagens em envio ou já enviadas não podem ser editadas.');
         }
 
         $htmlContent = $this->request->getPost('html_content');

@@ -1,4 +1,4 @@
-<?php if ($pager->hasPages()) : ?>
+<?php if ($pager->getPageCount() > 1) : ?>
 <nav aria-label="Navegação de página">
     <ul class="pagination justify-content-center">
         <?php if ($pager->hasPreviousPage()) : ?>

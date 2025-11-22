@@ -100,6 +100,10 @@ class QueueManager
                     'contact_id' => $contactId,
                     'resend_number' => $resendNumber,
                     'tracking_hash' => $trackingHash,
+                    'opened' => 0,
+                    'total_opens' => 0,
+                    'clicked' => 0,
+                    'total_clicks' => 0,
                     'status' => 'pending',
                 ]);
 
@@ -131,6 +135,8 @@ class QueueManager
         $now = $this->now();
 
         $this->queueResendsDue($now);
+
+        $this->finalizeMessageStatuses($this->collectFinishedMessages());
 
         // Busca envios pendentes respeitando agendamentos
         $pending = $this->sendModel
@@ -612,5 +618,28 @@ class QueueManager
                 'sent_at' => $now,
             ]);
         }
+    }
+
+    /**
+     * Recupera mensagens sem envios ou reenvios pendentes.
+     *
+     * @return array<int> IDs de mensagens finalizáveis
+     */
+    protected function collectFinishedMessages(): array
+    {
+        $db = \Config\Database::connect();
+
+        $builder = $db->table('messages')
+            ->select('messages.id')
+            ->join('message_sends', 'message_sends.message_id = messages.id', 'left')
+            ->join('resend_rules', 'resend_rules.message_id = messages.id', 'left')
+            ->whereIn('messages.status', ['sending', 'scheduled'])
+            ->groupBy('messages.id')
+            ->having('SUM(CASE WHEN message_sends.status IN("pending","sending") THEN 1 ELSE 0 END)', 0)
+            ->having('SUM(CASE WHEN resend_rules.status = "pending" THEN 1 ELSE 0 END)', 0);
+
+        $rows = $builder->get()->getResultArray();
+
+        return array_map(static fn(array $row) => (int) $row['id'], $rows);
     }
 }
