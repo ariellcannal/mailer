@@ -113,6 +113,7 @@ class MessageController extends BaseController {
             'message' => $message,
             'campaigns' => $campaignModel->where('is_active', 1)->findAll(),
             'senders' => $senderModel->where('is_active', 1)->where('ses_verified', 1)->findAll(),
+            'resendRules' => $this->getResendRules($id),
             'activeMenu' => 'messages',
             'pageTitle' => 'Editar Mensagem',
             'editorEngine' => get_system_setting('editor_engine', 'tinymce'),
@@ -222,11 +223,19 @@ class MessageController extends BaseController {
             'optout_link_visible' => $validation['is_visible'],
         ];
 
-        if ($model->update($id, $data)) {
-            return redirect()->to('/messages/view/' . $id)->with('success', 'Mensagem atualizada!');
+        $scheduledAt = $this->request->getPost('scheduled_at');
+        $resends = (array) $this->request->getPost('resends');
+
+        if ($this->canRescheduleMessage($message) && !empty($scheduledAt)) {
+            $data['scheduled_at'] = $scheduledAt;
+            $data['status'] = 'scheduled';
         }
 
-        return redirect()->back()->withInput()->with('error', 'Erro ao atualizar mensagem');
+        $model->update($id, $data);
+
+        $this->rescheduleResends($id, $resends);
+
+        return redirect()->to('/messages/view/' . $id)->with('success', 'Mensagem atualizada!');
     }
     
     public function send($id) {
@@ -422,5 +431,90 @@ class MessageController extends BaseController {
         $result = $builder->get()->getResultArray();
 
         return array_column($result, 'id');
+    }
+
+    /**
+     * Recupera regras de reenvio existentes para edição.
+     *
+     * @param int $messageId ID da mensagem
+     *
+     * @return array
+     */
+    protected function getResendRules(int $messageId): array
+    {
+        $db = \Config\Database::connect();
+
+        return $db->table('resend_rules')
+            ->where('message_id', $messageId)
+            ->orderBy('resend_number', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
+    /**
+     * Verifica se a mensagem pode ser reagendada.
+     *
+     * @param array $message Dados da mensagem
+     *
+     * @return bool
+     */
+    protected function canRescheduleMessage(array $message): bool
+    {
+        if (($message['status'] ?? '') !== 'scheduled') {
+            return false;
+        }
+
+        return !empty($message['scheduled_at']) && strtotime($message['scheduled_at']) > time();
+    }
+
+    /**
+     * Atualiza datas de reenvio para regras ainda pendentes.
+     *
+     * @param int   $messageId ID da mensagem
+     * @param array $resends   Dados enviados pelo formulário
+     *
+     * @return void
+     */
+    protected function rescheduleResends(int $messageId, array $resends): void
+    {
+        if (empty($resends)) {
+            return;
+        }
+
+        $db = \Config\Database::connect();
+
+        foreach ($resends as $ruleId => $resend) {
+            if (empty($resend['scheduled_at'])) {
+                continue;
+            }
+
+            $current = $db->table('resend_rules')
+                ->where('id', (int) $ruleId)
+                ->where('message_id', $messageId)
+                ->get()
+                ->getRowArray();
+
+            if (!$current) {
+                continue;
+            }
+
+            if ($current['status'] !== 'pending') {
+                continue;
+            }
+
+            if (strtotime($current['scheduled_at']) <= time()) {
+                continue;
+            }
+
+            if (strtotime($resend['scheduled_at']) <= time()) {
+                continue;
+            }
+
+            $db->table('resend_rules')
+                ->where('id', (int) $ruleId)
+                ->update([
+                    'scheduled_at' => $resend['scheduled_at'],
+                ]);
+        }
     }
 }

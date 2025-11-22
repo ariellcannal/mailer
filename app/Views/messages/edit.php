@@ -57,6 +57,76 @@
                 </div>
             </div>
 
+            <hr>
+            <h5 class="mb-3">Agendamento</h5>
+            <?php $canReschedule = ($message['status'] === 'scheduled' && !empty($message['scheduled_at']) && strtotime($message['scheduled_at']) > time()); ?>
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <label class="form-label" for="scheduledAt">Primeiro envio</label>
+                    <input
+                        type="datetime-local"
+                        id="scheduledAt"
+                        name="scheduled_at"
+                        class="form-control"
+                        value="<?= $message['scheduled_at'] ? date('Y-m-d\TH:i', strtotime($message['scheduled_at'])) : '' ?>"
+                        <?= $canReschedule ? '' : 'disabled' ?>
+                    >
+                    <small class="text-muted">Disponível apenas para mensagens com envio futuro.</small>
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                    <div class="alert <?= $canReschedule ? 'alert-info' : 'alert-secondary' ?> mb-0 w-100" role="status">
+                        <?php if ($message['scheduled_at']): ?>
+                            Agendado para <?= date('d/m/Y H:i', strtotime($message['scheduled_at'])) ?> (status: <?= esc($message['status']) ?>).
+                        <?php else: ?>
+                            Nenhum agendamento registrado.
+                        <?php endif; ?>
+                        <?php if (!$canReschedule && $message['scheduled_at']): ?>
+                            <br><strong>Reagendamento indisponível</strong>: apenas datas futuras podem ser alteradas.
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <?php if (!empty($resendRules)): ?>
+                <div class="mb-4">
+                    <h6 class="mb-2">Reenvios</h6>
+                    <div class="row g-3">
+                        <?php $now = time(); ?>
+                        <?php foreach ($resendRules as $rule): ?>
+                            <?php
+                                $isEditable = ($rule['status'] === 'pending'
+                                    && !empty($rule['scheduled_at'])
+                                    && strtotime($rule['scheduled_at']) > $now);
+                            ?>
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <span class="badge bg-primary">Reenvio #<?= (int) $rule['resend_number'] ?></span>
+                                            <span class="badge <?= $rule['status'] === 'pending' ? 'bg-info text-dark' : 'bg-secondary' ?>">Status: <?= esc($rule['status']) ?></span>
+                                        </div>
+                                        <p class="mb-2">Assunto: <strong><?= esc($rule['subject_override']) ?></strong></p>
+                                        <p class="mb-3">Programado para <?= date('d/m/Y H:i', strtotime($rule['scheduled_at'])) ?></p>
+                                        <div class="mb-2">
+                                            <label class="form-label" for="resend-<?= $rule['id'] ?>">Novo agendamento</label>
+                                            <input
+                                                type="datetime-local"
+                                                class="form-control"
+                                                id="resend-<?= $rule['id'] ?>"
+                                                name="resends[<?= $rule['id'] ?>][scheduled_at]"
+                                                value="<?= $rule['scheduled_at'] ? date('Y-m-d\TH:i', strtotime($rule['scheduled_at'])) : '' ?>"
+                                                <?= $isEditable ? '' : 'disabled' ?>
+                                            >
+                                            <small class="text-muted">Somente reenvios pendentes com data futura podem ser alterados.</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save"></i> Atualizar
