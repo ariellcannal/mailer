@@ -82,6 +82,14 @@ $height = $height ?? 500;
                 instance.editor.model.insertContent(modelFragment, instance.editor.model.document.selection);
             });
         };
+
+        window.getRichEditorData = function () {
+            if (!window.richEditorInstances.length) {
+                return '';
+            }
+
+            return window.richEditorInstances[0].editor.getData();
+        };
     </script>
 <?php else: ?>
     <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
@@ -124,6 +132,16 @@ $height = $height ?? 500;
             if (editor) {
                 editor.insertContent(html);
             }
+        };
+
+        window.getRichEditorData = function () {
+            var editor = tinymce.activeEditor || window.richEditorInstances[0];
+
+            if (!editor) {
+                return '';
+            }
+
+            return editor.getContent();
         };
     </script>
 <?php endif; ?>
