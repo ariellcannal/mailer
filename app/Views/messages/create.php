@@ -25,6 +25,27 @@
     background: #28a745;
     color: white;
 }
+
+.editor-panel {
+    border: 1px solid #e9ecef;
+}
+
+.editor-panel .card-body {
+    background: #fff;
+}
+
+.editor-fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 1080;
+    background: #fff;
+    padding: 1.5rem;
+    overflow-y: auto;
+}
+
+.editor-fullscreen .editor-panel {
+    height: calc(100vh - 180px);
+}
 </style>
 <?= $this->endSection() ?>
 
@@ -49,12 +70,12 @@
                 Destinatários
             </div>
             <div class="step" data-step="4">
-                <i class="fas fa-redo"></i><br>
-                Reenvios
-            </div>
-            <div class="step" data-step="5">
                 <i class="fas fa-check"></i><br>
                 Agendamento
+            </div>
+            <div class="step" data-step="5">
+                <i class="fas fa-redo"></i><br>
+                Reenvios
             </div>
         </div>
         
@@ -105,22 +126,53 @@
             
             <!-- Step 2: Editor GrapesJS -->
             <div class="step-content" data-step="2" style="display:none;">
-                <div class="mb-3">
-                    <div class="btn-toolbar mb-3">
-                        <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="insertVariable('{{nome}}')">
-                            <i class="fas fa-user"></i> Inserir Nome
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="insertVariable('{{email}}')">
-                            <i class="fas fa-envelope"></i> Inserir Email
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-warning me-2" onclick="insertWebviewLink()">
-                            <i class="fas fa-external-link-alt"></i> Link Visualização
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="insertOptoutLink()">
-                            <i class="fas fa-times-circle"></i> Link Opt-out *
-                        </button>
+                <div class="mb-3" id="editorWrapper" aria-live="polite">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                        <div class="btn-group" role="group" aria-label="Alternar modo do editor">
+                            <button type="button" class="btn btn-outline-primary active" id="editorModeCreate" onclick="switchEditorMode('create')">
+                                <i class="fas fa-pen"></i> Criar
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="editorModePreview" onclick="switchEditorMode('preview')">
+                                <i class="fas fa-eye"></i> Preview
+                            </button>
+                        </div>
+
+                        <div class="btn-group" role="group" aria-label="Ações do editor">
+                            <button type="button" class="btn btn-outline-dark" id="editorFullscreenToggle" onclick="toggleEditorFullscreen()">
+                                <i class="fas fa-expand"></i> Tela cheia
+                            </button>
+                        </div>
                     </div>
-                    <textarea id="messageEditor" name="html_content" class="form-control js-rich-editor" rows="15" required><?= old('html_content') ?></textarea>
+
+                    <div id="editorCreatePanel" class="editor-panel card shadow-sm">
+                        <div class="card-body">
+                            <div class="btn-toolbar mb-3">
+                                <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="insertVariable('{{nome}}')">
+                                    <i class="fas fa-user"></i> Inserir Nome
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="insertVariable('{{email}}')">
+                                    <i class="fas fa-envelope"></i> Inserir Email
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-warning me-2" onclick="insertWebviewLink()">
+                                    <i class="fas fa-external-link-alt"></i> Link Visualização
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="insertOptoutLink()">
+                                    <i class="fas fa-times-circle"></i> Link Opt-out *
+                                </button>
+                            </div>
+                            <textarea id="messageEditor" name="html_content" class="form-control js-rich-editor" rows="15" required><?= old('html_content') ?></textarea>
+                        </div>
+                    </div>
+
+                    <div id="editorPreviewPanel" class="editor-panel card shadow-sm d-none">
+                        <div class="card-body bg-light">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0">Preview</h6>
+                                <span class="badge bg-secondary">Leitura somente</span>
+                            </div>
+                            <div id="editorPreviewContent" class="border rounded p-3 bg-white" style="min-height: 400px;"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <button type="button" class="btn btn-secondary me-2" onclick="prevStep()">
@@ -172,11 +224,39 @@
                 </button>
             </div>
             
-            <!-- Step 4: Reenvios -->
+            <!-- Step 4: Agendamento -->
             <div class="step-content" data-step="4" style="display:none;">
+                <h5 class="mb-3">Agendamento</h5>
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label" for="scheduledAt">Primeiro envio *</label>
+                        <input type="datetime-local" id="scheduledAt" name="scheduled_at" class="form-control" value="<?= date('Y-m-d\TH:i') ?>" required>
+                        <small class="text-muted">A aplicação iniciará o disparo automaticamente neste horário.</small>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div class="alert alert-info mb-0 w-100" id="scheduleSummary" aria-live="polite">
+                            Defina a data e hora para iniciar o envio.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-secondary">
+                    Ajuste o primeiro envio agora e configure os reenvios na etapa seguinte. Caso um horário específico seja informado para cada reenvio, ele prevalecerá sobre o intervalo em horas.
+                </div>
+
+                <button type="button" class="btn btn-secondary me-2" onclick="prevStep()">
+                    <i class="fas fa-arrow-left"></i> Anterior
+                </button>
+                <button type="button" class="btn btn-primary" onclick="nextStep()">
+                    Próximo <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- Step 5: Reenvios -->
+            <div class="step-content" data-step="5" style="display:none;">
                 <h5 class="mb-3">Configurar Reenvios Automáticos</h5>
                 <p class="text-muted">Configure até 3 reenvios automáticos para contatos que não abriram a mensagem.</p>
-                
+
                 <div id="resends-container">
                     <div class="card mb-3">
                         <div class="card-body">
@@ -198,7 +278,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="card mb-3">
                         <div class="card-body">
                             <h6>Reenvio 2</h6>
@@ -219,7 +299,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="card mb-3">
                         <div class="card-body">
                             <h6>Reenvio 3</h6>
@@ -240,34 +320,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                
-                <button type="button" class="btn btn-secondary me-2" onclick="prevStep()">
-                    <i class="fas fa-arrow-left"></i> Anterior
-                </button>
-                <button type="button" class="btn btn-primary" onclick="nextStep()">
-                    Próximo <i class="fas fa-arrow-right"></i>
-                </button>
-            </div>
-            
-            <!-- Step 5: Agendamento -->
-            <div class="step-content" data-step="5" style="display:none;">
-                <h5 class="mb-3">Agendamento</h5>
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <label class="form-label" for="scheduledAt">Primeiro envio *</label>
-                        <input type="datetime-local" id="scheduledAt" name="scheduled_at" class="form-control" value="<?= date('Y-m-d\TH:i') ?>" required>
-                        <small class="text-muted">A aplicação iniciará o disparo automaticamente neste horário.</small>
-                    </div>
-                    <div class="col-md-6 d-flex align-items-end">
-                        <div class="alert alert-info mb-0 w-100" id="scheduleSummary" aria-live="polite">
-                            Defina a data e hora para iniciar o envio.
-                        </div>
-                    </div>
-                </div>
-
-                <div class="alert alert-secondary">
-                    Os reenvios seguirão os agendamentos definidos nas etapas anteriores. Caso um horário específico seja informado para cada reenvio, ele prevalecerá sobre o intervalo em horas.
                 </div>
 
                 <button type="button" class="btn btn-secondary me-2" onclick="prevStep()">
@@ -312,7 +364,7 @@ function nextStep() {
 
     currentStep++;
 
-    if (currentStep === 5) {
+    if (currentStep === 4) {
         updateScheduleSummary();
     }
 
@@ -352,6 +404,64 @@ function insertOptoutLink() {
         window.insertRichHtml(html);
         alertify.success('Link de opt-out inserido!');
     }
+}
+
+function switchEditorMode(mode) {
+    if (mode !== 'create' && mode !== 'preview') {
+        return;
+    }
+
+    if (mode === 'preview') {
+        renderEditorPreview();
+    }
+
+    document.getElementById('editorModeCreate').classList.toggle('active', mode === 'create');
+    document.getElementById('editorModePreview').classList.toggle('active', mode === 'preview');
+
+    document.getElementById('editorCreatePanel').classList.toggle('d-none', mode !== 'create');
+    document.getElementById('editorPreviewPanel').classList.toggle('d-none', mode !== 'preview');
+}
+
+function renderEditorPreview() {
+    if (typeof window.syncRichEditors === 'function') {
+        window.syncRichEditors();
+    }
+
+    const previewElement = document.getElementById('editorPreviewContent');
+    if (!previewElement) {
+        return;
+    }
+
+    let fallbackContent = '';
+    const messageElement = document.getElementById('messageEditor');
+    if (messageElement) {
+        fallbackContent = messageElement.value;
+    }
+
+    const content = typeof window.getRichEditorData === 'function'
+        ? window.getRichEditorData()
+        : fallbackContent;
+
+    previewElement.innerHTML = content || '<p class="text-muted">Nenhum conteúdo para pré-visualizar.</p>';
+}
+
+function toggleEditorFullscreen() {
+    const wrapper = document.getElementById('editorWrapper');
+    const toggleButton = document.getElementById('editorFullscreenToggle');
+
+    if (!wrapper || !toggleButton) {
+        return;
+    }
+
+    wrapper.classList.toggle('editor-fullscreen');
+
+    const icon = toggleButton.querySelector('i');
+    if (icon) {
+        icon.classList.toggle('fa-expand');
+        icon.classList.toggle('fa-compress');
+    }
+
+    toggleButton.classList.toggle('active');
 }
 
 function updateScheduleSummary() {
