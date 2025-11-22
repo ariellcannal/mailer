@@ -34,6 +34,11 @@
     background: #fff;
 }
 
+.editor-outline {
+    position: sticky;
+    top: 20px;
+}
+
 .editor-fullscreen {
     position: fixed;
     inset: 0;
@@ -126,51 +131,65 @@
             
             <!-- Step 2: Editor GrapesJS -->
             <div class="step-content" data-step="2" style="display:none;">
-                <div class="mb-3" id="editorWrapper" aria-live="polite">
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-                        <div class="btn-group" role="group" aria-label="Alternar modo do editor">
-                            <button type="button" class="btn btn-outline-primary active" id="editorModeCreate" onclick="switchEditorMode('create')">
-                                <i class="fas fa-pen"></i> Criar
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary" id="editorModePreview" onclick="switchEditorMode('preview')">
-                                <i class="fas fa-eye"></i> Preview
-                            </button>
+                <div class="row g-3" id="editorWrapper" aria-live="polite">
+                    <div class="col-lg-9">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                            <div class="btn-group" role="group" aria-label="Alternar modo do editor">
+                                <button type="button" class="btn btn-outline-primary active" id="editorModeCreate" onclick="switchEditorMode('create')">
+                                    <i class="fas fa-pen"></i> Criar
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="editorModePreview" onclick="switchEditorMode('preview')">
+                                    <i class="fas fa-eye"></i> Preview
+                                </button>
+                            </div>
+
+                            <div class="btn-group" role="group" aria-label="Ações do editor">
+                                <button type="button" class="btn btn-outline-dark" id="editorFullscreenToggle" onclick="toggleEditorFullscreen()">
+                                    <i class="fas fa-expand"></i> Tela cheia
+                                </button>
+                            </div>
                         </div>
 
-                        <div class="btn-group" role="group" aria-label="Ações do editor">
-                            <button type="button" class="btn btn-outline-dark" id="editorFullscreenToggle" onclick="toggleEditorFullscreen()">
-                                <i class="fas fa-expand"></i> Tela cheia
-                            </button>
+                        <div id="editorCreatePanel" class="editor-panel card shadow-sm">
+                            <div class="card-body">
+                                <div class="btn-toolbar mb-3">
+                                    <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="insertVariable('{{nome}}')">
+                                        <i class="fas fa-user"></i> Inserir Nome
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="insertVariable('{{email}}')">
+                                        <i class="fas fa-envelope"></i> Inserir Email
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-warning me-2" onclick="insertWebviewLink()">
+                                        <i class="fas fa-external-link-alt"></i> Link Visualização
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="insertOptoutLink()">
+                                        <i class="fas fa-times-circle"></i> Link Opt-out *
+                                    </button>
+                                </div>
+                                <textarea id="messageEditor" name="html_content" class="form-control js-rich-editor" rows="15" required><?= old('html_content') ?></textarea>
+                            </div>
+                        </div>
+
+                        <div id="editorPreviewPanel" class="editor-panel card shadow-sm d-none">
+                            <div class="card-body bg-light">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="mb-0">Preview</h6>
+                                    <span class="badge bg-secondary">Leitura somente</span>
+                                </div>
+                                <div id="editorPreviewContent" class="border rounded p-3 bg-white" style="min-height: 400px;"></div>
+                            </div>
                         </div>
                     </div>
 
-                    <div id="editorCreatePanel" class="editor-panel card shadow-sm">
-                        <div class="card-body">
-                            <div class="btn-toolbar mb-3">
-                                <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="insertVariable('{{nome}}')">
-                                    <i class="fas fa-user"></i> Inserir Nome
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="insertVariable('{{email}}')">
-                                    <i class="fas fa-envelope"></i> Inserir Email
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-warning me-2" onclick="insertWebviewLink()">
-                                    <i class="fas fa-external-link-alt"></i> Link Visualização
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="insertOptoutLink()">
-                                    <i class="fas fa-times-circle"></i> Link Opt-out *
-                                </button>
+                    <div class="col-lg-3">
+                        <div class="card shadow-sm h-100 editor-outline">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-list-alt text-primary me-2"></i>
+                                    <h6 class="mb-0">Estrutura do documento</h6>
+                                </div>
+                                <div data-document-outline class="border rounded p-2" style="min-height: 300px;"></div>
                             </div>
-                            <textarea id="messageEditor" name="html_content" class="form-control js-rich-editor" rows="15" required><?= old('html_content') ?></textarea>
-                        </div>
-                    </div>
-
-                    <div id="editorPreviewPanel" class="editor-panel card shadow-sm d-none">
-                        <div class="card-body bg-light">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="mb-0">Preview</h6>
-                                <span class="badge bg-secondary">Leitura somente</span>
-                            </div>
-                            <div id="editorPreviewContent" class="border rounded p-3 bg-white" style="min-height: 400px;"></div>
                         </div>
                     </div>
                 </div>

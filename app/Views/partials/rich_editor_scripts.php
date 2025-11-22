@@ -43,6 +43,13 @@ $ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
                 return;
             }
 
+            var documentOutlineContainer = document.querySelector('[data-document-outline]');
+
+            if (!documentOutlineContainer) {
+                console.error('Container do DocumentOutline não encontrado.');
+                return;
+            }
+
             document.querySelectorAll('<?= $selectorJs ?>').forEach(function (element) {
                 CKEDITOR.ClassicEditor
                     .create(element, {
@@ -122,8 +129,10 @@ $ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
                         htmlEmbed: {
                             showPreviews: true
                         },
+                        documentOutline: {
+                            container: documentOutlineContainer
+                        },
                         removePlugins: [
-                            'DocumentOutline',
                             'CKBox',
                             'CKFinder',
                             'EasyImage',
