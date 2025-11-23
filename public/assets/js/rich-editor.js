@@ -402,12 +402,12 @@
                         return;
                     }
 
-                    if (actionMap[item]) {
+                    if (Object.prototype.hasOwnProperty.call(actionMap, item)) {
                         createButton(item, actionMap[item]);
                         return;
                     }
 
-                    createButton(item, () => alert(`${item} não está disponível neste modo.`));
+                    createButton(item, null);
                 });
 
                 return toolbar;
