@@ -1,22 +1,18 @@
 <?php
-/** @var string|null $editorEngine */
 /** @var string|null $selector */
 /** @var int|null    $height */
-
-$editorEngine = $editorEngine ?? 'tinymce';
 $selector = $selector ?? '.js-rich-editor';
 $selectorJs = addslashes($selector);
 $height = $height ?? 500;
 $ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
 ?>
-<?php if ($editorEngine === 'ckeditor'): ?>
     <script>
         window.richEditorEngine = 'ckeditor';
         window.richEditorInstances = [];
 
         const ckeditorSources = [
-            'https://cdn.ckeditor.com/ckeditor5/latest/super-build/ckeditor.js<?= $ckeditorCacheBuster ?>',
-            'https://cdn.ckeditor.com/ckeditor5/latest/super-build/translations/pt-br.js<?= $ckeditorCacheBuster ?>'
+            'https://cdn.ckeditor.com/ckeditor5/47.2.0/super-build/ckeditor.js<?= $ckeditorCacheBuster ?>',
+            'https://cdn.ckeditor.com/ckeditor5/47.2.0/super-build/translations/pt-br.js<?= $ckeditorCacheBuster ?>'
         ];
 
         const editorResources = {
@@ -343,7 +339,7 @@ $ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
 
                 showTemplateDialog(editor) {
                     const body = `
-                        <p class="ck-text-muted">Busque pelo nome ou descrição e visualize o conteúdo antes de inserir.</p>
+                        <p class="ck-text-muted">Busque pelo nome ou descrição, clique para visualizar e confirme para inserir. Duplo clique insere imediatamente.</p>
                         <div class="ck-form-row">
                             <label class="ck-form-label">Buscar template</label>
                             <input type="search" class="ck ck-input" id="ck-template-search" placeholder="Filtrar por nome ou descrição">
@@ -522,8 +518,8 @@ $ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
                 .ck-modal__footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
                 .ck-form-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
                 .ck-form-label { font-weight: 600; }
-                .ck-image-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); grid-auto-rows: 1fr; gap: 12px; max-height: 420px; overflow: auto; align-items: stretch; }
-                .ck-image-card { text-align: left; height: 260px; padding: 0; border: 1px solid #e4e4e4; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; align-items: stretch; }
+                .ck-image-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); grid-auto-rows: 260px; gap: 12px; max-height: 420px; overflow: auto; align-items: stretch; }
+                .ck-image-card { text-align: left; height: 100%; padding: 0; border: 1px solid #e4e4e4; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; align-items: stretch; }
                 .ck-image-card__thumb { flex: 1 1 auto; background-size: cover; background-position: center; min-height: 160px; }
                 .ck-image-card__meta { padding: 10px; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; width: 100%; }
                 .ck-image-card.is-active { outline: 2px solid #0d6efd; }
@@ -597,57 +593,3 @@ $ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
             return editor ? editor.getData() : '';
         };
     </script>
-<?php else: ?>
-    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
-    <script>
-        window.richEditorEngine = 'tinymce';
-        window.richEditorInstances = [];
-
-        document.addEventListener('DOMContentLoaded', function () {
-            tinymce.init({
-                selector: '<?= $selectorJs ?>',
-                language: 'pt_BR',
-                height: <?= (int) $height ?>,
-                menubar: true,
-                plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime table paste help wordcount',
-                toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | code',
-                setup: function (editor) {
-                    window.richEditorInstances.push(editor);
-                },
-                init_instance_callback: function (editor) {
-                    editor.on('remove', function () {
-                        window.richEditorInstances = window.richEditorInstances.filter(function (item) {
-                            return item !== editor;
-                        });
-                    });
-                }
-            });
-        });
-
-        window.syncRichEditors = function () {
-            tinymce.triggerSave();
-        };
-
-        window.insertRichText = function (text) {
-            window.insertRichHtml(text);
-        };
-
-        window.insertRichHtml = function (html) {
-            var editor = tinymce.activeEditor || window.richEditorInstances[0];
-
-            if (editor) {
-                editor.insertContent(html);
-            }
-        };
-
-        window.getRichEditorData = function () {
-            var editor = tinymce.activeEditor || window.richEditorInstances[0];
-
-            if (!editor) {
-                return '';
-            }
-
-            return editor.getContent();
-        };
-    </script>
-<?php endif; ?>
