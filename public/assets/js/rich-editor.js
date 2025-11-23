@@ -449,7 +449,11 @@
                 extraPlugins: [ImagesDropdownPlugin, ImageLibraryPlugin, TemplatesPlugin, TagsPlugin, FullscreenPlugin],
                 toolbar: {
                     items: [
-                        'heading', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|',
+                        'heading', 'fontFamily', 'fontSize', '|',
+                        'fontColor', 'fontBackgroundColor', '|',
+                        'bold', 'italic', 'underline', 'strikethrough', '|',
+                        'alignment', 'outdent', 'indent', 'bulletedList', 'numberedList', '|',
+                        'link', 'blockQuote', 'insertTable', 'imageUpload', 'mediaEmbed', 'horizontalLine', 'specialCharacters', '|',
                         'Imagens', 'BancoImagens', 'Templates', 'Tags', 'TelaCheia', '|',
                         'undo', 'redo'
                     ]
