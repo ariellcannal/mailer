@@ -15,8 +15,8 @@ $ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
         window.richEditorInstances = [];
 
         const ckeditorSources = [
-            'https://cdn.ckeditor.com/ckeditor5/41.3.1/classic/ckeditor.js<?= $ckeditorCacheBuster ?>',
-            'https://cdn.ckeditor.com/ckeditor5/41.3.1/classic/translations/pt-br.js<?= $ckeditorCacheBuster ?>'
+            'https://cdn.ckeditor.com/ckeditor5/43.2.2/super-build/ckeditor.js<?= $ckeditorCacheBuster ?>',
+            'https://cdn.ckeditor.com/ckeditor5/43.2.2/super-build/translations/pt-br.js<?= $ckeditorCacheBuster ?>'
         ];
 
         const editorResources = {
@@ -94,10 +94,37 @@ $ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
             editor.model.insertContent(modelFragment, editor.model.document.selection);
         }
 
+        function resolveCkeditorApi() {
+            const root = window.CKEDITOR || {};
+            const core = root.core || {};
+            const ui = root.ui || {};
+            const utils = root.utils || {};
+            const dropdownUtils = ui.dropdownUtils || {};
+            const button = ui.button || {};
+
+            const Plugin = core.Plugin || root.Plugin;
+            const ButtonView = button.ButtonView || ui.ButtonView;
+            const createDropdown = dropdownUtils.createDropdown;
+            const addListToDropdown = dropdownUtils.addListToDropdown;
+            const Model = ui.Model || (button.ButtonView ? button.ButtonView.Model : undefined) || root.Model;
+            const Collection = utils.Collection || root.Collection;
+
+            if (!Plugin || !ButtonView || !createDropdown || !addListToDropdown || !Model || !Collection) {
+                console.error('CKEditor 5 não pôde ser inicializado: dependências indisponíveis.');
+                return null;
+            }
+
+            return { Plugin, ButtonView, createDropdown, addListToDropdown, Model, Collection };
+        }
+
         function registerPlugins() {
-            const { Plugin } = window.CKEDITOR5.core;
-            const { ButtonView, createDropdown, addListToDropdown, Model } = window.CKEDITOR5.ui;
-            const { Collection } = window.CKEDITOR5.utils;
+            const api = resolveCkeditorApi();
+
+            if (!api) {
+                return;
+            }
+
+            const { Plugin, ButtonView, createDropdown, addListToDropdown, Model, Collection } = api;
 
             class ImageToolsPlugin extends Plugin {
                 static get pluginName() { return 'ImageToolsPlugin'; }
@@ -156,7 +183,7 @@ $ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
                     const openImageLibraryDialog = () => {
                         const body = `
                             <div class="ck-library-actions">
-                                <button type="button" class="ck ck-button ck-button_with-text" id="ck-image-upload-trigger">Enviar imagem</button>
+                                <button type="button" class="ck ck-button ck-button_with-text ck-button_action" id="ck-image-upload-trigger">Enviar imagem</button>
                                 <div class="ck-text-muted" id="ck-image-library-status">Carregando Biblioteca de Imagens...</div>
                             </div>
                             <div class="ck-image-grid" id="ck-image-library-list"></div>
@@ -316,6 +343,7 @@ $ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
 
                 showTemplateDialog(editor) {
                     const body = `
+                        <p class="ck-text-muted">Busque pelo nome ou descrição e visualize o conteúdo antes de inserir.</p>
                         <div class="ck-form-row">
                             <label class="ck-form-label">Buscar template</label>
                             <input type="search" class="ck ck-input" id="ck-template-search" placeholder="Filtrar por nome ou descrição">
@@ -348,18 +376,28 @@ $ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
                         }
 
                         templates.forEach((tpl) => {
+                            const textPreview = (tpl.html_content || '')
+                                .replace(/<[^>]+>/g, ' ')
+                                .replace(/\s+/g, ' ')
+                                .trim()
+                                .slice(0, 140);
+
                             const item = document.createElement('button');
                             item.type = 'button';
                             item.className = 'ck-template-card ck ck-button ck-button_with-text';
                             item.innerHTML = `
                                 <div class="ck-template-title">${tpl.name}</div>
                                 <div class="ck-text-muted">${tpl.description || 'Sem descrição'}</div>
+                                <div class="ck-template-snippet">${textPreview || 'Prévia indisponível'}</div>
                             `;
                             item.addEventListener('click', function () {
                                 listEl.querySelectorAll('.ck-template-card').forEach((el) => el.classList.remove('is-active'));
                                 this.classList.add('is-active');
                                 selectedHtml = tpl.html_content || '';
                                 previewEl.innerHTML = tpl.html_content || '<div class="ck-text-muted">Sem conteúdo para exibir.</div>';
+                            });
+                            item.addEventListener('dblclick', function () {
+                                listEl.querySelector('.ck-modal__confirm')?.click();
                             });
                             listEl.appendChild(item);
                         });
@@ -415,8 +453,6 @@ $ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
 
                 init() {
                     const editor = this.editor;
-                    const { ButtonView, createDropdown, addListToDropdown, Model } = window.CKEDITOR5.ui;
-                    const { Collection } = window.CKEDITOR5.utils;
 
                     editor.ui.componentFactory.add('Tags', (locale) => {
                         const dropdown = createDropdown(locale);
@@ -465,7 +501,9 @@ $ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
         }
 
         function initializeCkeditor() {
-            if (!window.ClassicEditor || !window.CKEDITOR5) {
+            const EditorConstructor = window.CKEDITOR?.ClassicEditor || window.ClassicEditor;
+
+            if (!EditorConstructor) {
                 console.error('CKEditor 5 não pôde ser carregado.');
                 return;
             }
@@ -477,16 +515,16 @@ $ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
                 .ck-editor__editable_inline { min-height: <?= (int) $height ?>px; }
                 .ck-modal { position: fixed; inset: 0; z-index: 1050; display: flex; align-items: center; justify-content: center; }
                 .ck-modal__backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.35); }
-                .ck-modal__dialog { position: relative; background: #fff; border-radius: 12px; box-shadow: 0 6px 30px rgba(0,0,0,.15); padding: 16px; width: min(960px, 94vw); max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; }
+                .ck-modal__dialog { position: relative; background: #fff; border-radius: 12px; box-shadow: 0 6px 30px rgba(0,0,0,.15); padding: 16px; width: min(1140px, 96vw); max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; }
                 .ck-modal__header { margin-bottom: 12px; }
                 .ck-modal__title { margin: 0; font-size: 18px; }
                 .ck-modal__body { overflow: auto; flex: 1 1 auto; padding: 8px 0; }
                 .ck-modal__footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
                 .ck-form-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
                 .ck-form-label { font-weight: 600; }
-                .ck-image-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; max-height: 420px; overflow: auto; }
-                .ck-image-card { text-align: left; height: 230px; padding: 0; border: 1px solid #e4e4e4; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; align-items: stretch; }
-                .ck-image-card__thumb { flex: 1 1 auto; background-size: cover; background-position: center; min-height: 140px; }
+                .ck-image-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); grid-auto-rows: 1fr; gap: 12px; max-height: 420px; overflow: auto; align-items: stretch; }
+                .ck-image-card { text-align: left; height: 260px; padding: 0; border: 1px solid #e4e4e4; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; align-items: stretch; }
+                .ck-image-card__thumb { flex: 1 1 auto; background-size: cover; background-position: center; min-height: 160px; }
                 .ck-image-card__meta { padding: 10px; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; width: 100%; }
                 .ck-image-card.is-active { outline: 2px solid #0d6efd; }
                 .ck-text-muted { color: #6c757d; font-size: 12px; }
@@ -496,8 +534,9 @@ $ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
                 .ck-template-card { text-align: left; width: 100%; border: 1px solid transparent; justify-content: flex-start; }
                 .ck-template-card.is-active { border-color: #0d6efd; box-shadow: 0 0 0 0.2rem rgba(13,110,253,.15); }
                 .ck-template-title { font-weight: 600; margin-bottom: 4px; }
-                .ck-template-preview { border: 1px solid #e4e4e4; border-radius: 8px; padding: 12px; overflow: auto; background: #fafafa; }
+                .ck-template-preview { border: 1px solid #e4e4e4; border-radius: 8px; padding: 12px; overflow: auto; background: #fafafa; min-height: 200px; }
                 .ck-template-replace { gap: 8px; align-items: center; }
+                .ck-template-snippet { font-size: 12px; color: #495057; text-align: left; margin-top: 4px; line-height: 1.3; }
                 .ck-editor--fullscreen { position: fixed !important; inset: 0; z-index: 1200; background: #fff; padding: 16px; }
                 .ck-editor--fullscreen .ck-editor__editable { min-height: calc(100vh - 120px); }
                 .ck-editor-body-lock { overflow: hidden; }
@@ -505,7 +544,7 @@ $ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
             document.head.appendChild(styles);
 
             document.querySelectorAll('<?= $selectorJs ?>').forEach(function (element) {
-                ClassicEditor.create(element, {
+                EditorConstructor.create(element, {
                     language: 'pt-br',
                     extraPlugins: window.CustomCkeditorPlugins,
                     toolbar: {
