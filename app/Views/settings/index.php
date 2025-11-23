@@ -45,7 +45,11 @@
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save"></i> Salvar Configurações
                 </button>
-                <button type="button" class="btn btn-outline-secondary" id="btnSesLimits">
+                <button
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    id="btnSesLimits"
+                    data-ses-url="<?= base_url('settings/ses-limits') ?>">
                     <i class="fas fa-sync"></i> Consultar limites SES
                 </button>
             </div>
@@ -62,35 +66,5 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
-$(function() {
-    $('#btnSesLimits').on('click', function() {
-        const button = $(this);
-        button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Consultando...');
-
-        $.getJSON('<?= base_url('settings/ses-limits') ?>')
-            .done(function(response) {
-                if (response.success === false) {
-                    $('#sesLimits').html('<div class="alert alert-danger">' + response.message + '</div>');
-                    return;
-                }
-
-                $('#sesLimits').html(`
-                    <div class="row">
-                        <div class="col-md-3"><strong>Limite 24h:</strong> ${response.max24HourSend}</div>
-                        <div class="col-md-3"><strong>Taxa Máxima:</strong> ${response.maxSendRate}</div>
-                        <div class="col-md-3"><strong>Enviados 24h:</strong> ${response.sentLast24Hours}</div>
-                        <div class="col-md-3"><strong>Restante:</strong> ${response.remaining}</div>
-                    </div>
-                `);
-            })
-            .fail(function() {
-                $('#sesLimits').html('<div class="alert alert-danger">Erro ao consultar limites.</div>');
-            })
-            .always(function() {
-                button.prop('disabled', false).html('<i class="fas fa-sync"></i> Consultar limites SES');
-            });
-    });
-});
-</script>
+<script src="<?= base_url('assets/js/settings-limits.js') ?>" defer></script>
 <?= $this->endSection() ?>
