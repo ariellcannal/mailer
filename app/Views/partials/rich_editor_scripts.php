@@ -14,5 +14,7 @@ $height = $height ?? 500;
      data-file-list-url="<?= base_url('files/list') ?>"
      data-file-upload-url="<?= base_url('files/upload') ?>">
 </div>
-<script src="<?= base_url('assets/ckeditor5/ckeditor.js') ?>" defer></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/47.2.0/super-build/ckeditor.js" defer></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/47.2.0/super-build/translations/pt-br.js" defer></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/47.2.0/super-build/adapters/jquery.js" defer></script>
 <script src="<?= base_url('assets/js/rich-editor.js') ?>" defer></script>
