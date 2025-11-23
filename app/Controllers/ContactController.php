@@ -163,9 +163,12 @@ class ContactController extends BaseController {
             ->select('contact_lists.*')
             ->findAll();
 
+        $sends = $model->getContactSends((int) $id);
+
         return view('contacts/view', [
             'contact' => $contact,
             'lists' => $lists,
+            'sends' => $sends,
             'activeMenu' => 'contacts',
             'pageTitle' => $contact['name'] ?: $contact['email']
         ]);
