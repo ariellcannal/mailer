@@ -9,7 +9,10 @@
             <div class="alert alert-danger"><?= esc(session('error')) ?></div>
         <?php endif; ?>
 
-        <form action="<?= base_url('messages/update/' . $message['id']) ?>" method="POST">
+        <form
+            action="<?= base_url('messages/update/' . $message['id']) ?>"
+            method="POST"
+            data-sync-rich-editor="true">
             <?= csrf_field() ?>
 
             <div class="row">
@@ -205,16 +208,5 @@
     'selector' => 'textarea[name="html_content"]',
     'height' => 600,
 ]) ?>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const form = document.querySelector('form');
-        if (form) {
-            form.addEventListener('submit', function() {
-                if (typeof window.syncRichEditors === 'function') {
-                    window.syncRichEditors();
-                }
-            });
-        }
-    });
-</script>
+<script src="<?= base_url('assets/js/editor-sync.js') ?>" defer></script>
 <?= $this->endSection() ?>

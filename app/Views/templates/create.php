@@ -15,7 +15,11 @@
             </div>
         <?php endif; ?>
 
-        <form id="templateForm" action="<?= base_url('templates/store') ?>" method="POST">
+        <form
+            id="templateForm"
+            action="<?= base_url('templates/store') ?>"
+            method="POST"
+            data-sync-rich-editor="true">
             <?= csrf_field() ?>
 
             <div class="mb-3">
@@ -63,44 +67,6 @@
     'selector' => 'textarea[name="html_content"]',
     'height' => 500,
 ]) ?>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const form = document.getElementById('templateForm');
-        const htmlField = form ? form.querySelector('textarea[name="html_content"]') : null;
-        const feedback = document.getElementById('htmlContentFeedback');
-
-        const validateHtmlContent = function () {
-            if (typeof window.syncRichEditors === 'function') {
-                window.syncRichEditors();
-            }
-
-            if (!htmlField) {
-                return true;
-            }
-
-            const value = (htmlField.value || '').trim();
-
-            if (value === '') {
-                if (feedback) {
-                    feedback.classList.remove('d-none');
-                }
-                return false;
-            }
-
-            if (feedback) {
-                feedback.classList.add('d-none');
-            }
-
-            return true;
-        };
-
-        if (form) {
-            form.addEventListener('submit', function(event) {
-                if (!validateHtmlContent()) {
-                    event.preventDefault();
-                }
-            });
-        }
-    });
-</script>
+<script src="<?= base_url('assets/js/template-form.js') ?>" defer></script>
+<script src="<?= base_url('assets/js/editor-sync.js') ?>" defer></script>
 <?= $this->endSection() ?>

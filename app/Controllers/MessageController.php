@@ -100,10 +100,6 @@ class MessageController extends BaseController {
             return redirect()->to('/messages')->with('error', 'Mensagem não encontrada');
         }
 
-        if (in_array($message['status'], ['sending', 'sent'], true)) {
-            return redirect()->to('/messages')->with('error', 'Mensagens em envio ou já enviadas não podem ser editadas.');
-        }
-
         $sendModel = new MessageSendModel();
         $campaignModel = new CampaignModel();
 
