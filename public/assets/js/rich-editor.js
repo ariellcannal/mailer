@@ -280,12 +280,12 @@
 
             buildToolbar(items = []) {
                 const toolbar = document.createElement('div');
-                toolbar.className = 'ck-fallback-toolbar ck-fallback-toolbar-advanced';
+                toolbar.className = 'ck ck-reset ck-toolbar ck-toolbar_grouping ck-rounded-corners ck-fallback-toolbar ck-fallback-toolbar-advanced';
 
                 const actionMap = {
                     undo: () => document.execCommand('undo'),
                     redo: () => document.execCommand('redo'),
-                    findAndReplace: () => alert('Buscar/Substituir não disponível no modo offline.'),
+                    findAndReplace: null,
                     selectAll: () => document.execCommand('selectAll'),
                     heading: () => document.execCommand('formatBlock', false, 'h2'),
                     style: () => document.execCommand('formatBlock', false, 'p'),
@@ -319,8 +319,8 @@
                         if (url) { document.execCommand('createLink', false, url); }
                     },
                     blockQuote: () => document.execCommand('formatBlock', false, 'blockquote'),
-                    uploadImage: () => (typeof this.__openImageLibrary === 'function' ? this.__openImageLibrary() : alert('Envio de imagem indisponível.')),
-                    insertImage: () => (typeof this.__openImageLibrary === 'function' ? this.__openImageLibrary() : alert('Envio de imagem indisponível.')),
+                    uploadImage: () => (typeof this.__openImageLibrary === 'function' ? this.__openImageLibrary() : null),
+                    insertImage: () => (typeof this.__openImageLibrary === 'function' ? this.__openImageLibrary() : null),
                     mediaEmbed: () => {
                         const url = prompt('URL do conteúdo de mídia');
                         if (url) { document.execCommand('insertHTML', false, `<iframe src="${url}" style="width:100%;height:320px;" allowfullscreen></iframe>`); }
@@ -328,7 +328,7 @@
                     insertTable: () => this.insertTable(),
                     horizontalLine: () => document.execCommand('insertHorizontalRule'),
                     pageBreak: () => document.execCommand('insertHorizontalRule'),
-                    specialCharacters: () => alert('Seleção de caracteres especiais indisponível no modo offline.'),
+                    specialCharacters: null,
                     codeBlock: () => document.execCommand('formatBlock', false, 'pre'),
                     alignment: () => document.execCommand('justifyLeft'),
                     outdent: () => document.execCommand('outdent'),
@@ -336,38 +336,42 @@
                     bulletedList: () => document.execCommand('insertUnorderedList'),
                     numberedList: () => document.execCommand('insertOrderedList'),
                     todoList: () => document.execCommand('insertUnorderedList'),
-                    sourceEditing: () => alert('Edição de código-fonte não disponível no modo offline.')
+                    sourceEditing: null
                 };
 
                 const createButton = (label, command, icon) => {
                     const button = document.createElement('button');
                     button.type = 'button';
-                    button.className = 'ck-fallback-button';
-                    button.innerHTML = icon ? `<img alt="" src="${icon}"> <span>${label}</span>` : label;
+                    button.className = 'ck ck-button ck-button_with-text ck-rounded-corners ck-fallback-button';
+                    button.innerHTML = icon ? `<img alt="" src="${icon}" class="ck-fallback-icon"> <span>${label}</span>` : label;
                     button.title = label;
-                    button.addEventListener('click', () => {
-                        this.__editable.focus();
-                        if (typeof command === 'function') {
+                    if (typeof command === 'function') {
+                        button.addEventListener('click', () => {
+                            this.__editable.focus();
                             command();
-                        }
-                    });
+                        });
+                    } else {
+                        button.classList.add('ck-disabled');
+                        button.disabled = true;
+                        button.title = `${label} indisponível offline`;
+                    }
                     toolbar.appendChild(button);
                 };
 
                 const renderDropdown = (dropdown) => {
                     const wrapper = document.createElement('div');
-                    wrapper.className = 'ck-fallback-dropdown';
+                    wrapper.className = 'ck ck-dropdown ck-rounded-corners ck-fallback-dropdown';
                     const button = document.createElement('button');
                     button.type = 'button';
-                    button.className = 'ck-fallback-button';
-                    button.innerHTML = dropdown.buttonView.icon ? `<img alt="" src="${dropdown.buttonView.icon}"> <span>${dropdown.buttonView.label}</span>` : dropdown.buttonView.label;
+                    button.className = 'ck ck-button ck-button_with-text ck-rounded-corners ck-fallback-button';
+                    button.innerHTML = dropdown.buttonView.icon ? `<img alt="" src="${dropdown.buttonView.icon}" class="ck-fallback-icon"> <span>${dropdown.buttonView.label}</span>` : dropdown.buttonView.label;
                     const menu = document.createElement('div');
-                    menu.className = 'ck-fallback-dropdown__menu';
+                    menu.className = 'ck ck-toolbar ck-toolbar_grouping ck-fallback-dropdown__menu';
                     dropdown.items.forEach((item) => {
                         if (item.model) {
                             const option = document.createElement('button');
                             option.type = 'button';
-                            option.className = 'ck-fallback-button';
+                            option.className = 'ck ck-button ck-button_with-text ck-rounded-corners ck-fallback-button';
                             option.textContent = item.model.label;
                             option.addEventListener('click', () => item.model.fire('execute'));
                             menu.appendChild(option);
