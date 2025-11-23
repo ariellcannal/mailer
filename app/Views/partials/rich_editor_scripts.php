@@ -9,6 +9,7 @@ $ckeditorCacheBuster = '';
     <script>
         window.richEditorEngine = 'ckeditor';
         window.richEditorInstances = [];
+        window.richFallbackEditors = [];
 
         const ckeditorBundles = [
             {
@@ -18,6 +19,10 @@ $ckeditorCacheBuster = '';
             {
                 js: 'https://cdn.jsdelivr.net/npm/@ckeditor/ckeditor5-build-classic@47.2.0/build/ckeditor.js<?= $ckeditorCacheBuster ?>',
                 lang: 'https://cdn.jsdelivr.net/npm/@ckeditor/ckeditor5-build-classic@47.2.0/build/translations/pt-br.js<?= $ckeditorCacheBuster ?>'
+            },
+            {
+                js: '<?= base_url('assets/ckeditor5/ckeditor.js') ?>',
+                lang: '<?= base_url('assets/ckeditor5/translations/pt-br.js') ?>'
             }
         ];
 
@@ -104,9 +109,98 @@ $ckeditorCacheBuster = '';
         }
 
         function insertHtml(editor, html) {
-            const viewFragment = editor.data.processor.toView(html);
-            const modelFragment = editor.data.toModel(viewFragment);
-            editor.model.insertContent(modelFragment, editor.model.document.selection);
+            if (editor?.data?.processor && editor?.model) {
+                const viewFragment = editor.data.processor.toView(html);
+                const modelFragment = editor.data.toModel(viewFragment);
+                editor.model.insertContent(modelFragment, editor.model.document.selection);
+                return;
+            }
+
+            if (editor?.__fallbackElement) {
+                editor.__fallbackElement.focus();
+                document.execCommand('insertHTML', false, html);
+                return;
+            }
+        }
+
+        function createFallbackEditor(element) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'ck-fallback-wrapper';
+
+            const toolbar = document.createElement('div');
+            toolbar.className = 'ck ck-toolbar ck-toolbar_grouping mb-2';
+
+            const editable = document.createElement('div');
+            editable.className = 'ck ck-editor__editable ck-editor__editable_inline form-control';
+            editable.contentEditable = 'true';
+            editable.style.minHeight = '<?= (int) $height ?>px';
+            editable.innerHTML = element.value;
+
+            element.style.display = 'none';
+            wrapper.appendChild(toolbar);
+            wrapper.appendChild(editable);
+            element.parentNode.insertBefore(wrapper, element.nextSibling);
+
+            const adapter = {
+                __fallbackElement: editable,
+                setData(html) { editable.innerHTML = html; },
+                getData() { return editable.innerHTML; },
+                updateSourceElement() { element.value = editable.innerHTML; }
+            };
+
+            const addButton = function (label, icon, onClick) {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'ck ck-button ck-button_with-text';
+                button.innerHTML = `<span class="ck ck-button__icon"><img src="${icon}" alt=""></span><span class="ck ck-button__label">${label}</span>`;
+                button.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    onClick();
+                });
+                toolbar.appendChild(button);
+            };
+
+            addButton('Imagens', imageDropdownIcon, function () {
+                insertHtml(adapter, '');
+                const modal = createCkModal('Imagens', '<div class="ck-text-muted">Use a opção de upload, URL ou Banco de Imagens.</div>', { showCancel: false });
+                modal.modal.querySelector('.ck-modal__confirm').addEventListener('click', modal.close);
+            });
+
+            addButton('Banco de Imagens', imageLibraryIcon, function () {
+                if (!window.CustomCkeditorPlugins?.length) {
+                    alert('Biblioteca de imagens indisponível sem o CKEditor carregado.');
+                    return;
+                }
+                registerPlugins();
+                const fakeEditor = { ...adapter, model: null, data: {} };
+                const api = resolveCkeditorApi();
+                if (api) {
+                    const plugin = new window.CustomCkeditorPlugins[0](fakeEditor);
+                    plugin.init?.();
+                }
+            });
+
+            addButton('Templates', templateIcon, function () {
+                if (!window.CustomCkeditorPlugins?.length) {
+                    alert('Listagem de templates indisponível sem o CKEditor carregado.');
+                    return;
+                }
+                registerPlugins();
+                const fakeEditor = adapter;
+                const plugin = new window.CustomCkeditorPlugins[1](fakeEditor);
+                plugin.init?.();
+            });
+
+            addButton('Tags', tagsIcon, function () {
+                insertHtml(adapter, '{{nome}}');
+            });
+
+            addButton('Tela cheia', fullscreenIcon, function () {
+                wrapper.classList.toggle('ck-editor--fullscreen');
+                document.body.classList.toggle('ck-editor-body-lock', wrapper.classList.contains('ck-editor--fullscreen'));
+            });
+
+            window.richFallbackEditors.push(adapter);
         }
 
         function resolveCkeditorApi() {
@@ -520,6 +614,7 @@ $ckeditorCacheBuster = '';
 
             if (!EditorConstructor) {
                 console.error('CKEditor 5 não pôde ser carregado.');
+                document.querySelectorAll('<?= $selectorJs ?>').forEach(createFallbackEditor);
                 return;
             }
 
@@ -590,11 +685,15 @@ $ckeditorCacheBuster = '';
         document.addEventListener('DOMContentLoaded', function () {
             loadCkeditorBundle()
                 .then(function () { initializeCkeditor(); })
-                .catch(function (error) { console.error('CKEditor 5 não pôde ser carregado.', error); });
+                .catch(function (error) {
+                    console.error('CKEditor 5 não pôde ser carregado.', error);
+                    document.querySelectorAll('<?= $selectorJs ?>').forEach(createFallbackEditor);
+                });
         });
 
         window.syncRichEditors = function () {
             window.richEditorInstances.forEach(function (instance) { instance.updateSourceElement?.(); });
+            window.richFallbackEditors.forEach(function (instance) { instance.updateSourceElement?.(); });
         };
 
         window.insertRichText = function (text) {
@@ -602,13 +701,13 @@ $ckeditorCacheBuster = '';
         };
 
         window.insertRichHtml = function (html) {
-            const editor = window.richEditorInstances[0];
+            const editor = window.richEditorInstances[0] || window.richFallbackEditors[0];
             if (!editor) { return; }
             insertHtml(editor, html);
         };
 
         window.getRichEditorData = function () {
-            const editor = window.richEditorInstances[0];
+            const editor = window.richEditorInstances[0] || window.richFallbackEditors[0];
             return editor ? editor.getData() : '';
         };
     </script>
