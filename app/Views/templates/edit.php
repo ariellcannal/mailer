@@ -63,7 +63,6 @@
 
 <?= $this->section('scripts') ?>
 <?= view('partials/rich_editor_scripts', [
-    'editorEngine' => $editorEngine ?? 'ckeditor',
     'selector' => 'textarea[name="html_content"]',
     'height' => 500,
 ]) ?>
