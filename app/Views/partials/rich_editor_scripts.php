@@ -4,15 +4,21 @@
 $selector = $selector ?? '.js-rich-editor';
 $selectorJs = addslashes($selector);
 $height = $height ?? 500;
-$ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
+$ckeditorCacheBuster = '';
 ?>
     <script>
         window.richEditorEngine = 'ckeditor';
         window.richEditorInstances = [];
 
-        const ckeditorSources = [
-            'https://cdn.ckeditor.com/ckeditor5/47.2.0/super-build/ckeditor.js<?= $ckeditorCacheBuster ?>',
-            'https://cdn.ckeditor.com/ckeditor5/47.2.0/super-build/translations/pt-br.js<?= $ckeditorCacheBuster ?>'
+        const ckeditorBundles = [
+            {
+                js: 'https://cdn.ckeditor.com/ckeditor5/47.2.0/super-build/ckeditor.js<?= $ckeditorCacheBuster ?>',
+                lang: 'https://cdn.ckeditor.com/ckeditor5/47.2.0/super-build/translations/pt-br.js<?= $ckeditorCacheBuster ?>'
+            },
+            {
+                js: 'https://cdn.jsdelivr.net/npm/@ckeditor/ckeditor5-build-classic@47.2.0/build/ckeditor.js<?= $ckeditorCacheBuster ?>',
+                lang: 'https://cdn.jsdelivr.net/npm/@ckeditor/ckeditor5-build-classic@47.2.0/build/translations/pt-br.js<?= $ckeditorCacheBuster ?>'
+            }
         ];
 
         const editorResources = {
@@ -41,6 +47,19 @@ $ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
             return sources.reduce(function (promise, source) {
                 return promise.then(function () { return loadCkeditorScript(source); });
             }, Promise.resolve());
+        }
+
+        function loadCkeditorBundle(index = 0) {
+            if (index >= ckeditorBundles.length) {
+                return Promise.reject(new Error('CKEditor 5 não pôde ser carregado de nenhuma origem.'));
+            }
+
+            const bundle = ckeditorBundles[index];
+
+            return loadCkeditorSequentially([bundle.js, bundle.lang])
+                .catch(function () {
+                    return loadCkeditorBundle(index + 1);
+                });
         }
 
         function createHiddenUploadInput() {
@@ -569,7 +588,7 @@ $ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
         }
 
         document.addEventListener('DOMContentLoaded', function () {
-            loadCkeditorSequentially(ckeditorSources)
+            loadCkeditorBundle()
                 .then(function () { initializeCkeditor(); })
                 .catch(function (error) { console.error('CKEditor 5 não pôde ser carregado.', error); });
         });

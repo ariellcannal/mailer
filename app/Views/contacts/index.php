@@ -25,6 +25,34 @@
             <div class="alert alert-danger"><?= esc(session('contacts_error')) ?></div>
         <?php endif; ?>
 
+        <form method="GET" action="<?= base_url('contacts') ?>" class="row g-2 mb-4 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Filtrar por e-mail</label>
+                <input type="text" name="email" value="<?= esc($filters['email']) ?>" class="form-control" placeholder="email@dominio.com">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Filtrar por nome</label>
+                <input type="text" name="name" value="<?= esc($filters['name']) ?>" class="form-control" placeholder="Nome do contato">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Qualidade</label>
+                <select name="quality_score" class="form-select">
+                    <option value="">Todas</option>
+                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                        <option value="<?= $i ?>" <?= (string) $filters['quality_score'] === (string) $i ? 'selected' : '' ?>><?= $i ?> estrela(s)</option>
+                    <?php endfor; ?>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> Filtrar
+                </button>
+                <a href="<?= base_url('contacts') ?>" class="btn btn-outline-secondary" title="Limpar filtros">
+                    <i class="fas fa-undo"></i>
+                </a>
+            </div>
+        </form>
+
         <?php if (!empty($lists)): ?>
         <form id="bulkListsForm" action="<?= base_url('contacts/bulk-assign') ?>" method="POST" class="mb-3">
             <?= csrf_field() ?>
@@ -109,10 +137,10 @@
                                 </td>
                                 <td>
                                     <a href="<?= base_url('contacts/view/' . $contact['id']) ?>" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-eye"></i>
+                                        <i class="fas fa-eye"></i> Ver
                                     </a>
                                     <a href="<?= base_url('contacts/edit/' . $contact['id']) ?>" class="btn btn-sm btn-outline-secondary">
-                                        <i class="fas fa-edit"></i>
+                                        <i class="fas fa-edit"></i> Editar
                                     </a>
                                 </td>
                             </tr>
