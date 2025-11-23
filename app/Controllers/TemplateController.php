@@ -36,7 +36,6 @@ class TemplateController extends BaseController
         return view('templates/create', [
             'activeMenu' => 'templates',
             'pageTitle' => 'Novo Template',
-            'editorEngine' => 'ckeditor',
         ]);
     }
 
@@ -101,7 +100,6 @@ class TemplateController extends BaseController
             'template' => $template,
             'activeMenu' => 'templates',
             'pageTitle' => 'Editar Template',
-            'editorEngine' => 'ckeditor',
         ]);
     }
 

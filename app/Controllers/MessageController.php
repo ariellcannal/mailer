@@ -83,7 +83,6 @@ class MessageController extends BaseController {
             'contactLists' => $contactListModel->orderBy('name', 'ASC')->findAll(),
             'activeMenu' => 'messages',
             'pageTitle' => 'Nova Mensagem',
-            'editorEngine' => 'ckeditor',
             'selectedCampaignId' => $defaultCampaignId > 0 ? $defaultCampaignId : null,
         ]);
     }
@@ -177,7 +176,6 @@ class MessageController extends BaseController {
             'resendLocks' => $resendLocks,
             'activeMenu' => 'messages',
             'pageTitle' => 'Editar Mensagem',
-            'editorEngine' => 'ckeditor',
         ]);
     }
 
