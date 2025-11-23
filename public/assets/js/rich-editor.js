@@ -339,11 +339,15 @@
                     sourceEditing: null
                 };
 
-                const createButton = (label, command, icon) => {
+                const createButton = (label, command, icon, withText = true) => {
                     const button = document.createElement('button');
                     button.type = 'button';
                     button.className = 'ck ck-button ck-button_with-text ck-rounded-corners ck-fallback-button';
-                    button.innerHTML = icon ? `<img alt="" src="${icon}" class="ck-fallback-icon"> <span>${label}</span>` : label;
+                    if (icon) {
+                        button.innerHTML = withText ? `<img alt="" src="${icon}" class="ck-fallback-icon"> <span>${label}</span>` : `<img alt="${label}" src="${icon}" class="ck-fallback-icon">`;
+                    } else {
+                        button.innerHTML = label;
+                    }
                     button.title = label;
                     if (typeof command === 'function') {
                         button.addEventListener('click', () => {
@@ -364,7 +368,13 @@
                     const button = document.createElement('button');
                     button.type = 'button';
                     button.className = 'ck ck-button ck-button_with-text ck-rounded-corners ck-fallback-button';
-                    button.innerHTML = dropdown.buttonView.icon ? `<img alt="" src="${dropdown.buttonView.icon}" class="ck-fallback-icon"> <span>${dropdown.buttonView.label}</span>` : dropdown.buttonView.label;
+                    if (dropdown.buttonView.icon) {
+                        button.innerHTML = dropdown.buttonView.withText === false
+                            ? `<img alt="${dropdown.buttonView.label}" src="${dropdown.buttonView.icon}" class="ck-fallback-icon">`
+                            : `<img alt="" src="${dropdown.buttonView.icon}" class="ck-fallback-icon"> <span>${dropdown.buttonView.label}</span>`;
+                    } else {
+                        button.innerHTML = dropdown.buttonView.label;
+                    }
                     const menu = document.createElement('div');
                     menu.className = 'ck ck-toolbar ck-toolbar_grouping ck-fallback-dropdown__menu';
                     dropdown.items.forEach((item) => {
@@ -396,7 +406,7 @@
                         if (view instanceof Dropdown) {
                             renderDropdown(view);
                         } else if (view instanceof ButtonView) {
-                            createButton(view.label, () => view.fire('execute'), view.icon);
+                            createButton(view.label, () => view.fire('execute'), view.icon, view.withText);
                             view.on('execute', () => view.fire('execute'));
                         }
                         return;
@@ -568,7 +578,7 @@
 
             editor.ui.componentFactory.add('Imagens', (locale) => {
                 const dropdown = dropdownUtils.createDropdown(locale);
-                dropdown.buttonView.set({ label: 'Imagens', icon: icons.images, tooltip: 'Inserir imagem' });
+                dropdown.buttonView.set({ label: 'Imagens', icon: icons.images, tooltip: 'Inserir imagem', withText: false });
                 const options = new CKEDITOR_NS.utils.Collection(
                     [
                         { id: 'upload', label: 'Enviar Imagem (Upload)', action: addUpload },
@@ -593,7 +603,7 @@
             const editor = this.editor;
             editor.ui.componentFactory.add('BancoImagens', (locale) => {
                 const button = new CKEDITOR_NS.ui.button.ButtonView(locale);
-                button.set({ label: 'Banco de Imagens', icon: icons.library, tooltip: 'Abrir Banco de Imagens' });
+                button.set({ label: 'Banco de Imagens', icon: icons.library, tooltip: 'Abrir Banco de Imagens', withText: false });
                 button.on('execute', () => {
                     if (typeof editor.__openImageLibrary === 'function') {
                         editor.__openImageLibrary();
@@ -611,7 +621,7 @@
             const editor = this.editor;
             editor.ui.componentFactory.add('Templates', (locale) => {
                 const button = new CKEDITOR_NS.ui.button.ButtonView(locale);
-                button.set({ label: 'Templates', icon: icons.templates, tooltip: 'Inserir template' });
+                button.set({ label: 'Templates', icon: icons.templates, tooltip: 'Inserir template', withText: false });
                 button.on('execute', () => this.openTemplateModal(editor));
                 return button;
             });
@@ -709,7 +719,7 @@
             const dropdownUtils = CKEDITOR_NS.ui.dropdownUtils;
             editor.ui.componentFactory.add('Tags', (locale) => {
                 const dropdown = dropdownUtils.createDropdown(locale);
-                dropdown.buttonView.set({ label: 'TAGs', icon: icons.tags, tooltip: 'Inserir TAG' });
+                dropdown.buttonView.set({ label: 'TAGs', icon: icons.tags, tooltip: 'Inserir TAG', withText: false });
                 const tags = [
                     { label: 'Nome', html: '{{nome}}' },
                     { label: 'E-mail', html: '{{email}}' },
@@ -734,7 +744,7 @@
             const editor = this.editor;
             editor.ui.componentFactory.add('TelaCheia', (locale) => {
                 const button = new CKEDITOR_NS.ui.button.ButtonView(locale);
-                button.set({ label: 'Tela cheia', icon: icons.fullscreen, tooltip: 'Expandir editor' });
+                button.set({ label: 'Tela cheia', icon: icons.fullscreen, tooltip: 'Expandir editor', withText: false });
                 button.on('execute', () => {
                     const wrapper = editor.ui.getEditableElement()?.closest('.ck-editor');
                     if (!wrapper) { return; }
