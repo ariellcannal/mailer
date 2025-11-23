@@ -1,52 +1,8 @@
 <?= $this->extend('layouts/main') ?>
 
 <?= $this->section('styles') ?>
-<style>
-.step-wizard {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 30px;
-}
-.step {
-    flex: 1;
-    text-align: center;
-    padding: 15px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    margin: 0 5px;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-.step.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-}
-.step.completed {
-    background: #28a745;
-    color: white;
-}
-
-.editor-panel {
-    border: 1px solid #e9ecef;
-}
-
-.editor-panel .card-body {
-    background: #fff;
-}
-
-.editor-fullscreen {
-    position: fixed;
-    inset: 0;
-    z-index: 1080;
-    background: #fff;
-    padding: 1.5rem;
-    overflow-y: auto;
-}
-
-.editor-fullscreen .editor-panel {
-    height: calc(100vh - 180px);
-}
-</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+<link rel="stylesheet" href="<?= base_url('assets/css/message-wizard.css') ?>">
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
@@ -79,7 +35,11 @@
             </div>
         </div>
         
-        <form id="messageForm">
+        <form
+            id="messageForm"
+            data-store-url="<?= base_url('messages/store') ?>"
+            data-index-url="<?= base_url('messages') ?>"
+            data-contacts-url="<?= base_url('contact-lists/buscar-contatos') ?>">
             <!-- Step 1: Informações Básicas -->
             <div class="step-content" data-step="1">
                 <div class="row">
@@ -152,20 +112,7 @@
 
                         <div id="editorCreatePanel" class="editor-panel card shadow-sm">
                             <div class="card-body">
-                                <div class="btn-toolbar mb-3">
-                                    <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="insertVariable('{{nome}}')">
-                                        <i class="fas fa-user"></i> Inserir Nome
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="insertVariable('{{email}}')">
-                                        <i class="fas fa-envelope"></i> Inserir Email
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-warning me-2" onclick="insertWebviewLink()">
-                                        <i class="fas fa-external-link-alt"></i> Link Visualização
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="insertOptoutLink()">
-                                        <i class="fas fa-times-circle"></i> Link Opt-out *
-                                    </button>
-                                </div>
+                                <div class="text-muted small mb-2">Use a barra do CKEditor para inserir templates, imagens, tags e expandir para tela cheia.</div>
                                 <textarea id="messageEditor" name="html_content" class="form-control js-rich-editor" rows="15" required><?= old('html_content') ?></textarea>
                             </div>
                         </div>
@@ -327,240 +274,12 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <?= view('partials/rich_editor_scripts', [
-    'editorEngine' => $editorEngine ?? 'tinymce',
+    'editorEngine' => $editorEngine ?? 'ckeditor',
     'selector' => '#messageEditor',
     'height' => 600,
 ]) ?>
-<script>
-let currentStep = 1;
-
-function nextStep() {
-    if (currentStep === 2 && typeof window.syncRichEditors === 'function') {
-        window.syncRichEditors();
-    }
-
-    const listasSelecionadas = $('#contactListSelect').val() || [];
-    const nenhumaListaDisponivel = $('#contactListSelect option').length === 0;
-
-    if (currentStep === 3 && !nenhumaListaDisponivel && listasSelecionadas.length === 0) {
-        alertify.error('Selecione pelo menos uma lista de contato.');
-        return;
-    }
-
-    $('.step-content[data-step="' + currentStep + '"]').hide();
-    $('.step[data-step="' + currentStep + '"]').removeClass('active').addClass('completed');
-
-    currentStep++;
-
-    if (currentStep === 4) {
-        updateScheduleSummary();
-    }
-
-    $('.step-content[data-step="' + currentStep + '"]').show();
-    $('.step[data-step="' + currentStep + '"]').addClass('active');
-}
-
-function prevStep() {
-    $('.step-content[data-step="' + currentStep + '"]').hide();
-    $('.step[data-step="' + currentStep + '"]').removeClass('active');
-
-    currentStep--;
-
-    $('.step-content[data-step="' + currentStep + '"]').show();
-    $('.step[data-step="' + currentStep + '"]').removeClass('completed').addClass('active');
-}
-
-function insertVariable(variable) {
-    if (typeof window.insertRichText === 'function') {
-        window.insertRichText(variable);
-    }
-}
-
-function insertWebviewLink() {
-    const html = '<a href="{{webview_link}}" style="color: #999; font-size: 12px;">Clique aqui se não estiver visualizando corretamente</a>';
-
-    if (typeof window.insertRichHtml === 'function') {
-        window.insertRichHtml(html);
-        alertify.success('Link de visualização inserido!');
-    }
-}
-
-function insertOptoutLink() {
-    const html = '<p style="text-align: center; margin-top: 20px;"><a href="{{optout_link}}" style="color: #666; font-size: 12px;">Descadastrar</a></p>';
-
-    if (typeof window.insertRichHtml === 'function') {
-        window.insertRichHtml(html);
-        alertify.success('Link de opt-out inserido!');
-    }
-}
-
-function switchEditorMode(mode) {
-    if (mode !== 'create' && mode !== 'preview') {
-        return;
-    }
-
-    if (mode === 'preview') {
-        renderEditorPreview();
-    }
-
-    document.getElementById('editorModeCreate').classList.toggle('active', mode === 'create');
-    document.getElementById('editorModePreview').classList.toggle('active', mode === 'preview');
-
-    document.getElementById('editorCreatePanel').classList.toggle('d-none', mode !== 'create');
-    document.getElementById('editorPreviewPanel').classList.toggle('d-none', mode !== 'preview');
-}
-
-function renderEditorPreview() {
-    if (typeof window.syncRichEditors === 'function') {
-        window.syncRichEditors();
-    }
-
-    const previewElement = document.getElementById('editorPreviewContent');
-    if (!previewElement) {
-        return;
-    }
-
-    let fallbackContent = '';
-    const messageElement = document.getElementById('messageEditor');
-    if (messageElement) {
-        fallbackContent = messageElement.value;
-    }
-
-    const content = typeof window.getRichEditorData === 'function'
-        ? window.getRichEditorData()
-        : fallbackContent;
-
-    previewElement.innerHTML = content || '<p class="text-muted">Nenhum conteúdo para pré-visualizar.</p>';
-}
-
-function toggleEditorFullscreen() {
-    const wrapper = document.getElementById('editorWrapper');
-    const toggleButton = document.getElementById('editorFullscreenToggle');
-
-    if (!wrapper || !toggleButton) {
-        return;
-    }
-
-    wrapper.classList.toggle('editor-fullscreen');
-
-    const icon = toggleButton.querySelector('i');
-    if (icon) {
-        icon.classList.toggle('fa-expand');
-        icon.classList.toggle('fa-compress');
-    }
-
-    toggleButton.classList.toggle('active');
-}
-
-function updateScheduleSummary() {
-    const selectedListsText = $('#selectedLists').text() || 'Nenhuma lista selecionada.';
-    const totalRecipients = $('#recipientTotal').text();
-    const scheduledAt = $('#scheduledAt').val();
-
-    const formattedSchedule = (() => {
-        if (!scheduledAt) {
-            return 'não definido';
-        }
-
-        const date = new Date(scheduledAt);
-
-        if (Number.isNaN(date.getTime())) {
-            return 'não definido';
-        }
-
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = String(date.getFullYear()).slice(-2);
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-
-        return `${day}/${month}/${year} ${hours}:${minutes}`;
-    })();
-
-    $('#scheduleSummary').html(`<strong>Resumo:</strong> ${selectedListsText}<br>Total estimado: <strong>${totalRecipients}</strong><br>Envio inicial: <strong>${formattedSchedule}</strong>`);
-}
-
-$('#messageForm').on('submit', function(e) {
-    e.preventDefault();
-
-    if (typeof window.syncRichEditors === 'function') {
-        window.syncRichEditors();
-    }
-
-    const formData = $(this).serialize();
-
-    $.ajax({
-        url: '<?= base_url('messages/store') ?>',
-        method: 'POST',
-        data: formData,
-        success: function(response) {
-            if (response.success) {
-                alertify.success('Mensagem salva com sucesso!');
-                setTimeout(() => {
-                    window.location.href = '<?= base_url('messages') ?>';
-                }, 1500);
-            } else {
-                alertify.error(response.error || 'Erro ao salvar mensagem');
-            }
-        },
-        error: function() {
-            alertify.error('Erro ao salvar mensagem');
-        }
-    });
-});
-
-$(function() {
-    $('#contactListSelect').select2({
-        width: '100%',
-        placeholder: $('#contactListSelect').data('placeholder') || 'Selecione as listas'
-    });
-
-    $('#contactListSelect').on('change', function() {
-        atualizarDestinatariosPorLista();
-        updateScheduleSummary();
-    });
-
-    $('#scheduledAt').on('change', function() {
-        updateScheduleSummary();
-    });
-
-    atualizarDestinatariosPorLista();
-    updateScheduleSummary();
-});
-
-function atualizarDestinatariosPorLista() {
-    const listasSelecionadas = $('#contactListSelect').val() || [];
-
-    if (listasSelecionadas.length === 0) {
-        $('#selectedLists').text('Nenhuma lista selecionada.');
-        $('#recipientTotal').text('0');
-        return;
-    }
-
-    $.ajax({
-        url: '<?= base_url('contact-lists/buscar-contatos') ?>',
-        method: 'POST',
-        data: { listas: listasSelecionadas },
-        success: function(response) {
-            if (!response.success) {
-                alertify.error(response.error || 'Não foi possível carregar os contatos.');
-                return;
-            }
-
-            const listaResumo = response.lists
-                .map(lista => `<span class="badge bg-secondary me-1 mb-1">${lista.name} (${lista.contacts})</span>`)
-                .join(' ');
-
-            $('#selectedLists').html(listaResumo || 'Nenhuma lista selecionada.');
-            $('#recipientTotal').text(response.total_contacts || 0);
-        },
-        error: function() {
-            alertify.error('Erro ao buscar contatos das listas.');
-        }
-    });
-}
-</script>
+<script src="<?= base_url('assets/js/messages-form.js') ?>" defer></script>
+<script src="<?= base_url('assets/js/editor-sync.js') ?>" defer></script>
 <?= $this->endSection() ?>

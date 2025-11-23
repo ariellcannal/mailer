@@ -1,5 +1,9 @@
 <?= $this->extend('layouts/main') ?>
 
+<?= $this->section('styles') ?>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="card">
     <div class="card-body">
@@ -24,6 +28,34 @@
         <?php if (session('contacts_error')): ?>
             <div class="alert alert-danger"><?= esc(session('contacts_error')) ?></div>
         <?php endif; ?>
+
+        <form method="GET" action="<?= base_url('contacts') ?>" class="row g-2 mb-4 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Filtrar por e-mail</label>
+                <input type="text" name="email" value="<?= esc($filters['email']) ?>" class="form-control" placeholder="email@dominio.com">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Filtrar por nome</label>
+                <input type="text" name="name" value="<?= esc($filters['name']) ?>" class="form-control" placeholder="Nome do contato">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Qualidade</label>
+                <select name="quality_score" class="form-select">
+                    <option value="">Todas</option>
+                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                        <option value="<?= $i ?>" <?= (string) $filters['quality_score'] === (string) $i ? 'selected' : '' ?>><?= $i ?> estrela(s)</option>
+                    <?php endfor; ?>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> Filtrar
+                </button>
+                <a href="<?= base_url('contacts') ?>" class="btn btn-outline-secondary" title="Limpar filtros">
+                    <i class="fas fa-undo"></i>
+                </a>
+            </div>
+        </form>
 
         <?php if (!empty($lists)): ?>
         <form id="bulkListsForm" action="<?= base_url('contacts/bulk-assign') ?>" method="POST" class="mb-3">
@@ -109,10 +141,10 @@
                                 </td>
                                 <td>
                                     <a href="<?= base_url('contacts/view/' . $contact['id']) ?>" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-eye"></i>
+                                        <i class="fas fa-eye"></i> Ver
                                     </a>
                                     <a href="<?= base_url('contacts/edit/' . $contact['id']) ?>" class="btn btn-sm btn-outline-secondary">
-                                        <i class="fas fa-edit"></i>
+                                        <i class="fas fa-edit"></i> Editar
                                     </a>
                                 </td>
                             </tr>
@@ -128,56 +160,7 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script>
-    $(function() {
-        $('.select2').each(function() {
-            const placeholder = $(this).data('placeholder') || 'Selecione';
-            $(this).select2({
-                width: '100%',
-                placeholder: placeholder,
-                allowClear: true
-            });
-        });
-
-        const toggleSelectAllNotice = function(visible) {
-            const notice = $('#selectAllNotice');
-            if (!notice.length) return;
-
-            if (visible) {
-                notice.removeClass('d-none');
-            } else {
-                notice.addClass('d-none');
-            }
-        };
-
-        $('#selectAll').on('change', function() {
-            const checked = $(this).is(':checked');
-            $('input.contact-checkbox').prop('checked', checked);
-            $('#selectAllFlag').val('0');
-
-            if (checked) {
-                toggleSelectAllNotice(true);
-            } else {
-                toggleSelectAllNotice(false);
-            }
-        });
-
-        $('#confirmSelectAll').on('click', function(e) {
-            e.preventDefault();
-            $('#selectAllFlag').val('1');
-            toggleSelectAllNotice(false);
-            $('input.contact-checkbox').prop('checked', true);
-        });
-
-        $('input.contact-checkbox').on('change', function() {
-            if (!$(this).is(':checked')) {
-                $('#selectAll').prop('checked', false);
-                $('#selectAllFlag').val('0');
-                toggleSelectAllNotice(false);
-            }
-        });
-    });
-</script>
+<script src="<?= base_url('assets/js/contacts-form.js') ?>" defer></script>
+<script src="<?= base_url('assets/js/contacts-index.js') ?>" defer></script>
 <?= $this->endSection() ?>

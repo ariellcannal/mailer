@@ -81,6 +81,13 @@ $routes->group('templates', function($routes) {
     $routes->get('edit/(:num)', 'TemplateController::edit/$1');
     $routes->post('update/(:num)', 'TemplateController::update/$1');
     $routes->post('delete/(:num)', 'TemplateController::delete/$1');
+    $routes->get('search', 'TemplateController::search');
+});
+
+// Gerenciador de arquivos
+$routes->group('files', function($routes) {
+    $routes->get('list', 'FileManagerController::list');
+    $routes->post('upload', 'FileManagerController::upload');
 });
 
 // Senders
@@ -118,6 +125,8 @@ $routes->get('queue/process', 'QueueController::process');
 
 // Auth routes (to be implemented)
 $routes->get('login', 'AuthController::login');
+$routes->post('login', 'AuthController::authenticate');
+$routes->post('register', 'AuthController::register');
 $routes->get('logout', 'AuthController::logout');
 $routes->get('auth/google', 'AuthController::google');
 $routes->get('auth/google/callback', 'AuthController::googleCallback');

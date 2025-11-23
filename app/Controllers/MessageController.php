@@ -83,7 +83,7 @@ class MessageController extends BaseController {
             'contactLists' => $contactListModel->orderBy('name', 'ASC')->findAll(),
             'activeMenu' => 'messages',
             'pageTitle' => 'Nova Mensagem',
-            'editorEngine' => get_system_setting('editor_engine', 'tinymce'),
+            'editorEngine' => 'ckeditor',
             'selectedCampaignId' => $defaultCampaignId > 0 ? $defaultCampaignId : null,
         ]);
     }
@@ -98,10 +98,6 @@ class MessageController extends BaseController {
 
         if (!$message) {
             return redirect()->to('/messages')->with('error', 'Mensagem não encontrada');
-        }
-
-        if (in_array($message['status'], ['sending', 'sent'], true)) {
-            return redirect()->to('/messages')->with('error', 'Mensagens em envio ou já enviadas não podem ser editadas.');
         }
 
         $sendModel = new MessageSendModel();
@@ -150,6 +146,10 @@ class MessageController extends BaseController {
             return redirect()->to('/messages')->with('error', 'Mensagem não encontrada');
         }
 
+        if (in_array($message['status'], ['sending', 'sent'], true)) {
+            return redirect()->to('/messages')->with('error', 'Mensagens em envio ou já enviadas não podem ser editadas.');
+        }
+
         $campaignModel = new CampaignModel();
         $senderModel = new SenderModel();
         $contactListModel = new ContactListModel();
@@ -177,7 +177,7 @@ class MessageController extends BaseController {
             'resendLocks' => $resendLocks,
             'activeMenu' => 'messages',
             'pageTitle' => 'Editar Mensagem',
-            'editorEngine' => get_system_setting('editor_engine', 'tinymce'),
+            'editorEngine' => 'ckeditor',
         ]);
     }
 

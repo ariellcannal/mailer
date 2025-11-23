@@ -9,9 +9,11 @@
                 <small class="text-muted">Criada em <?= date('d/m/Y H:i', strtotime($message['created_at'])) ?></small>
             </div>
             <div class="d-flex gap-2">
-                <a href="<?= base_url('messages/edit/' . $message['id']) ?>" class="btn btn-outline-secondary">
-                    <i class="fas fa-edit"></i> Editar
-                </a>
+                <?php if (!in_array($message['status'], ['sending', 'sent'], true)): ?>
+                    <a href="<?= base_url('messages/edit/' . $message['id']) ?>" class="btn btn-outline-secondary">
+                        <i class="fas fa-edit"></i> Editar
+                    </a>
+                <?php endif; ?>
                 <form action="<?= base_url('messages/duplicate/' . $message['id']) ?>" method="POST">
                     <?= csrf_field() ?>
                     <button type="submit" class="btn btn-outline-info">
@@ -67,6 +69,7 @@
                         <th>Enviado em</th>
                         <th>Abertura</th>
                         <th>Clique</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -83,6 +86,11 @@
                                 <td><?= $send['sent_at'] ? date('d/m/Y H:i', strtotime($send['sent_at'])) : '-' ?></td>
                                 <td><?= $send['opened'] ? '<span class="badge bg-success">Sim</span>' : '<span class="badge bg-secondary">Não</span>' ?></td>
                                 <td><?= $send['clicked'] ? '<span class="badge bg-success">Sim</span>' : '<span class="badge bg-secondary">Não</span>' ?></td>
+                                <td>
+                                    <a href="<?= base_url('contacts/view/' . $send['contact_id']) ?>" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-user"></i> Ver contato
+                                    </a>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>

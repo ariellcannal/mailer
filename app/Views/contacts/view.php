@@ -58,6 +58,70 @@
                 <span class="text-muted">Nenhuma lista associada.</span>
             <?php endif; ?>
         </div>
+
+        <?php if (!empty($sends)): ?>
+            <div class="border rounded p-3 mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">Mensagens enviadas</h6>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Assunto</th>
+                                <th>Envio</th>
+                                <th>Status</th>
+                                <th>Abertura</th>
+                                <th>Clique</th>
+                                <th>Opt-out</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($sends as $send): ?>
+                                <tr>
+                                    <td>
+                                        <a href="<?= base_url('messages/view/' . $send['message_id']) ?>" class="text-decoration-none">
+                                            <?= esc($send['subject'] ?? 'Mensagem #' . $send['message_id']) ?>
+                                        </a>
+                                    </td>
+                                    <td><?= $send['sent_at'] ? date('d/m/Y H:i', strtotime($send['sent_at'])) : '-' ?></td>
+                                    <td>
+                                        <?php if (($send['message_status'] ?? '') === 'sent'): ?>
+                                            <span class="badge bg-success">Enviado</span>
+                                        <?php else: ?>
+                                            <span class="badge bg-secondary"><?= esc(ucfirst($send['message_status'] ?? 'pendente')) ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if ((int) ($send['opened'] ?? 0) === 1): ?>
+                                            <span class="badge bg-success">Sim</span>
+                                            <small class="text-muted d-block">Total: <?= (int) ($send['total_opens'] ?? 0) ?></small>
+                                        <?php else: ?>
+                                            <span class="badge bg-secondary">Não</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if ((int) ($send['clicked'] ?? 0) === 1): ?>
+                                            <span class="badge bg-success">Sim</span>
+                                            <small class="text-muted d-block">Total: <?= (int) ($send['total_clicks'] ?? 0) ?></small>
+                                        <?php else: ?>
+                                            <span class="badge bg-secondary">Não</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if ((int) ($contact['opted_out'] ?? 0) === 1): ?>
+                                            <span class="badge bg-danger">Sim</span>
+                                        <?php else: ?>
+                                            <span class="badge bg-success">Não</span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        <?php endif; ?>
     </div>
 </div>
 <?= $this->endSection() ?>

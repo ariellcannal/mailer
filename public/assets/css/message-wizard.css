@@ -1,0 +1,47 @@
+.step-wizard {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+}
+
+.step {
+    flex: 1;
+    text-align: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin: 0 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.step.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #ffffff;
+}
+
+.step.completed {
+    background: #28a745;
+    color: #ffffff;
+}
+
+.editor-panel {
+    border: 1px solid #e9ecef;
+}
+
+.editor-panel .card-body {
+    background: #ffffff;
+}
+
+.editor-fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 1080;
+    background: #ffffff;
+    padding: 1.5rem;
+    overflow-y: auto;
+}
+
+.editor-fullscreen .editor-panel {
+    height: calc(100vh - 180px);
+}
