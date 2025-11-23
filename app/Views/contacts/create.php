@@ -1,5 +1,9 @@
 <?= $this->extend('layouts/main') ?>
 
+<?= $this->section('styles') ?>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="card">
     <div class="card-body">
@@ -41,15 +45,6 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script>
-    $(function() {
-        $('.select2').select2({
-            width: '100%',
-            placeholder: $('.select2').data('placeholder') || 'Selecione',
-            allowClear: true
-        });
-    });
-</script>
+<script src="<?= base_url('assets/js/contacts-form.js') ?>" defer></script>
 <?= $this->endSection() ?>

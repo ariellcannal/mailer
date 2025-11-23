@@ -1,52 +1,8 @@
 <?= $this->extend('layouts/main') ?>
 
 <?= $this->section('styles') ?>
-<style>
-.step-wizard {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 30px;
-}
-.step {
-    flex: 1;
-    text-align: center;
-    padding: 15px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    margin: 0 5px;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-.step.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-}
-.step.completed {
-    background: #28a745;
-    color: white;
-}
-
-.editor-panel {
-    border: 1px solid #e9ecef;
-}
-
-.editor-panel .card-body {
-    background: #fff;
-}
-
-.editor-fullscreen {
-    position: fixed;
-    inset: 0;
-    z-index: 1080;
-    background: #fff;
-    padding: 1.5rem;
-    overflow-y: auto;
-}
-
-.editor-fullscreen .editor-panel {
-    height: calc(100vh - 180px);
-}
-</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+<link rel="stylesheet" href="<?= base_url('assets/css/message-wizard.css') ?>">
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
@@ -318,7 +274,6 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <?= view('partials/rich_editor_scripts', [
     'editorEngine' => $editorEngine ?? 'ckeditor',

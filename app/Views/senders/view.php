@@ -15,7 +15,10 @@
                 <a href="<?= base_url('senders/edit/' . $sender['id']) ?>" class="btn btn-outline-primary btn-sm me-2">
                     <i class="fas fa-pen"></i> Editar
                 </a>
-                <button class="btn btn-primary btn-sm" onclick="checkDNS()">
+                <button
+                    class="btn btn-primary btn-sm"
+                    id="checkDnsBtn"
+                    data-dns-url="<?= base_url('senders/check-dns/' . $sender['id']) ?>">
                     <i class="fas fa-sync"></i> Verificar DNS
                 </button>
             </div>
@@ -148,45 +151,5 @@ if (!empty($dnsInstructions['dkim']) && is_array($dnsInstructions['dkim'])) {
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
-function checkDNS() {
-    $.ajax({
-        url: '<?= base_url('senders/check-dns/' . $sender['id']) ?>',
-        method: 'POST',
-        success: function(response) {
-            if (response.success) {
-                alertify.success('DNS verificado!');
-                location.reload();
-            }
-        }
-    });
-}
-
-document.querySelectorAll('button[data-copy]').forEach(function(button) {
-    button.addEventListener('click', function() {
-        const value = this.getAttribute('data-copy');
-
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(value).then(function() {
-                alertify.success('Copiado para a área de transferência');
-            }).catch(function() {
-                alertify.error('Não foi possível copiar o valor');
-            });
-            return;
-        }
-
-        const tempInput = document.createElement('input');
-        tempInput.value = value;
-        document.body.appendChild(tempInput);
-        tempInput.select();
-        try {
-            document.execCommand('copy');
-            alertify.success('Copiado para a área de transferência');
-        } catch (error) {
-            alertify.error('Não foi possível copiar o valor');
-        }
-        document.body.removeChild(tempInput);
-    });
-});
-</script>
+<script src="<?= base_url('assets/js/sender-view.js') ?>" defer></script>
 <?= $this->endSection() ?>

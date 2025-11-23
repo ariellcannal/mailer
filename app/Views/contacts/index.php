@@ -1,5 +1,9 @@
 <?= $this->extend('layouts/main') ?>
 
+<?= $this->section('styles') ?>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="card">
     <div class="card-body">
@@ -156,56 +160,7 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script>
-    $(function() {
-        $('.select2').each(function() {
-            const placeholder = $(this).data('placeholder') || 'Selecione';
-            $(this).select2({
-                width: '100%',
-                placeholder: placeholder,
-                allowClear: true
-            });
-        });
-
-        const toggleSelectAllNotice = function(visible) {
-            const notice = $('#selectAllNotice');
-            if (!notice.length) return;
-
-            if (visible) {
-                notice.removeClass('d-none');
-            } else {
-                notice.addClass('d-none');
-            }
-        };
-
-        $('#selectAll').on('change', function() {
-            const checked = $(this).is(':checked');
-            $('input.contact-checkbox').prop('checked', checked);
-            $('#selectAllFlag').val('0');
-
-            if (checked) {
-                toggleSelectAllNotice(true);
-            } else {
-                toggleSelectAllNotice(false);
-            }
-        });
-
-        $('#confirmSelectAll').on('click', function(e) {
-            e.preventDefault();
-            $('#selectAllFlag').val('1');
-            toggleSelectAllNotice(false);
-            $('input.contact-checkbox').prop('checked', true);
-        });
-
-        $('input.contact-checkbox').on('change', function() {
-            if (!$(this).is(':checked')) {
-                $('#selectAll').prop('checked', false);
-                $('#selectAllFlag').val('0');
-                toggleSelectAllNotice(false);
-            }
-        });
-    });
-</script>
+<script src="<?= base_url('assets/js/contacts-form.js') ?>" defer></script>
+<script src="<?= base_url('assets/js/contacts-index.js') ?>" defer></script>
 <?= $this->endSection() ?>
