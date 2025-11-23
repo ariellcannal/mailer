@@ -22,6 +22,45 @@
         fullscreen: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M11.5 5.75a.75.75 0 0 1 0-1.5H15a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0V6.81l-2.72 2.72a.75.75 0 0 1-1.06-1.06l2.72-2.72zm-1.97 4.72a.75.75 0 0 1 0 1.06l-2.72 2.72H8.5a.75.75 0 0 1 0 1.5H5a.75.75 0 0 1-.75-.75v-3.5a.75.75 0 0 1 1.5 0v1.69l2.72-2.72a.75.75 0 0 1 1.06 0"></path><path d="M2 0h16a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2m16 1.5H2a.5.5 0 0 0-.5.5v16a.5.5 0 0 0 .5.5h16a.5.5 0 0 0 .5-.5V2a.5.5 0 0 0-.5-.5"></path></svg>'
     };
 
+    const toolbarIcons = {
+        undo: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M7.707 4.293a1 1 0 0 0-1.414 0l-4 4a1 1 0 0 0 0 1.414l4 4a1 1 0 0 0 1.414-1.414L5.414 11H12a3 3 0 0 1 0 6h-3a1 1 0 1 0 0 2h3a5 5 0 1 0 0-10H5.414l2.293-2.293a1 1 0 0 0 0-1.414z"/></svg>',
+        redo: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M12.293 4.293a1 1 0 0 1 1.414 0l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 1 1-1.414-1.414L14.586 11H8a3 3 0 0 0 0 6H5a1 1 0 1 1 0-2h3a1 1 0 1 0 0-2H5a5 5 0 1 1 0-10h7.586l-2.293-2.293a1 1 0 0 1 0-1.414z"/></svg>',
+        findAndReplace: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M11.5 3a5.5 5.5 0 1 1-4.422 8.778l-2.65 2.65a1 1 0 0 1-1.414-1.414l2.65-2.65A5.5 5.5 0 0 1 11.5 3m0 2a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7"/><path fill="#2e2e2e" d="M7 7.75a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 0 1.5H8.5v.5H10a.75.75 0 0 1 0 1.5H7.75a.75.75 0 0 1-.75-.75z"/></svg>',
+        selectAll: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M5 3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 2h2v2H5zm4 0h2v2H9zm4 0h2v2h-2zM5 9h2v2H5zm4 0h2v2H9zm4 0h2v2h-2zM5 13h2v2H5zm4 0h2v2H9zm4 0h2v2h-2z"/></svg>',
+        heading: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M4 4a1 1 0 0 1 1-1h2.5a1 1 0 1 1 0 2H6v4h8V5h-1.5a1 1 0 1 1 0-2H15a1 1 0 0 1 1 1v11a1 1 0 1 1-2 0v-4H6v4a1 1 0 1 1-2 0z"/></svg>',
+        style: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M4.5 4.5 6 6l1.5-1.5L9 6l1.5-1.5L12 6l1.5-1.5L15 6l1.5-1.5L18 6v8l-1.5-1.5L15 14l-1.5-1.5L12 14l-1.5-1.5L9 14l-1.5-1.5L6 14l-1.5-1.5L3 14V6Z"/></svg>',
+        fontFamily: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M5.5 16a1 1 0 0 1-.948-1.317l4-12a1 1 0 0 1 1.896.634l-4 12A1 1 0 0 1 5.5 16m9 0h-1a1 1 0 0 1-.894-1.447l3-6A1 1 0 0 1 16.5 8h1a1 1 0 0 1 .894 1.447l-3 6A1 1 0 0 1 14.5 16"></path><path fill="#2e2e2e" d="M2 15a1 1 0 0 1 .8-.98l12-2.4a1 1 0 0 1 .4 1.96l-12 2.4A1 1 0 0 1 2 15"></path></svg>',
+        fontSize: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M7 4a1 1 0 0 1 1-1h1.5a1 1 0 1 1 0 2H9v11a1 1 0 1 1-2 0zm6 5a1 1 0 0 1 1-1h1.75a1 1 0 1 1 0 2h-.75v6a1 1 0 1 1-2 0z"/></svg>',
+        fontColor: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M10 3a1 1 0 0 1 .949.684l4 12a1 1 0 0 1-1.898.632L12.215 13H7.786l-.836 2.316a1 1 0 1 1-1.896-.632l4-12A1 1 0 0 1 10 3m-1.357 8h2.714L10 6.885z"></path><rect fill="#2e2e2e" x="3" y="16" width="14" height="1.5" rx="0.75"/></svg>',
+        fontBackgroundColor: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M9.293 4.293a1 1 0 0 1 1.414 0l3 3a1 1 0 0 1 0 1.414L8.414 14H12a1 1 0 1 1 0 2H5a1 1 0 0 1-.707-1.707l7-7-1.586-1.586a1 1 0 0 1 0-1.414Z"></path><rect fill="#2e2e2e" x="3" y="16" width="14" height="1.5" rx="0.75"/></svg>',
+        highlight: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="m8.293 14.707-2 2a1 1 0 0 1-1.414-1.414l2-2a1 1 0 0 1 1.122-.21l1.71-1.71-3-3a1 1 0 0 1 0-1.414l4-4a1 1 0 0 1 1.414 0l3 3a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.122.21l-1.71 1.71a1 1 0 0 1-.99.204"></path><rect fill="#ffea00" x="2" y="15.5" width="16" height="2" rx="1"/></svg>',
+        bold: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M6 3a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h5a3.5 3.5 0 0 0 2.864-5.524A3.5 3.5 0 0 0 11 3zm5 5.5A1.5 1.5 0 0 1 12.5 10 1.5 1.5 0 0 1 11 11.5H7v-3zM7 13.5h4A1.5 1.5 0 1 1 11 16H7z"/></svg>',
+        italic: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M12 3a1 1 0 1 1 0 2h-1.38l-2.24 10H10a1 1 0 1 1 0 2H6a1 1 0 1 1 0-2h1.38l2.24-10H8a1 1 0 1 1 0-2z"/></svg>',
+        underline: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M6 3a1 1 0 0 1 1 1v5a3 3 0 0 0 6 0V4a1 1 0 1 1 2 0v5a5 5 0 0 1-10 0V4a1 1 0 0 1 1-1"></path><rect fill="#2e2e2e" x="4" y="16" width="12" height="1.5" rx="0.75"/></svg>',
+        strikethrough: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M6.28 6.22a2.7 2.7 0 0 0-.28 1.22h-2a4.7 4.7 0 0 1 .52-2.2C5.3 3.4 7.14 2.5 9.5 2.5c3.18 0 5.5 1.64 5.5 4.1 0 1.2-.44 2.08-1.2 2.78h-3.02c.66-.3 1.22-.8 1.22-1.68 0-1.06-.98-1.7-2.5-1.7-1.14 0-2.05.38-2.22 1.22M3 10h14a1 1 0 1 1 0 2h-4.3c.46.28.75.74.75 1.35 0 1.33-1.28 2.15-3.2 2.15-2.12 0-3.67-.92-4.1-2.5h2.09c.18.46.74.8 2.01.8 1.1 0 1.7-.32 1.7-.86 0-.46-.47-.84-1.45-.94L7.1 12.9A3 3 0 0 1 3 12v-.5z"/></svg>',
+        code: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="m7.293 5.293-4 4a1 1 0 0 0 0 1.414l4 4 1.414-1.414L5.414 10l3.293-3.293zm5.414 0L11.293 6.707 14.586 10l-3.293 3.293 1.414 1.414 4-4a1 1 0 0 0 0-1.414z"/></svg>',
+        subscript: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="m5.8 4.1 3.2 4.48L12.2 4.1h2.07l-4 5.4 4.2 5.5h-2.1l-2.27-3.05L7.8 15h-2.1l4.22-5.5-3.98-5.4zm8.95 8.15h-.75c-.25 0-.45.2-.45.44v.47h1.2c.82 0 1.25.62 1.25 1.28 0 .82-.6 1.41-1.55 1.41-.95 0-1.55-.6-1.55-1.33 0-.26.2-.46.45-.46.24 0 .45.2.45.45 0 .3.3.44.65.44.34 0 .55-.2.55-.5 0-.22-.13-.43-.55-.43h-1.2c-.25 0-.45-.2-.45-.44v-1.1c0-.78.6-1.41 1.55-1.41.95 0 1.55.62 1.55 1.36 0 .25-.2.45-.45.45-.24 0-.45-.2-.45-.45 0-.26-.3-.46-.65-.46z"/></svg>',
+        superscript: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="m5.8 4.1 3.2 4.48L12.2 4.1h2.07l-4 5.4 4.2 5.5h-2.1l-2.27-3.05L7.8 15h-2.1l4.22-5.5-3.98-5.4zm8.95-.25h-.75c-.25 0-.45.2-.45.44v.47h1.2c.82 0 1.25.62 1.25 1.28 0 .82-.6 1.41-1.55 1.41-.95 0-1.55-.6-1.55-1.33 0-.26.2-.46.45-.46.24 0 .45.2.45.45 0 .3.3.44.65.44.34 0 .55-.2.55-.5 0-.22-.13-.43-.55-.43h-1.2c-.25 0-.45-.2-.45-.44V3.8c0-.78.6-1.41 1.55-1.41.95 0 1.55.62 1.55 1.36 0 .25-.2.45-.45.45-.24 0-.45-.2-.45-.45 0-.26-.3-.46-.65-.46z"/></svg>',
+        removeFormat: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="m3.293 2.293 14.414 14.414-1.414 1.414-2.242-2.242L11.83 19H9v-2h1.17l1.151-1.15L8 12.53V17H6V5H3zm11.9 6.1-5.8-5.8 1.4-1.4 2.1 2.1H17v2h-1.207z"/></svg>',
+        link: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M7.05 11.536a3 3 0 0 1 0-4.242l2.122-2.122a3 3 0 0 1 4.243 0 1 1 0 1 1-1.414 1.414 1 1 0 0 0-1.415 0L8.464 8.707a1 1 0 0 0 1.415 1.414l1.414-1.414 1.414 1.414-1.414 1.414a3 3 0 0 1-4.243 0m8.486-4.95a5 5 0 0 0-7.071 0L6.343 8.707a5 5 0 1 0 7.071 7.071l1.414-1.414a1 1 0 1 0-1.414-1.414l-1.414 1.414a3 3 0 0 1-4.243-4.243l2.122-2.121a3 3 0 0 1 4.243 0 1 1 0 0 0 1.414-1.414z"/></svg>',
+        blockQuote: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M5 4h5v4H8l1 4H4L5 8H3zm8 0h5v4h-2l1 4h-5l1-4h-2z"/></svg>',
+        uploadImage: icons.images,
+        insertImage: icons.images,
+        mediaEmbed: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M4 4h12a2 2 0 0 1 2 2v8.5a1.5 1.5 0 0 1-1.5 1.5H3.5A1.5 1.5 0 0 1 2 14.5V6a2 2 0 0 1 2-2m0 2v8h12V6zm4.5 1.5v5l4-2.5z"/></svg>',
+        insertTable: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M4 4a2 2 0 0 0-2 2v8.5A1.5 1.5 0 0 0 3.5 16h13a1.5 1.5 0 0 0 1.5-1.5V6a2 2 0 0 0-2-2zm0 2h3v3H4zm5 0h3v3H9zm8 0v3h-3V6zM4 11h3v3H4zm5 0h3v3H9zm5 0h3v3h-3z"/></svg>',
+        horizontalLine: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><rect fill="#2e2e2e" x="3" y="9" width="14" height="2" rx="1"/></svg>',
+        pageBreak: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M4 3h12a1 1 0 0 1 1 1v4H3V4a1 1 0 0 1 1-1m0 9h12v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1zm3-2h6v2H7zm-3 0h2v2H4zm12 0h2v2h-2z"/></svg>',
+        specialCharacters: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M9 3h2v6h2v2h-2v6H9v-6H7V9h2zm-5 4a1 1 0 0 1 0-2h1a1 1 0 1 1 0 2zm11 0a1 1 0 1 1 0-2h1a1 1 0 1 1 0 2z"/></svg>',
+        codeBlock: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M5 4h10a2 2 0 0 1 2 2v8.5a1.5 1.5 0 0 1-1.5 1.5H4.5A1.5 1.5 0 0 1 3 14.5V6a2 2 0 0 1 2-2m0 2v8h10V6zm2 1.5 2.5 2.5L7 12.5zm6 0-2.5 2.5L13 12.5z"/></svg>',
+        alignment: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M3 4h14v2H3zm0 4h10v2H3zm0 4h14v2H3zm0 4h10v2H3z"/></svg>',
+        outdent: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M3 4h14v2H3zm0 4h6v2H3zm0 4h14v2H3zm0 4h6v2H3zm9-7.414V6l-3 3 3 3z"/></svg>',
+        indent: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M3 4h14v2H3zm0 4h6v2H3zm0 4h14v2H3zm0 4h6v2H3zm5-6 3 3V8z"/></svg>',
+        bulletedList: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M5 5a2 2 0 1 1-4 0 2 2 0 0 1 4 0m5 0h8v2h-8zM5 10a2 2 0 1 1-4 0 2 2 0 0 1 4 0m5-1h8v2h-8zm-5 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0m5-1h8v2h-8z"/></svg>',
+        numberedList: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M4.5 4h-1V3h2v6h-1zM4 11h1l-1.5 1.5L5 14H3v-1h1l-1-1zm5-6h8v2H9zm0 5h8v2H9zm0 5h8v2H9z"/></svg>',
+        todoList: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="M4.5 4.5 6 6 9 3l-1.5-1.5L6 3 4.5 1.5 3 3zm0 6L6 12l3-3-1.5-1.5L6 9 4.5 7.5 3 9zm0 6L6 18l3-3-1.5-1.5L6 15l-1.5-1.5L3 15zm5.5-12h7v2h-7zm0 6h7v2h-7zm0 6h7v2h-7z"/></svg>',
+        sourceEditing: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#2e2e2e" d="m6.293 3.293 1.414 1.414L4.414 8l3.293 3.293-1.414 1.414-4-4a1 1 0 0 1 0-1.414zm7.414 0-1.414 1.414L15.586 8l-3.293 3.293 1.414 1.414 4-4a1 1 0 0 0 0-1.414z"/></svg>'
+    };
+
     function createModal(title, bodyHtml) {
         const modal = document.createElement('div');
         modal.className = 'ck ck-reset_all ck-rounded-corners ck-modal';
@@ -282,6 +321,45 @@
                 const toolbar = document.createElement('div');
                 toolbar.className = 'ck ck-reset ck-toolbar ck-toolbar_grouping ck-rounded-corners ck-fallback-toolbar ck-fallback-toolbar-advanced';
 
+                const toolbarLabels = {
+                    undo: 'Desfazer',
+                    redo: 'Refazer',
+                    findAndReplace: 'Localizar e substituir',
+                    selectAll: 'Selecionar tudo',
+                    heading: 'Cabeçalho',
+                    style: 'Estilo',
+                    fontFamily: 'Fonte',
+                    fontSize: 'Tamanho da fonte',
+                    fontColor: 'Cor do texto',
+                    fontBackgroundColor: 'Cor de fundo',
+                    highlight: 'Marcador',
+                    bold: 'Negrito',
+                    italic: 'Itálico',
+                    underline: 'Sublinhado',
+                    strikethrough: 'Tachado',
+                    code: 'Código',
+                    subscript: 'Subscrito',
+                    superscript: 'Sobrescrito',
+                    removeFormat: 'Limpar formatação',
+                    link: 'Link',
+                    blockQuote: 'Citação',
+                    uploadImage: 'Enviar imagem',
+                    insertImage: 'Inserir imagem',
+                    mediaEmbed: 'Mídia',
+                    insertTable: 'Tabela',
+                    horizontalLine: 'Linha horizontal',
+                    pageBreak: 'Quebra de página',
+                    specialCharacters: 'Caracteres especiais',
+                    codeBlock: 'Bloco de código',
+                    alignment: 'Alinhamento',
+                    outdent: 'Recuar',
+                    indent: 'Avançar',
+                    bulletedList: 'Lista pontuada',
+                    numberedList: 'Lista numerada',
+                    todoList: 'Lista de tarefas',
+                    sourceEditing: 'Edição de código'
+                };
+
                 const actionMap = {
                     undo: () => document.execCommand('undo'),
                     redo: () => document.execCommand('redo'),
@@ -342,11 +420,20 @@
                 const createButton = (label, command, icon, withText = true) => {
                     const button = document.createElement('button');
                     button.type = 'button';
-                    button.className = 'ck ck-button ck-button_with-text ck-rounded-corners ck-fallback-button';
-                    if (icon) {
-                        button.innerHTML = withText ? `<img alt="" src="${icon}" class="ck-fallback-icon"> <span>${label}</span>` : `<img alt="${label}" src="${icon}" class="ck-fallback-icon">`;
+                    button.className = 'ck ck-button ck-rounded-corners ck-fallback-button';
+                    if (withText) {
+                        button.classList.add('ck-button_with-text', 'ck-fallback-button--text');
                     } else {
-                        button.innerHTML = label;
+                        button.classList.add('ck-fallback-button--icon-only');
+                    }
+
+                    if (icon) {
+                        const labelSpan = `<span class="ck-fallback-label">${label}</span>`;
+                        button.innerHTML = withText
+                            ? `<img alt="" src="${icon}" class="ck-fallback-icon"> ${labelSpan}`
+                            : `<img alt="${label}" src="${icon}" class="ck-fallback-icon">${labelSpan}`;
+                    } else {
+                        button.innerHTML = `<span class="ck-fallback-label">${label}</span>`;
                     }
                     button.title = label;
                     if (typeof command === 'function') {
@@ -367,13 +454,18 @@
                     wrapper.className = 'ck ck-dropdown ck-rounded-corners ck-fallback-dropdown';
                     const button = document.createElement('button');
                     button.type = 'button';
-                    button.className = 'ck ck-button ck-button_with-text ck-rounded-corners ck-fallback-button';
+                    button.className = 'ck ck-button ck-rounded-corners ck-fallback-button';
+                    if (dropdown.buttonView.withText) {
+                        button.classList.add('ck-button_with-text', 'ck-fallback-button--text');
+                    } else {
+                        button.classList.add('ck-fallback-button--icon-only');
+                    }
                     if (dropdown.buttonView.icon) {
                         button.innerHTML = dropdown.buttonView.withText === false
-                            ? `<img alt="${dropdown.buttonView.label}" src="${dropdown.buttonView.icon}" class="ck-fallback-icon">`
-                            : `<img alt="" src="${dropdown.buttonView.icon}" class="ck-fallback-icon"> <span>${dropdown.buttonView.label}</span>`;
+                            ? `<img alt="${dropdown.buttonView.label}" src="${dropdown.buttonView.icon}" class="ck-fallback-icon"><span class="ck-fallback-label">${dropdown.buttonView.label}</span>`
+                            : `<img alt="" src="${dropdown.buttonView.icon}" class="ck-fallback-icon"> <span class="ck-fallback-label">${dropdown.buttonView.label}</span>`;
                     } else {
-                        button.innerHTML = dropdown.buttonView.label;
+                        button.innerHTML = `<span class="ck-fallback-label">${dropdown.buttonView.label}</span>`;
                     }
                     const menu = document.createElement('div');
                     menu.className = 'ck ck-toolbar ck-toolbar_grouping ck-fallback-dropdown__menu';
@@ -413,7 +505,9 @@
                     }
 
                     if (Object.prototype.hasOwnProperty.call(actionMap, item)) {
-                        createButton(item, actionMap[item]);
+                        const icon = toolbarIcons[item];
+                        const label = toolbarLabels[item] || item;
+                        createButton(label, actionMap[item], icon, !icon);
                         return;
                     }
 
