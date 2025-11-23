@@ -66,12 +66,82 @@
         return fetch(url, options).then((response) => response.json());
     }
 
-    class ImagesDropdownPlugin extends window.CKEDITOR.Plugin {
+    function createFallbackEditor(element) {
+        const wrapper = document.createElement('div');
+        const toolbar = document.createElement('div');
+        const editable = document.createElement('div');
+
+        wrapper.className = 'ck-fallback-wrapper';
+        toolbar.className = 'ck-fallback-toolbar';
+        editable.className = 'ck-fallback-editable form-control';
+        editable.contentEditable = 'true';
+        editable.style.minHeight = `${settings.height}px`;
+        editable.innerHTML = element.value;
+
+        const actions = [
+            { label: 'Negrito', action: () => document.execCommand('bold') },
+            { label: 'Itálico', action: () => document.execCommand('italic') },
+            { label: 'Inserir imagem', action: () => alert('Editor em modo simplificado, recurso indisponível.') },
+        ];
+
+        actions.forEach((item) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'ck-fallback-button';
+            button.textContent = item.label;
+            button.addEventListener('click', item.action);
+            toolbar.appendChild(button);
+        });
+
+        element.style.display = 'none';
+        wrapper.appendChild(toolbar);
+        wrapper.appendChild(editable);
+        element.parentNode.insertBefore(wrapper, element.nextSibling);
+
+        return {
+            updateSourceElement: () => { element.value = editable.innerHTML; },
+            getData: () => editable.innerHTML
+        };
+    }
+
+    function bootstrapFallback() {
+        document.addEventListener('DOMContentLoaded', () => {
+            const instances = [];
+            const sources = [];
+            document.querySelectorAll(settings.selector).forEach((element) => {
+                sources.push(element);
+                instances.push(createFallbackEditor(element));
+            });
+
+            window.richEditorInstances = instances;
+            window.syncRichEditors = () => {
+                instances.forEach((instance) => instance.updateSourceElement());
+            };
+            window.getRichEditorData = () => {
+                const first = instances[0];
+                if (first && typeof first.getData === 'function') {
+                    return first.getData();
+                }
+                const firstElement = sources[0];
+                return firstElement ? firstElement.value : '';
+            };
+        });
+    }
+
+    const CKEDITOR_NS = window.CKEDITOR;
+    const BasePlugin = CKEDITOR_NS?.Plugin || CKEDITOR_NS?.core?.Plugin;
+
+    if (!BasePlugin) {
+        bootstrapFallback();
+        return;
+    }
+
+    class ImagesDropdownPlugin extends BasePlugin {
         static get pluginName() { return 'ImagesDropdownPlugin'; }
 
         init() {
             const editor = this.editor;
-            const dropdownUtils = window.CKEDITOR.ui.dropdownUtils;
+            const dropdownUtils = CKEDITOR_NS.ui.dropdownUtils;
 
             const addUpload = () => {
                 const fileInput = document.createElement('input');
@@ -185,13 +255,13 @@
             editor.ui.componentFactory.add('Imagens', (locale) => {
                 const dropdown = dropdownUtils.createDropdown(locale);
                 dropdown.buttonView.set({ label: 'Imagens', icon: icons.images, tooltip: 'Inserir imagem' });
-                const options = new window.CKEDITOR.utils.Collection(
+                const options = new CKEDITOR_NS.utils.Collection(
                     [
                         { id: 'upload', label: 'Enviar Imagem (Upload)', action: addUpload },
                         { id: 'url', label: 'Inserir da URL', action: addFromUrl },
                         { id: 'library', label: 'Inserir do Banco de Imagens', action: addFromLibrary },
                     ].map((item) => {
-                        const model = new window.CKEDITOR.ui.Model({ label: item.label, withText: true });
+                        const model = new CKEDITOR_NS.ui.Model({ label: item.label, withText: true });
                         model.on('execute', item.action);
                         return { type: 'button', model };
                     })
@@ -202,13 +272,13 @@
         }
     }
 
-    class ImageLibraryPlugin extends window.CKEDITOR.Plugin {
+    class ImageLibraryPlugin extends BasePlugin {
         static get pluginName() { return 'ImageLibraryPlugin'; }
 
         init() {
             const editor = this.editor;
             editor.ui.componentFactory.add('BancoImagens', (locale) => {
-                const button = new window.CKEDITOR.ui.button.ButtonView(locale);
+                const button = new CKEDITOR_NS.ui.button.ButtonView(locale);
                 button.set({ label: 'Banco de Imagens', icon: icons.library, tooltip: 'Abrir Banco de Imagens' });
                 button.on('execute', () => {
                     if (typeof editor.__openImageLibrary === 'function') {
@@ -220,13 +290,13 @@
         }
     }
 
-    class TemplatesPlugin extends window.CKEDITOR.Plugin {
+    class TemplatesPlugin extends BasePlugin {
         static get pluginName() { return 'TemplatesPlugin'; }
 
         init() {
             const editor = this.editor;
             editor.ui.componentFactory.add('Templates', (locale) => {
-                const button = new window.CKEDITOR.ui.button.ButtonView(locale);
+                const button = new CKEDITOR_NS.ui.button.ButtonView(locale);
                 button.set({ label: 'Templates', icon: icons.templates, tooltip: 'Inserir template' });
                 button.on('execute', () => this.openTemplateModal(editor));
                 return button;
@@ -317,12 +387,12 @@
         }
     }
 
-    class TagsPlugin extends window.CKEDITOR.Plugin {
+    class TagsPlugin extends BasePlugin {
         static get pluginName() { return 'TagsPlugin'; }
 
         init() {
             const editor = this.editor;
-            const dropdownUtils = window.CKEDITOR.ui.dropdownUtils;
+            const dropdownUtils = CKEDITOR_NS.ui.dropdownUtils;
             editor.ui.componentFactory.add('Tags', (locale) => {
                 const dropdown = dropdownUtils.createDropdown(locale);
                 dropdown.buttonView.set({ label: 'TAGs', icon: icons.tags, tooltip: 'Inserir TAG' });
@@ -332,8 +402,8 @@
                     { label: 'Link de Visualização', html: '<a href="{{webview_link}}" target="_blank">Link de Visualização</a>' },
                     { label: 'Link Opt-out', html: '<a href="{{optout_link}}" target="_blank">Link Opt-out</a>' },
                 ];
-                const definitions = new window.CKEDITOR.utils.Collection(tags.map((tag) => {
-                    const model = new window.CKEDITOR.ui.Model({ label: tag.label, withText: true });
+                const definitions = new CKEDITOR_NS.utils.Collection(tags.map((tag) => {
+                    const model = new CKEDITOR_NS.ui.Model({ label: tag.label, withText: true });
                     model.on('execute', () => insertHtml(editor, tag.html));
                     return { type: 'button', model };
                 }));
@@ -343,13 +413,13 @@
         }
     }
 
-    class FullscreenPlugin extends window.CKEDITOR.Plugin {
+    class FullscreenPlugin extends BasePlugin {
         static get pluginName() { return 'FullscreenPlugin'; }
 
         init() {
             const editor = this.editor;
             editor.ui.componentFactory.add('TelaCheia', (locale) => {
-                const button = new window.CKEDITOR.ui.button.ButtonView(locale);
+                const button = new CKEDITOR_NS.ui.button.ButtonView(locale);
                 button.set({ label: 'Tela cheia', icon: icons.fullscreen, tooltip: 'Expandir editor' });
                 button.on('execute', () => {
                     const wrapper = editor.ui.getEditableElement()?.closest('.ck-editor');
@@ -362,45 +432,8 @@
         }
     }
 
-    function createFallbackEditor(element) {
-        const wrapper = document.createElement('div');
-        const toolbar = document.createElement('div');
-        const editable = document.createElement('div');
-
-        wrapper.className = 'ck-fallback-wrapper';
-        toolbar.className = 'ck-fallback-toolbar';
-        editable.className = 'ck-fallback-editable form-control';
-        editable.contentEditable = 'true';
-        editable.style.minHeight = `${settings.height}px`;
-        editable.innerHTML = element.value;
-
-        const actions = [
-            { label: 'Negrito', action: () => document.execCommand('bold') },
-            { label: 'Itálico', action: () => document.execCommand('italic') },
-            { label: 'Inserir imagem', action: () => alert('Editor em modo simplificado, recurso indisponível.') },
-        ];
-
-        actions.forEach((item) => {
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'ck-fallback-button';
-            button.textContent = item.label;
-            button.addEventListener('click', item.action);
-            toolbar.appendChild(button);
-        });
-
-        element.style.display = 'none';
-        wrapper.appendChild(toolbar);
-        wrapper.appendChild(editable);
-        element.parentNode.insertBefore(wrapper, element.nextSibling);
-
-        return {
-            updateSourceElement: () => { element.value = editable.innerHTML; }
-        };
-    }
-
     function initEditors() {
-        const EditorClass = window.CKEDITOR?.ClassicEditor;
+        const EditorClass = CKEDITOR_NS?.ClassicEditor;
         const $ = window.jQuery;
         const instances = [];
 
