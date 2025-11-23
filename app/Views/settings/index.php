@@ -36,11 +36,8 @@
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Editor de conteúdo</label>
-                    <select class="form-select" name="settings[editor_engine]">
-                        <?php $currentEditor = $settings['editor_engine'] ?? 'tinymce'; ?>
-                        <option value="tinymce" <?= $currentEditor === 'tinymce' ? 'selected' : '' ?>>TinyMCE</option>
-                        <option value="ckeditor" <?= $currentEditor === 'ckeditor' ? 'selected' : '' ?>>CKEditor</option>
-                    </select>
+                    <input type="hidden" name="settings[editor_engine]" value="ckeditor">
+                    <div class="form-control bg-light">CKEditor 5 (padrão)</div>
                 </div>
             </div>
 

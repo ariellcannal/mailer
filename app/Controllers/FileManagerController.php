@@ -63,7 +63,7 @@ class FileManagerController extends BaseController
             ])->setStatusCode(400);
         }
 
-        $targetDirectory = rtrim(FCPATH, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'uploads';
+        $targetDirectory = rtrim(FCPATH, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'imagens' . DIRECTORY_SEPARATOR . 'banco';
 
         if (!is_dir($targetDirectory) && !mkdir($targetDirectory, 0755, true) && !is_dir($targetDirectory)) {
             return $this->response->setJSON([
@@ -75,7 +75,7 @@ class FileManagerController extends BaseController
         $newName = $upload->getRandomName();
         $upload->move($targetDirectory, $newName);
 
-        $filePath = 'uploads/' . $newName;
+        $filePath = 'uploads/imagens/banco/' . $newName;
 
         return $this->response->setJSON([
             'success' => true,
@@ -94,7 +94,7 @@ class FileManagerController extends BaseController
      */
     private function mapExistingFiles(): array
     {
-        $directory = rtrim(FCPATH, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'uploads';
+        $directory = rtrim(FCPATH, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'imagens' . DIRECTORY_SEPARATOR . 'banco';
 
         if (!is_dir($directory)) {
             return [];
@@ -113,8 +113,8 @@ class FileManagerController extends BaseController
             if (is_file($fullPath)) {
                 $files[] = [
                     'name' => $entry,
-                    'path' => 'uploads/' . $entry,
-                    'url' => base_url('uploads/' . $entry),
+                    'path' => 'uploads/imagens/banco/' . $entry,
+                    'url' => base_url('uploads/imagens/banco/' . $entry),
                     'size' => filesize($fullPath) ?: 0,
                     'updated_at' => date('Y-m-d H:i:s', (int) filemtime($fullPath)),
                 ];
