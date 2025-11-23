@@ -15,8 +15,8 @@ $ckeditorCacheBuster = ENVIRONMENT === 'development' ? ('?t=' . time()) : '';
         window.richEditorInstances = [];
 
         const ckeditorSources = [
-            'https://cdn.ckeditor.com/ckeditor5/43.2.2/super-build/ckeditor.js<?= $ckeditorCacheBuster ?>',
-            'https://cdn.ckeditor.com/ckeditor5/43.2.2/super-build/translations/pt-br.js<?= $ckeditorCacheBuster ?>'
+            'https://cdn.ckeditor.com/ckeditor5/latest/super-build/ckeditor.js<?= $ckeditorCacheBuster ?>',
+            'https://cdn.ckeditor.com/ckeditor5/latest/super-build/translations/pt-br.js<?= $ckeditorCacheBuster ?>'
         ];
 
         const editorResources = {
