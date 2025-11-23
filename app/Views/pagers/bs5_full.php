@@ -1,6 +1,6 @@
 <?php if ($pager->getPageCount() > 1) : ?>
     <?php
-    $currentPage = $pager->getCurrentPage();
+    $currentPage = $pager->getCurrentPageNumber();
     $totalPages  = $pager->getPageCount();
     ?>
 

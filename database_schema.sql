@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
     google_id VARCHAR(255) NULL UNIQUE,
     passkey_credential_id VARCHAR(255) NULL UNIQUE,
     email VARCHAR(320) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NULL,
     name VARCHAR(255) NOT NULL,
     avatar VARCHAR(500) NULL,
     is_active TINYINT(1) DEFAULT 1,

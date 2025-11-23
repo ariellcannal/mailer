@@ -59,6 +59,30 @@ class ContactModel extends Model
     ];
 
     /**
+     * Recupera histórico de envios do contato com métricas agregadas.
+     *
+     * @param int $contactId ID do contato a ser consultado.
+     * @return array Lista de envios ordenada por data de envio.
+     */
+    public function getContactSends(int $contactId): array
+    {
+        $builder = $this->db->table('message_sends');
+
+        return $builder
+            ->select(
+                'message_sends.id, message_sends.message_id, message_sends.resend_number, message_sends.sent_at, ' .
+                'message_sends.opened, message_sends.total_opens, message_sends.clicked, message_sends.total_clicks, ' .
+                'messages.subject, messages.status AS message_status'
+            )
+            ->join('messages', 'messages.id = message_sends.message_id')
+            ->where('message_sends.contact_id', $contactId)
+            ->orderBy('message_sends.sent_at', 'DESC')
+            ->orderBy('message_sends.id', 'DESC')
+            ->get()
+            ->getResultArray();
+    }
+
+    /**
      * Busca contatos com paginação e filtros
      * 
      * @param array $filters Filtros opcionais
