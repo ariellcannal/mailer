@@ -56,10 +56,22 @@
         if (!html) {
             return;
         }
-        editor.editing.view.focus();
-        const viewFragment = editor.data.processor.toView(html);
-        const modelFragment = editor.data.toModel(viewFragment);
-        editor.model.insertContent(modelFragment, editor.model.document.selection);
+
+        if (editor.editing?.view?.focus) {
+            editor.editing.view.focus();
+        }
+
+        if (editor.model?.insertContent && editor.data?.processor?.toView) {
+            const viewFragment = editor.data.processor.toView(html);
+            const modelFragment = editor.data.toModel(viewFragment);
+            editor.model.insertContent(modelFragment, editor.model.document?.selection);
+            return;
+        }
+
+        if (editor.__editable) {
+            editor.__editable.focus();
+            document.execCommand('insertHTML', false, html);
+        }
     }
 
     function fetchJson(url, options = {}) {
@@ -128,7 +140,305 @@
         });
     }
 
-    const CKEDITOR_NS = window.CKEDITOR;
+    function createLocalCkeditorNamespace() {
+        class BasicEmitter {
+            constructor() {
+                this.listeners = {};
+            }
+
+            on(eventName, callback) {
+                if (!this.listeners[eventName]) {
+                    this.listeners[eventName] = [];
+                }
+                this.listeners[eventName].push(callback);
+            }
+
+            fire(eventName, payload) {
+                (this.listeners[eventName] || []).forEach((listener) => listener(payload));
+            }
+        }
+
+        class Model extends BasicEmitter {
+            constructor(initialState = {}) {
+                super();
+                Object.assign(this, initialState);
+            }
+
+            set(state = {}) {
+                Object.assign(this, state);
+            }
+        }
+
+        class Collection extends Array {}
+
+        class ButtonView extends BasicEmitter {
+            constructor(locale) {
+                super();
+                this.locale = locale;
+                this.label = '';
+                this.icon = '';
+                this.tooltip = '';
+                this.withText = true;
+            }
+
+            set({ label, icon, tooltip, withText = true }) {
+                this.label = label;
+                this.icon = icon;
+                this.tooltip = tooltip;
+                this.withText = withText;
+            }
+        }
+
+        class Dropdown {
+            constructor(locale) {
+                this.locale = locale;
+                this.buttonView = new ButtonView(locale);
+                this.items = [];
+            }
+
+            setItems(items = []) {
+                this.items = items;
+            }
+        }
+
+        const componentFactory = {
+            components: new Map(),
+            add(name, factory) {
+                this.components.set(name, factory);
+            },
+            get(name) {
+                return this.components.get(name);
+            },
+            has(name) {
+                return this.components.has(name);
+            }
+        };
+
+        const ui = {
+            componentFactory,
+            Model,
+            dropdownUtils: {
+                createDropdown: (locale) => new Dropdown(locale),
+                addListToDropdown: (dropdown, items) => dropdown.setItems(items)
+            },
+            button: { ButtonView }
+        };
+
+        class Plugin {
+            constructor(editor) {
+                this.editor = editor;
+            }
+        }
+
+        class ClassicEditor {
+            constructor(element, config) {
+                this.sourceElement = element;
+                this.config = config || {};
+                this.locale = 'pt-br';
+                this.ui = ui;
+                this.__editable = document.createElement('div');
+                this.__editable.className = 'ck-fallback-editable form-control';
+                this.__editable.contentEditable = 'true';
+                this.__editable.style.minHeight = `${settings.height}px`;
+                this.__editable.innerHTML = element.value;
+                element.style.display = 'none';
+                element.parentNode.insertBefore(this.__editable, element.nextSibling);
+
+                this.editing = { view: { focus: () => this.__editable.focus() } };
+                this.model = {
+                    document: { selection: null },
+                    insertContent: (content) => {
+                        if (typeof content === 'string') {
+                            this.__editable.focus();
+                            document.execCommand('insertHTML', false, content);
+                        }
+                    }
+                };
+                this.data = {
+                    processor: { toView: (value) => value },
+                    toModel: (value) => value,
+                    set: (html) => { this.__editable.innerHTML = html; },
+                    get: () => this.__editable.innerHTML
+                };
+
+                (this.config.extraPlugins || []).forEach((PluginClass) => {
+                    if (typeof PluginClass === 'function') {
+                        const plugin = new PluginClass(this);
+                        if (typeof plugin.init === 'function') {
+                            plugin.init();
+                        }
+                    }
+                });
+
+                this.__toolbar = this.buildToolbar(this.config.toolbar?.items || []);
+                this.__editable.parentNode.insertBefore(this.__toolbar, this.__editable);
+            }
+
+            static create(element, config) {
+                return Promise.resolve(new ClassicEditor(element, config));
+            }
+
+            buildToolbar(items = []) {
+                const toolbar = document.createElement('div');
+                toolbar.className = 'ck-fallback-toolbar ck-fallback-toolbar-advanced';
+
+                const actionMap = {
+                    undo: () => document.execCommand('undo'),
+                    redo: () => document.execCommand('redo'),
+                    findAndReplace: () => alert('Buscar/Substituir não disponível no modo offline.'),
+                    selectAll: () => document.execCommand('selectAll'),
+                    heading: () => document.execCommand('formatBlock', false, 'h2'),
+                    style: () => document.execCommand('formatBlock', false, 'p'),
+                    fontFamily: () => {
+                        const family = prompt('Fonte desejada (ex: Arial, Roboto)');
+                        if (family) { document.execCommand('fontName', false, family); }
+                    },
+                    fontSize: () => {
+                        const size = prompt('Tamanho da fonte (1 a 7)', '3');
+                        if (size) { document.execCommand('fontSize', false, size); }
+                    },
+                    fontColor: () => {
+                        const color = prompt('Cor da fonte (ex: #333333)');
+                        if (color) { document.execCommand('foreColor', false, color); }
+                    },
+                    fontBackgroundColor: () => {
+                        const color = prompt('Cor de fundo do texto (ex: #ffff00)');
+                        if (color) { document.execCommand('hiliteColor', false, color); }
+                    },
+                    highlight: () => document.execCommand('hiliteColor', false, '#ffff00'),
+                    bold: () => document.execCommand('bold'),
+                    italic: () => document.execCommand('italic'),
+                    underline: () => document.execCommand('underline'),
+                    strikethrough: () => document.execCommand('strikeThrough'),
+                    code: () => document.execCommand('formatBlock', false, 'pre'),
+                    subscript: () => document.execCommand('subscript'),
+                    superscript: () => document.execCommand('superscript'),
+                    removeFormat: () => document.execCommand('removeFormat'),
+                    link: () => {
+                        const url = prompt('Informe a URL do link');
+                        if (url) { document.execCommand('createLink', false, url); }
+                    },
+                    blockQuote: () => document.execCommand('formatBlock', false, 'blockquote'),
+                    uploadImage: () => (typeof this.__openImageLibrary === 'function' ? this.__openImageLibrary() : alert('Envio de imagem indisponível.')),
+                    insertImage: () => (typeof this.__openImageLibrary === 'function' ? this.__openImageLibrary() : alert('Envio de imagem indisponível.')),
+                    mediaEmbed: () => {
+                        const url = prompt('URL do conteúdo de mídia');
+                        if (url) { document.execCommand('insertHTML', false, `<iframe src="${url}" style="width:100%;height:320px;" allowfullscreen></iframe>`); }
+                    },
+                    insertTable: () => this.insertTable(),
+                    horizontalLine: () => document.execCommand('insertHorizontalRule'),
+                    pageBreak: () => document.execCommand('insertHorizontalRule'),
+                    specialCharacters: () => alert('Seleção de caracteres especiais indisponível no modo offline.'),
+                    codeBlock: () => document.execCommand('formatBlock', false, 'pre'),
+                    alignment: () => document.execCommand('justifyLeft'),
+                    outdent: () => document.execCommand('outdent'),
+                    indent: () => document.execCommand('indent'),
+                    bulletedList: () => document.execCommand('insertUnorderedList'),
+                    numberedList: () => document.execCommand('insertOrderedList'),
+                    todoList: () => document.execCommand('insertUnorderedList'),
+                    sourceEditing: () => alert('Edição de código-fonte não disponível no modo offline.')
+                };
+
+                const createButton = (label, command, icon) => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'ck-fallback-button';
+                    button.innerHTML = icon ? `<img alt="" src="${icon}"> <span>${label}</span>` : label;
+                    button.title = label;
+                    button.addEventListener('click', () => {
+                        this.__editable.focus();
+                        if (typeof command === 'function') {
+                            command();
+                        }
+                    });
+                    toolbar.appendChild(button);
+                };
+
+                const renderDropdown = (dropdown) => {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'ck-fallback-dropdown';
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'ck-fallback-button';
+                    button.innerHTML = dropdown.buttonView.icon ? `<img alt="" src="${dropdown.buttonView.icon}"> <span>${dropdown.buttonView.label}</span>` : dropdown.buttonView.label;
+                    const menu = document.createElement('div');
+                    menu.className = 'ck-fallback-dropdown__menu';
+                    dropdown.items.forEach((item) => {
+                        if (item.model) {
+                            const option = document.createElement('button');
+                            option.type = 'button';
+                            option.className = 'ck-fallback-button';
+                            option.textContent = item.model.label;
+                            option.addEventListener('click', () => item.model.fire('execute'));
+                            menu.appendChild(option);
+                        }
+                    });
+                    button.addEventListener('click', () => menu.classList.toggle('show'));
+                    wrapper.appendChild(button);
+                    wrapper.appendChild(menu);
+                    toolbar.appendChild(wrapper);
+                };
+
+                items.forEach((item) => {
+                    if (item === '|') {
+                        const divider = document.createElement('span');
+                        divider.className = 'ck-fallback-divider';
+                        toolbar.appendChild(divider);
+                        return;
+                    }
+
+                    if (componentFactory.has(item)) {
+                        const view = componentFactory.get(item)(this.locale);
+                        if (view instanceof Dropdown) {
+                            renderDropdown(view);
+                        } else if (view instanceof ButtonView) {
+                            createButton(view.label, () => view.fire('execute'), view.icon);
+                            view.on('execute', () => view.fire('execute'));
+                        }
+                        return;
+                    }
+
+                    if (actionMap[item]) {
+                        createButton(item, actionMap[item]);
+                        return;
+                    }
+
+                    createButton(item, () => alert(`${item} não está disponível neste modo.`));
+                });
+
+                return toolbar;
+            }
+
+            insertTable() {
+                const rows = parseInt(prompt('Quantidade de linhas?', '2'), 10);
+                const cols = parseInt(prompt('Quantidade de colunas?', '2'), 10);
+                if (!rows || !cols) { return; }
+                const table = Array.from({ length: rows }, () => `<tr>${'<td>&nbsp;</td>'.repeat(cols)}</tr>`).join('');
+                document.execCommand('insertHTML', false, `<table class="table table-bordered">${table}</table>`);
+            }
+
+            updateSourceElement() {
+                if (this.sourceElement) {
+                    this.sourceElement.value = this.__editable.innerHTML;
+                }
+            }
+
+            getData() {
+                return this.__editable.innerHTML;
+            }
+        }
+
+        if (window.jQuery && !window.jQuery.fn.ckeditor) {
+            window.jQuery.fn.ckeditor = function (options) {
+                const element = this[0];
+                return ClassicEditor.create(element, options);
+            };
+        }
+
+        return { ClassicEditor, Plugin, utils: { Collection }, ui };
+    }
+
+    const CKEDITOR_NS = window.CKEDITOR || (window.CKEDITOR = createLocalCkeditorNamespace());
     const BasePlugin = CKEDITOR_NS?.Plugin || CKEDITOR_NS?.core?.Plugin;
 
     if (!BasePlugin) {
