@@ -449,14 +449,15 @@
                 extraPlugins: [ImagesDropdownPlugin, ImageLibraryPlugin, TemplatesPlugin, TagsPlugin, FullscreenPlugin],
                 toolbar: {
                     items: [
-                        'heading', 'fontFamily', 'fontSize', '|',
-                        'fontColor', 'fontBackgroundColor', '|',
-                        'bold', 'italic', 'underline', 'strikethrough', '|',
-                        'alignment', 'outdent', 'indent', 'bulletedList', 'numberedList', '|',
-                        'link', 'blockQuote', 'insertTable', 'imageUpload', 'mediaEmbed', 'horizontalLine', 'specialCharacters', '|',
+                        'undo', 'redo', '|', 'findAndReplace', 'selectAll', '|',
+                        'heading', 'style', '|', 'fontFamily', 'fontSize', 'fontColor', 'fontBackgroundColor', 'highlight', '|',
+                        'bold', 'italic', 'underline', 'strikethrough', 'code', 'subscript', 'superscript', 'removeFormat', '|',
+                        'link', 'blockQuote', 'uploadImage', 'insertImage', 'mediaEmbed', 'insertTable', 'horizontalLine', 'pageBreak', 'specialCharacters', 'codeBlock', '|',
+                        'alignment', 'outdent', 'indent', 'bulletedList', 'numberedList', 'todoList', '|',
                         'Imagens', 'BancoImagens', 'Templates', 'Tags', 'TelaCheia', '|',
-                        'undo', 'redo'
-                    ]
+                        'sourceEditing'
+                    ],
+                    shouldNotGroupWhenFull: true
                 },
                 placeholder: 'Digite sua mensagem...',
             }).then((editor) => {
