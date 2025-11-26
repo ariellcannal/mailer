@@ -22,14 +22,18 @@
                 Conteúdo
             </div>
             <div class="step" data-step="3">
+                <i class="fas fa-eye"></i><br>
+                Pré-visualização
+            </div>
+            <div class="step" data-step="4">
                 <i class="fas fa-users"></i><br>
                 Destinatários
             </div>
-            <div class="step" data-step="4">
+            <div class="step" data-step="5">
                 <i class="fas fa-check"></i><br>
                 Agendamento
             </div>
-            <div class="step" data-step="5">
+            <div class="step" data-step="6">
                 <i class="fas fa-redo"></i><br>
                 Reenvios
             </div>
@@ -39,7 +43,9 @@
             id="messageForm"
             data-store-url="<?= base_url('messages/store') ?>"
             data-index-url="<?= base_url('messages') ?>"
+            data-progress-url="<?= base_url('messages/save-progress') ?>"
             data-contacts-url="<?= base_url('contact-lists/buscar-contatos') ?>">
+            <input type="hidden" name="message_id" id="messageId" value="">
             <!-- Step 1: Informações Básicas -->
             <div class="step-content" data-step="1">
                 <div class="row">
@@ -94,16 +100,38 @@
                 <?= view('partials/rich_editor', [
                     'height' => 600,
                 ]) ?>
-				<button type="button" class="btn btn-secondary me-2" onclick="prevStep()">
+                <div class="d-flex justify-content-between mt-3">
+                    <button type="button" class="btn btn-secondary me-2" onclick="prevStep()">
                     <i class="fas fa-arrow-left"></i> Anterior
                 </button>
                 <button type="button" class="btn btn-primary" onclick="nextStep()">
                     Próximo <i class="fas fa-arrow-right"></i>
                 </button>
+                </div>
             </div>
-            
-            <!-- Step 3: Destinatários -->
+
+            <!-- Step 3: Pré-visualização -->
             <div class="step-content" data-step="3" style="display:none;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Pré-visualização do conteúdo</h5>
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="renderEditorPreview('previewPane')">
+                        Atualizar pré-visualização
+                    </button>
+                </div>
+                <div id="previewPane" class="border rounded p-3 bg-light" aria-live="polite"></div>
+
+                <div class="mt-3">
+                    <button type="button" class="btn btn-secondary me-2" onclick="prevStep()">
+                        <i class="fas fa-arrow-left"></i> Anterior
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="nextStep()">
+                        Próximo <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 4: Destinatários -->
+            <div class="step-content" data-step="4" style="display:none;">
                 <p>Selecione as listas de contato que receberão esta mensagem:</p>
 
                 <div class="mb-3">
@@ -142,9 +170,9 @@
                     Próximo <i class="fas fa-arrow-right"></i>
                 </button>
             </div>
-            
-            <!-- Step 4: Agendamento -->
-            <div class="step-content" data-step="4" style="display:none;">
+
+            <!-- Step 5: Agendamento -->
+            <div class="step-content" data-step="5" style="display:none;">
                 <h5 class="mb-3">Agendamento</h5>
                 <div class="row mb-4">
                     <div class="col-md-6">
@@ -167,8 +195,8 @@
                 </button>
             </div>
 
-            <!-- Step 5: Reenvios -->
-            <div class="step-content" data-step="5" style="display:none;">
+            <!-- Step 6: Reenvios -->
+            <div class="step-content" data-step="6" style="display:none;">
                 <h5 class="mb-3">Configurar Reenvios Automáticos</h5>
                 <p class="text-muted">Configure até 3 reenvios automáticos para contatos que não abriram a mensagem.</p>
 

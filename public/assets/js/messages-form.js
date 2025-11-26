@@ -9,6 +9,9 @@
     const storeUrl = form.dataset.storeUrl;
     const indexUrl = form.dataset.indexUrl;
     const contactsUrl = form.dataset.contactsUrl;
+    const progressUrl = form.dataset.progressUrl;
+    const messageIdInput = document.getElementById('messageId');
+    const maxStep = 6;
     let currentStep = 1;
 
     const contactSelect = document.getElementById('contactListSelect');
@@ -53,24 +56,99 @@
             element.classList.toggle('active', elementStep === step);
             element.classList.toggle('completed', elementStep < step);
         });
+
+        if (step === 3) {
+            renderEditorPreview('previewPane');
+        }
     }
 
-    function nextStep() {
-        if (currentStep === 2) {
-            syncEditors();
+    function validateCurrentStep() {
+        const currentContainer = document.querySelector(`.step-content[data-step="${currentStep}"]`);
+
+        if (!currentContainer) {
+            return true;
         }
-        const selected = window.jQuery ? window.jQuery('#contactListSelect').val() || [] : [];
-        const hasOptions = contactSelect ? contactSelect.options.length > 0 : false;
-        if (currentStep === 3 && hasOptions && selected.length === 0) {
-            if (window.alertify) {
-                window.alertify.error('Selecione pelo menos uma lista de contato.');
+
+        const fields = currentContainer.querySelectorAll('input, select, textarea');
+
+        for (let index = 0; index < fields.length; index++) {
+            const field = fields[index];
+
+            if (typeof field.reportValidity === 'function' && !field.reportValidity()) {
+                return false;
             }
+        }
+
+        if (currentStep === 2 || currentStep === 3) {
+            const html = typeof getRichEditorData === 'function' ? getRichEditorData() : '';
+
+            if (!html || html.trim() === '') {
+                window.alertify?.error('Preencha o conteúdo do email antes de continuar.');
+                return false;
+            }
+        }
+
+        if (currentStep === 4) {
+            const selected = window.jQuery ? window.jQuery('#contactListSelect').val() || [] : [];
+            const hasOptions = contactSelect ? contactSelect.options.length > 0 : false;
+
+            if (hasOptions && selected.length === 0) {
+                window.alertify?.error('Selecione pelo menos uma lista de contato.');
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    async function persistStep() {
+        if (!progressUrl) {
+            return true;
+        }
+
+        syncEditors();
+        const formData = new FormData(form);
+        formData.set('step', currentStep);
+
+        try {
+            const response = await fetch(progressUrl, { method: 'POST', body: formData });
+            const payload = await response.json();
+
+            if (!payload.success) {
+                window.alertify?.error(payload.error || 'Não foi possível salvar o progresso.');
+                return false;
+            }
+
+            if (payload.message_id && messageIdInput) {
+                messageIdInput.value = payload.message_id;
+            }
+
+            return true;
+        } catch (error) {
+            window.alertify?.error('Falha ao salvar o progresso.');
+            return false;
+        }
+    }
+
+    async function nextStep() {
+        if (!validateCurrentStep()) {
             return;
         }
-        currentStep = Math.min(4, currentStep + 1);
-        if (currentStep === 4) {
+
+        if (!(await persistStep())) {
+            return;
+        }
+
+        if (currentStep === 2) {
+            renderEditorPreview('previewPane');
+        }
+
+        currentStep = Math.min(maxStep, currentStep + 1);
+
+        if (currentStep === 5) {
             updateScheduleSummary();
         }
+
         showStep(currentStep);
     }
 
@@ -139,8 +217,12 @@
     updateScheduleSummary();
     showStep(currentStep);
 
-    form.addEventListener('submit', (event) => {
+    form.addEventListener('submit', async (event) => {
         event.preventDefault();
+        if (!validateCurrentStep()) {
+            return;
+        }
+        await persistStep();
         syncEditors();
         const body = new URLSearchParams(new FormData(form));
         fetch(storeUrl, { method: 'POST', body })

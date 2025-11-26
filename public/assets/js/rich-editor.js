@@ -652,9 +652,9 @@
                 });
         }
 
-        function renderEditorPreview() {
+        function renderEditorPreview(targetId = 'editorPreviewContent') {
                 syncEditors();
-                const previewElement = document.getElementById('editorPreviewContent');
+                const previewElement = document.getElementById(targetId);
                 if (!previewElement) {
                         return;
                 }
