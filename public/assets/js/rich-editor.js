@@ -852,6 +852,27 @@
                                 })
                                 .then((editor) => {
                                         window.editor = editor;
+
+                                        /**
+                                         * Recupera o conteúdo atual do editor principal.
+                                         *
+                                         * @returns {string}
+                                         */
+                                        window.getRichEditorData = function getRichEditorData() {
+                                                return editor.getData();
+                                        };
+
+                                        /**
+                                         * Sincroniza o conteúdo do editor com o campo de mensagem.
+                                         *
+                                         * @returns {void}
+                                         */
+                                        window.syncRichEditors = function syncRichEditors() {
+                                                const messageElement = document.getElementById('messageEditor');
+                                                if (messageElement) {
+                                                        messageElement.value = editor.getData();
+                                                }
+                                        };
                                 })
                                 .catch((error) => {
                                         console.error('Erro ao inicializar CKEditor:', error);
