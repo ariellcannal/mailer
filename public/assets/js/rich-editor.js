@@ -350,7 +350,7 @@
                                         label: 'Imagens',
                                         icon: icons.images,
                                         tooltip: 'Inserir imagem',
-                                        withText: true
+                                        withText: false
                                 });
 
                                 const items = new Collection([
@@ -358,7 +358,8 @@
                                         { label: 'Inserir da URL', action: addFromUrl },
                                         { label: 'Inserir do Banco de Imagens', action: addFromLibrary }
                                 ].map((item) => {
-                                        const model = new Model({
+                                        const model = new Model();
+                                        model.set({
                                                 label: item.label,
                                                 withText: true
                                         });
@@ -386,7 +387,7 @@
                                         label: 'Banco de Imagens',
                                         icon: icons.library,
                                         tooltip: 'Abrir Banco de Imagens',
-                                        withText: true
+                                        withText: false
                                 });
 
                                 button.on('execute', () => {
@@ -413,7 +414,7 @@
                                         label: 'Templates',
                                         icon: icons.templates,
                                         tooltip: 'Selecionar template',
-                                        withText: true
+                                        withText: false
                                 });
 
                                 button.on('execute', () => this.openTemplateModal(editor));
@@ -532,7 +533,7 @@
                                         label: 'TAGs',
                                         icon: icons.tags,
                                         tooltip: 'Inserir TAG',
-                                        withText: true
+                                        withText: false
                                 });
 
                                 const tags = [
@@ -543,7 +544,8 @@
                                 ];
 
                                 const items = new Collection(tags.map((tag) => {
-                                        const model = new Model({
+                                        const model = new Model();
+                                        model.set({
                                                 label: tag.label,
                                                 withText: true
                                         });
@@ -571,7 +573,7 @@
                                         label: 'Tela cheia',
                                         icon: icons.fullscreen,
                                         tooltip: 'Expandir editor',
-                                        withText: true
+                                        withText: false
                                 });
 
                                 button.on('execute', () => toggleEditorFullscreen(editor));
@@ -707,6 +709,11 @@
                         window.syncRichEditors();
                 }
         }
+
+        window.switchEditorMode = switchEditorMode;
+        window.renderEditorPreview = renderEditorPreview;
+        window.toggleEditorFullscreen = toggleEditorFullscreen;
+        window.syncEditors = syncEditors;
 
         function initEditors() {
                 $('#richEditor').each(function() {
