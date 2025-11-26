@@ -34,9 +34,10 @@
 
             <div class="row g-3 mb-3">
                 <div class="col-12">
-                    <label class="form-label">HTML</label>
-                    <textarea name="html_content" class="form-control js-rich-editor" rows="10"><?= old('html_content', $template['html_content']) ?></textarea>
-                    <div id="htmlContentFeedback" class="text-danger small d-none mt-2">O HTML do template é obrigatório.</div>
+                    <label class="form-label">Template</label>
+                    <?= view('partials/rich_editor', [
+                        'height' => 600,
+                    ]) ?>
                 </div>
             </div>
 
@@ -62,10 +63,5 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<?= view('partials/rich_editor_scripts', [
-    'selector' => 'textarea[name="html_content"]',
-    'height' => 500,
-]) ?>
 <script src="<?= base_url('assets/js/template-form.js') ?>" defer></script>
-<script src="<?= base_url('assets/js/editor-sync.js') ?>" defer></script>
 <?= $this->endSection() ?>
