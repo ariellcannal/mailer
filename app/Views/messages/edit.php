@@ -55,9 +55,10 @@
                 </div>
 
                 <div class="col-12 mb-3">
-                    <label class="form-label mb-2">HTML</label>
-                    <div class="text-muted small mb-2">Use a barra de ferramentas do editor para importar templates, inserir imagens ou tags dinâmicas.</div>
-                    <textarea name="html_content" class="form-control js-rich-editor" rows="12" required><?= old('html_content', $message['html_content']) ?></textarea>
+                    <label class="form-label mb-2">Mensagem</label>
+                        <?= view('partials/rich_editor', [
+                        'height' => 600,
+                    ]) ?>
                 </div>
             </div>
 
@@ -200,12 +201,4 @@
     </div>
 </div>
 
-<?= $this->endSection() ?>
-
-<?= $this->section('scripts') ?>
-<?= view('partials/rich_editor_scripts', [
-    'selector' => 'textarea[name="html_content"]',
-    'height' => 600,
-]) ?>
-<script src="<?= base_url('assets/js/editor-sync.js') ?>" defer></script>
 <?= $this->endSection() ?>

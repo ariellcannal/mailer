@@ -91,45 +91,10 @@
             
             <!-- Step 2: Editor GrapesJS -->
             <div class="step-content" data-step="2" style="display:none;">
-                <div class="row g-3" id="editorWrapper" aria-live="polite">
-                    <div class="col-12">
-                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-                            <div class="btn-group" role="group" aria-label="Alternar modo do editor">
-                                <button type="button" class="btn btn-outline-primary active" id="editorModeCreate" onclick="switchEditorMode('create')">
-                                    <i class="fas fa-pen"></i> Criar
-                                </button>
-                                <button type="button" class="btn btn-outline-secondary" id="editorModePreview" onclick="switchEditorMode('preview')">
-                                    <i class="fas fa-eye"></i> Preview
-                                </button>
-                            </div>
-
-                            <div class="btn-group" role="group" aria-label="Ações do editor">
-                                <button type="button" class="btn btn-outline-dark" id="editorFullscreenToggle" onclick="toggleEditorFullscreen()">
-                                    <i class="fas fa-expand"></i> Tela cheia
-                                </button>
-                            </div>
-                        </div>
-
-                        <div id="editorCreatePanel" class="editor-panel card shadow-sm">
-                            <div class="card-body">
-                                <div class="text-muted small mb-2">Use a barra do CKEditor para inserir templates, imagens, tags e expandir para tela cheia.</div>
-                                <textarea id="messageEditor" name="html_content" class="form-control js-rich-editor" rows="15" required><?= old('html_content') ?></textarea>
-                            </div>
-                        </div>
-
-                        <div id="editorPreviewPanel" class="editor-panel card shadow-sm d-none">
-                            <div class="card-body bg-light">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h6 class="mb-0">Preview</h6>
-                                    <span class="badge bg-secondary">Leitura somente</span>
-                                </div>
-                                <div id="editorPreviewContent" class="border rounded p-3 bg-white" style="min-height: 400px;"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <button type="button" class="btn btn-secondary me-2" onclick="prevStep()">
+                <?= view('partials/rich_editor', [
+                    'height' => 600,
+                ]) ?>
+				<button type="button" class="btn btn-secondary me-2" onclick="prevStep()">
                     <i class="fas fa-arrow-left"></i> Anterior
                 </button>
                 <button type="button" class="btn btn-primary" onclick="nextStep()">
@@ -274,11 +239,5 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<?= view('partials/rich_editor_scripts', [
-    'selector' => '#messageEditor',
-    'height' => 600,
-]) ?>
 <script src="<?= base_url('assets/js/messages-form.js') ?>" defer></script>
-<script src="<?= base_url('assets/js/editor-sync.js') ?>" defer></script>
 <?= $this->endSection() ?>

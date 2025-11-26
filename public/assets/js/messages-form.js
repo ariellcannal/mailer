@@ -16,12 +16,6 @@
     const recipientTotal = document.getElementById('recipientTotal');
     const scheduledAt = document.getElementById('scheduledAt');
 
-    function syncEditors() {
-        if (typeof window.syncRichEditors === 'function') {
-            window.syncRichEditors();
-        }
-    }
-
     function updateScheduleSummary() {
         const selectedText = (selectedLists?.textContent || '').trim() || 'Nenhuma lista selecionada.';
         const total = recipientTotal?.textContent || '0';
@@ -47,46 +41,6 @@
         if (summary) {
             summary.innerHTML = `<strong>Resumo:</strong> ${selectedText}<br>Total estimado: <strong>${total}</strong><br>Envio inicial: <strong>${formatted}</strong>`;
         }
-    }
-
-    function renderEditorPreview() {
-        syncEditors();
-        const previewElement = document.getElementById('editorPreviewContent');
-        if (!previewElement) {
-            return;
-        }
-        const messageElement = document.getElementById('messageEditor');
-        const fallback = messageElement ? messageElement.value : '';
-        const content = typeof window.getRichEditorData === 'function' ? window.getRichEditorData() : fallback;
-        previewElement.innerHTML = content || '<p class="text-muted">Nenhum conteúdo para pré-visualizar.</p>';
-    }
-
-    function toggleEditorFullscreen() {
-        const wrapper = document.getElementById('editorWrapper');
-        const toggleButton = document.getElementById('editorFullscreenToggle');
-        if (!wrapper || !toggleButton) {
-            return;
-        }
-        wrapper.classList.toggle('editor-fullscreen');
-        const icon = toggleButton.querySelector('i');
-        if (icon) {
-            icon.classList.toggle('fa-expand');
-            icon.classList.toggle('fa-compress');
-        }
-        toggleButton.classList.toggle('active');
-    }
-
-    function switchEditorMode(mode) {
-        if (mode !== 'create' && mode !== 'preview') {
-            return;
-        }
-        if (mode === 'preview') {
-            renderEditorPreview();
-        }
-        document.getElementById('editorModeCreate')?.classList.toggle('active', mode === 'create');
-        document.getElementById('editorModePreview')?.classList.toggle('active', mode === 'preview');
-        document.getElementById('editorCreatePanel')?.classList.toggle('d-none', mode !== 'create');
-        document.getElementById('editorPreviewPanel')?.classList.toggle('d-none', mode !== 'preview');
     }
 
     function showStep(step) {
