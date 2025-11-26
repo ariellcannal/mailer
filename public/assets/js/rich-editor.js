@@ -72,7 +72,7 @@
                 SourceEditing,
                 createDropdown,
                 Collection,
-                UIModel,
+                Model,
                 addListToDropdown,
                 ButtonView
         } = CKEDITOR;
@@ -358,7 +358,7 @@
                                         { label: 'Inserir da URL', action: addFromUrl },
                                         { label: 'Inserir do Banco de Imagens', action: addFromLibrary }
                                 ].map((item) => {
-                                        const model = new UIModel({
+                                        const model = new Model({
                                                 label: item.label,
                                                 withText: true
                                         });
@@ -543,7 +543,7 @@
                                 ];
 
                                 const items = new Collection(tags.map((tag) => {
-                                        const model = new UIModel({
+                                        const model = new Model({
                                                 label: tag.label,
                                                 withText: true
                                         });
@@ -617,6 +617,9 @@
                 modalInstance.show();
 
                 const close = () => {
+                        if ($modal[0].contains(document.activeElement)) {
+                                document.activeElement.blur();
+                        }
                         $modal.on('hidden.bs.modal', () => $modal.remove());
                         modalInstance.hide();
                 };
