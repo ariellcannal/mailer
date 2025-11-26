@@ -350,7 +350,7 @@
                                         label: 'Imagens',
                                         icon: icons.images,
                                         tooltip: 'Inserir imagem',
-                                        withText: false
+                                        withText: true
                                 });
 
                                 const items = new Collection([
@@ -386,7 +386,7 @@
                                         label: 'Banco de Imagens',
                                         icon: icons.library,
                                         tooltip: 'Abrir Banco de Imagens',
-                                        withText: false
+                                        withText: true
                                 });
 
                                 button.on('execute', () => {
@@ -413,7 +413,7 @@
                                         label: 'Templates',
                                         icon: icons.templates,
                                         tooltip: 'Selecionar template',
-                                        withText: false
+                                        withText: true
                                 });
 
                                 button.on('execute', () => this.openTemplateModal(editor));
@@ -532,14 +532,14 @@
                                         label: 'TAGs',
                                         icon: icons.tags,
                                         tooltip: 'Inserir TAG',
-                                        withText: false
+                                        withText: true
                                 });
 
                                 const tags = [
                                         { label: 'Nome', html: '{{nome}}' },
                                         { label: 'E-mail', html: '{{email}}' },
                                         { label: 'Link de Visualização', html: '<a href="{{webview_link}}" target="_blank">Link de Visualização</a>' },
-                                        { label: 'Link Opt-out', html: '<a href="{{optout_link}}" target="_blank">Link Opt-out</a>' }
+                                        { label: 'Sair', html: '<a href="{{optout_link}}" target="_blank">Sair</a>' }
                                 ];
 
                                 const items = new Collection(tags.map((tag) => {
@@ -571,21 +571,10 @@
                                         label: 'Tela cheia',
                                         icon: icons.fullscreen,
                                         tooltip: 'Expandir editor',
-                                        withText: false
+                                        withText: true
                                 });
 
-                                button.on('execute', () => {
-                                        const wrapper = $(editor.ui.getEditableElement()).closest('.ck-editor');
-                                        const $toggleButton = $('#editorFullscreenToggle');
-
-                                        if (!wrapper.length || !$toggleButton.length) {
-                                                return;
-                                        }
-
-                                        wrapper.toggleClass('editor-fullscreen');
-                                        $toggleButton.toggleClass('active');
-                                        $('body').toggleClass('ck-fullscreen');
-                                });
+                                button.on('execute', () => toggleEditorFullscreen(editor));
 
                                 return button;
                         });
@@ -671,6 +660,33 @@
                 const fallback = messageElement ? messageElement.value : '';
                 const content = typeof window.getRichEditorData === 'function' ? window.getRichEditorData() : fallback;
                 previewElement.innerHTML = content || '<p class="text-muted">Nenhum conteúdo para pré-visualizar.</p>';
+        }
+
+        /**
+         * Alterna o modo fullscreen para o editor principal e botão auxiliar.
+         *
+         * @param {object} editor Instância do editor CKEditor.
+         * @returns {void}
+         */
+        function toggleEditorFullscreen(editor) {
+                const instance = editor || window.editor;
+                if (!instance?.ui?.getEditableElement) {
+                        return;
+                }
+
+                const $wrapper = $(instance.ui.getEditableElement()).closest('.ck-editor');
+                const $toggleButton = $('#editorFullscreenToggle');
+
+                if (!$wrapper.length) {
+                        return;
+                }
+
+                $wrapper.toggleClass('editor-fullscreen');
+                $('body').toggleClass('ck-fullscreen');
+
+                if ($toggleButton.length) {
+                        $toggleButton.toggleClass('active');
+                }
         }
 
         function switchEditorMode(mode) {
@@ -873,6 +889,10 @@
                                                         messageElement.value = editor.getData();
                                                 }
                                         };
+
+                                        window.switchEditorMode = switchEditorMode;
+                                        window.renderEditorPreview = renderEditorPreview;
+                                        window.toggleEditorFullscreen = () => toggleEditorFullscreen(editor);
                                 })
                                 .catch((error) => {
                                         console.error('Erro ao inicializar CKEditor:', error);

@@ -256,7 +256,7 @@ crontab -e
 **Passo 2 - Conteúdo (GrapesJS)**:
 - Use o editor drag & drop
 - Clique em **Inserir Nome** / **Inserir Email** para variáveis
-- **OBRIGATÓRIO**: Clique em **Link Opt-out** para inserir descadastramento
+- **OBRIGATÓRIO**: Clique em **Sair** para inserir descadastramento
 - Opcionalmente: **Link Visualização** para webview
 
 **Passo 3 - Destinatários**:
