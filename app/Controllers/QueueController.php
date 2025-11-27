@@ -15,6 +15,13 @@ use CodeIgniter\HTTP\ResponseInterface;
 class QueueController extends BaseController
 {
     /**
+     *  CRON SETUP
+     *  
+     *  LINUX
+        * * * * * cd /caminho/para/Mailer && php index.php queue/process >> /dev/null 2>&1 
+     */
+
+    /**
      * Processa a fila de envios pendentes, permitindo execução via CLI ou navegador em desenvolvimento.
      *
      * @return ResponseInterface Resposta com o resumo do processamento.

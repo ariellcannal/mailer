@@ -60,7 +60,7 @@ class DeployController extends BaseController
         $payload = file_get_contents('php://input');
 
         // Valida assinatura
-        $secret = getenv('GITHUB_WEBHOOK_SECRET') ?: '';
+        $secret = getenv('github.wh_secret') ?: '';
         $signature = $_SERVER['HTTP_X_HUB_SIGNATURE_256'] ?? $_SERVER['HTTP_X_HUB_SIGNATURE'] ?? '';
 
         if ($secret === '' || $signature === '' || ! $this->isValidSignature($payload, $secret, $signature)) {
