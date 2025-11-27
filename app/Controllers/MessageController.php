@@ -188,7 +188,7 @@ class MessageController extends BaseController {
         $messageId = (int) ($this->request->getPost('message_id') ?? 0);
 
         // Validar opt-out link
-        $htmlContent = $this->request->getPost('html_content');
+        $htmlContent = $this->sanitizeHtmlContent($this->request->getPost('html_content'));
         $validation = $this->validateOptOutLink($htmlContent);
 
         if (!$validation['valid']) {
@@ -277,7 +277,7 @@ class MessageController extends BaseController {
         $current = $messageId > 0 ? $model->find($messageId) : null;
 
         $step = (int) ($this->request->getPost('step') ?? 1);
-        $htmlContent = $this->request->getPost('html_content') ?? '';
+        $htmlContent = $this->sanitizeHtmlContent($this->request->getPost('html_content') ?? '');
         $validation = $this->validateStepData($step, $htmlContent);
 
         if (!$validation['valid']) {
@@ -328,7 +328,7 @@ class MessageController extends BaseController {
             return redirect()->to('/messages')->with('error', 'Mensagens em envio ou já enviadas não podem ser editadas.');
         }
 
-        $htmlContent = $this->request->getPost('html_content');
+        $htmlContent = $this->sanitizeHtmlContent($this->request->getPost('html_content'));
         $validation = $this->validateOptOutLink($htmlContent);
 
         if (!$validation['valid']) {
@@ -650,6 +650,42 @@ class MessageController extends BaseController {
         }
 
         return ['valid' => true, 'message' => 'OK'];
+    }
+
+    /**
+     * Remove atributos de largura e altura das imagens para evitar distorções.
+     *
+     * @param string|null $htmlContent Conteúdo HTML recebido do formulário.
+     *
+     * @return string HTML saneado sem os atributos width e height.
+     */
+    protected function sanitizeHtmlContent(?string $htmlContent): string
+    {
+        $content = $htmlContent ?? '';
+
+        if (trim($content) === '') {
+            return '';
+        }
+
+        $document = new \DOMDocument('1.0', 'UTF-8');
+
+        libxml_use_internal_errors(true);
+
+        if ($document->loadHTML($content, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD) === false) {
+            libxml_clear_errors();
+            return $content;
+        }
+
+        libxml_clear_errors();
+
+        foreach ($document->getElementsByTagName('img') as $image) {
+            $image->removeAttribute('width');
+            $image->removeAttribute('height');
+        }
+
+        $sanitized = $document->saveHTML();
+
+        return $sanitized === false ? $content : $sanitized;
     }
 
     /**

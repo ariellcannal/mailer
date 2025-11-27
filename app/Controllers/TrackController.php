@@ -250,11 +250,21 @@ class TrackController extends BaseController
             return view('errors/html/error_404');
         }
 
+        $contactModel = new ContactModel();
+        $contact = $contactModel->find($send['contact_id']);
+
+        if (!$contact) {
+            return view('errors/html/error_404');
+        }
+
         // Registra abertura
         $this->recordOpen($send);
 
-        // Retorna HTML da mensagem
-        return $message['html_content'];
+        return $this->prepareWebviewContent(
+            $message['html_content'],
+            $contact,
+            $send['tracking_hash']
+        );
     }
 
     /**
@@ -320,5 +330,62 @@ class TrackController extends BaseController
             'email' => $contact['email'],
             'hash' => $hash,
         ]);
+    }
+
+    /**
+     * Prepara o HTML de visualização externa com personalização do destinatário.
+     *
+     * @param string $htmlContent Conteúdo original salvo na mensagem.
+     * @param array  $contact     Dados do contato relacionado ao envio.
+     * @param string $hash        Hash de tracking do envio.
+     *
+     * @return string HTML personalizado com links corretos.
+     */
+    protected function prepareWebviewContent(string $htmlContent, array $contact, string $hash): string
+    {
+        $baseUrl = $this->getTrackingBaseUrl();
+
+        $htmlContent = str_replace('{{nome}}', $contact['name'] ?? '', $htmlContent);
+        $htmlContent = str_replace('{{name}}', $contact['name'] ?? '', $htmlContent);
+        $htmlContent = str_replace('{{email}}', $contact['email'] ?? '', $htmlContent);
+
+        $optoutUrl = $baseUrl . 'optout/' . $hash;
+        $htmlContent = str_replace('{{optout_link}}', $optoutUrl, $htmlContent);
+        $htmlContent = str_replace('{{unsubscribe_link}}', $optoutUrl, $htmlContent);
+
+        $htmlContent = str_replace('{{webview_link}}', '#', $htmlContent);
+        $htmlContent = str_replace('{{view_online}}', '#', $htmlContent);
+
+        return $htmlContent;
+    }
+
+    /**
+     * Obtém a URL base utilizada para geração de links de tracking.
+     *
+     * @return string URL base finalizada com barra.
+     */
+    protected function getTrackingBaseUrl(): string
+    {
+        $trackingBase = rtrim((string) getenv('app.trackingBaseURL'), '/');
+
+        if ($trackingBase !== '') {
+            return $trackingBase . '/';
+        }
+
+        $baseUrl = rtrim((string) (config('App')->baseURL ?? ''), '/');
+
+        if ($baseUrl === '') {
+            $baseUrl = rtrim((string) getenv('app.baseURL'), '/');
+        }
+
+        if ($baseUrl !== '') {
+            return $baseUrl . '/';
+        }
+
+        $request = service('request');
+        $scheme = $request->getServer('HTTPS') === 'on' ? 'https' : 'http';
+        $host = $request->getServer('HTTP_HOST');
+
+        return $scheme . '://' . $host . '/';
     }
 }

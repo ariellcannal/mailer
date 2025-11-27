@@ -561,14 +561,32 @@
 		});
 	}
 
-	function renderEditorPreview(targetId = 'editorPreviewContent') {
-		const previewElement = document.getElementById(targetId);
-		if (!previewElement) {
-			return;
-		}
-		const content = typeof window.getRichEditorData === 'function' ? window.getRichEditorData() : null;
-		previewElement.innerHTML = content || '<p class="text-muted">Nenhum conteúdo para pré-visualizar.</p>';
-	}
+        function removeImageSizeAttributes(html) {
+                if (!html) {
+                        return '';
+                }
+
+                const parser = new DOMParser();
+                const documentFragment = parser.parseFromString(html, 'text/html');
+
+                documentFragment.querySelectorAll('img').forEach((image) => {
+                        image.removeAttribute('width');
+                        image.removeAttribute('height');
+                });
+
+                return documentFragment.body.innerHTML;
+        }
+
+        function renderEditorPreview(targetId = 'editorPreviewContent') {
+                const previewElement = document.getElementById(targetId);
+                if (!previewElement) {
+                        return;
+                }
+                const content = typeof window.getRichEditorData === 'function' ? window.getRichEditorData() : null;
+                const sanitized = removeImageSizeAttributes(content || '');
+
+                previewElement.innerHTML = sanitized || '<p class="text-muted">Nenhum conteúdo para pré-visualizar.</p>';
+        }
 
 	window.renderEditorPreview = renderEditorPreview;
 
