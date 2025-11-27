@@ -45,6 +45,7 @@ class DashboardController extends BaseController
         $sesLimits = $this->getSESLimits();
 
         return view('dashboard/index', [
+            'activeMenu' => 'dashboard',
             'stats' => $stats,
             'recentCampaigns' => $recentCampaigns,
             'recentMessages' => $recentMessages,
