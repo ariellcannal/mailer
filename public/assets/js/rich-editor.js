@@ -876,6 +876,15 @@
                                 .then((editor) => {
                                         window.editor = editor;
 
+                                        editor.editing.view.change((writer) => {
+                                                const rootElement = editor.editing.view.document.getRoot();
+
+                                                if (rootElement) {
+                                                        writer.setStyle('height', `${settings.height}px`, rootElement);
+                                                        writer.setStyle('min-height', `${settings.height}px`, rootElement);
+                                                }
+                                        });
+
                                         /**
                                          * Recupera o conteúdo atual do editor principal.
                                          *

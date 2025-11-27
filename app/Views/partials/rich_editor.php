@@ -26,7 +26,6 @@ $htmlContent = $htmlContent ?? old('html_content');
     </div>
 </div>
 <?= $this->section('scripts') ?>
-<link rel="stylesheet" href="<?= base_url('assets/css/rich-editor.css') ?>">
 <div id="richEditorConfig"
      data-licence="<?= getenv('cke.licence') ?>"
      data-height="<?= (int) $height ?>"
