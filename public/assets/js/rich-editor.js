@@ -452,7 +452,7 @@
 				const tags = [
 					{ label: 'Nome', html: '{{nome}}' },
 					{ label: 'E-mail', html: '{{email}}' },
-					{ label: 'Link de Visualização', html: '<a href="{{webview_link}}" target="_blank">Link de Visualização</a>' },
+                                        { label: 'Link de Visualização', html: '<a href="{{webview_link}}">Link de Visualização</a>' },
 					{ label: 'Link Opt-out', html: '<a href="{{optout_link}}" target="_blank">Sair</a>' }
 				];
 
