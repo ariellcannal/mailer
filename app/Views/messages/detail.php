@@ -112,7 +112,7 @@
                     </div>
                 </div>
                 
-                <button type="button" class="btn btn-primary" onclick="nextStep()">
+                <button type="button" class="btn btn-primary nextStep">
                     Próximo <i class="fas fa-arrow-right"></i>
                 </button>
             </div>
@@ -124,10 +124,10 @@
                     'htmlContent' => old('html_content', $message['html_content'] ?? ''),
                 ]) ?>
                 <div class="d-flex justify-content-between mt-3">
-                    <button type="button" class="btn btn-secondary me-2" onclick="prevStep()">
+                    <button type="button" class="btn btn-secondary me-2 prevStep">
                     <i class="fas fa-arrow-left"></i> Anterior
                 </button>
-                <button type="button" class="btn btn-primary" onclick="nextStep()">
+                <button type="button" class="btn btn-primary nextStep">
                     Próximo <i class="fas fa-arrow-right"></i>
                 </button>
                 </div>
@@ -144,10 +144,10 @@
                 <div id="previewPane" class="border rounded p-3 bg-light" aria-live="polite"></div>
 
                 <div class="mt-3">
-                    <button type="button" class="btn btn-secondary me-2" onclick="prevStep()">
+                    <button type="button" class="btn btn-secondary me-2 prevStep">
                         <i class="fas fa-arrow-left"></i> Anterior
                     </button>
-                    <button type="button" class="btn btn-primary" onclick="nextStep()">
+                    <button type="button" class="btn btn-primary nextStep">
                         Próximo <i class="fas fa-arrow-right"></i>
                     </button>
                 </div>
@@ -190,10 +190,10 @@
                     </div>
                 </div>
 
-                <button type="button" class="btn btn-secondary me-2" onclick="prevStep()">
+                <button type="button" class="btn btn-secondary me-2 prevStep">
                     <i class="fas fa-arrow-left"></i> Anterior
                 </button>
-                <button type="button" class="btn btn-primary" onclick="nextStep()">
+                <button type="button" class="btn btn-primary nextStep">
                     Próximo <i class="fas fa-arrow-right"></i>
                 </button>
             </div>
@@ -220,10 +220,10 @@
                     </div>
                 </div>
 
-                <button type="button" class="btn btn-secondary me-2" onclick="prevStep()">
+                <button type="button" class="btn btn-secondary me-2 prevStep">
                     <i class="fas fa-arrow-left"></i> Anterior
                 </button>
-                <button type="button" class="btn btn-primary" onclick="nextStep()">
+                <button type="button" class="btn btn-primary nextStep">
                     Próximo <i class="fas fa-arrow-right"></i>
                 </button>
             </div>
@@ -282,11 +282,11 @@
                     <?php endforeach; ?>
                 </div>
 
-                <button type="button" class="btn btn-secondary me-2" onclick="prevStep()">
+                <button type="button" class="btn btn-secondary me-2 prevStep">
                     <i class="fas fa-arrow-left"></i> Anterior
                 </button>
                 <button type="submit" class="btn btn-success">
-                    <i class="fas fa-save"></i> Salvar Mensagem
+                    <i class="fas fa-save"></i> Confirmar Agendamentos
                 </button>
             </div>
         </form>

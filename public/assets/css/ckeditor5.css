@@ -1,0 +1,13 @@
+/* CKEDITOR */
+.ck-powered-by-balloon{
+	display: none!important;
+}
+
+.ck-editor__editable_inline {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.ck.ck-editor {
+	width: 100%;
+}
