@@ -67,7 +67,10 @@
         });
 
         if (step === 3) {
-            renderEditorPreview('previewPane');
+            const previewRenderer = window.renderEditorPreview;
+            if (typeof previewRenderer === 'function') {
+                previewRenderer('previewPane');
+            }
         }
     }
 
@@ -115,7 +118,9 @@
             return true;
         }
 
-        syncEditors();
+        if (typeof window.syncEditors === 'function') {
+            window.syncEditors();
+        }
         const formData = new FormData(form);
         formData.set('step', currentStep);
 
@@ -152,8 +157,8 @@
             return;
         }
 
-        if (currentStep === 2) {
-            renderEditorPreview('previewPane');
+        if (currentStep === 2 && typeof window.renderEditorPreview === 'function') {
+            window.renderEditorPreview('previewPane');
         }
 
         currentStep = Math.min(maxStep, currentStep + 1);
@@ -226,17 +231,19 @@
     updateScheduleSummary();
     showStep(currentStep);
 
-    form.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        if (!validateCurrentStep()) {
-            return;
-        }
-        await persistStep();
-        syncEditors();
-        const body = new URLSearchParams(new FormData(form));
-        fetch(storeUrl, { method: 'POST', body })
-            .then((response) => response.json())
-            .then((payload) => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (!validateCurrentStep()) {
+                return;
+            }
+            await persistStep();
+            if (typeof window.syncEditors === 'function') {
+                window.syncEditors();
+            }
+            const body = new URLSearchParams(new FormData(form));
+            fetch(storeUrl, { method: 'POST', body })
+                .then((response) => response.json())
+                .then((payload) => {
                 if (payload.success) {
                     showFeedback('Mensagem salva com sucesso!', 'success');
                     setTimeout(() => { window.location.href = indexUrl; }, 1500);
