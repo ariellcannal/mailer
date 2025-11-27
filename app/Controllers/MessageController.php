@@ -667,43 +667,23 @@ class MessageController extends BaseController {
             return '';
         }
 
-        $document = new \DOMDocument('1.0', 'UTF-8');
+        $cleanedContent = preg_replace_callback(
+            '/<img\b[^>]*?>/i',
+            static function (array $matches): string {
+                $imageTag = $matches[0];
 
-        libxml_use_internal_errors(true);
+                $imageTag = preg_replace(
+                    '/\s+(width|height)\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)/i',
+                    '',
+                    $imageTag
+                );
 
-        if ($document->loadHTML($content, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD) === false) {
-            libxml_clear_errors();
-            return $content;
-        }
-
-        libxml_clear_errors();
-
-        foreach ($document->getElementsByTagName('img') as $image) {
-            $image->removeAttribute('width');
-            $image->removeAttribute('height');
-        }
-
-        $sanitized = $document->saveHTML();
-
-        if ($sanitized === false) {
-            return $content;
-        }
-
-        $preservedPlaceholders = strtr(
-            $sanitized,
-            [
-                '%7B%7B' => '{{',
-                '%7D%7D' => '}}',
-                '%7b%7b' => '{{',
-                '%7d%7d' => '}}',
-                '&#123;&#123;' => '{{',
-                '&#125;&#125;' => '}}',
-                '&lbrace;&lbrace;' => '{{',
-                '&rbrace;&rbrace;' => '}}',
-            ]
+                return preg_replace('/\s{2,}/', ' ', trim($imageTag));
+            },
+            $content
         );
 
-        return $preservedPlaceholders;
+        return $cleanedContent ?? $content;
     }
 
     /**
