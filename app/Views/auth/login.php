@@ -44,19 +44,24 @@
                         <label class="form-label" for="loginEmail">E-mail</label>
                         <input type="email" class="form-control" id="loginEmail" name="email" value="<?= esc(old('email')) ?>" required>
                     </div>
-                    <div class="col-12">
-                        <label class="form-label d-flex justify-content-between" for="loginPassword">
-                            <span>Senha</span>
-                            <a href="#forgotCard" data-bs-toggle="collapse" class="small">Esqueci minha senha</a>
-                        </label>
-                        <input type="password" class="form-control" id="loginPassword" name="password" minlength="8" required>
-                    </div>
-                    <div class="col-12 d-grid">
-                        <button type="submit" class="btn btn-primary"><i class="fas fa-sign-in-alt me-2"></i> Entrar</button>
-                    </div>
-                </form>
-            </div>
+                <div class="col-12">
+                    <label class="form-label d-flex justify-content-between" for="loginPassword">
+                        <span>Senha</span>
+                        <a href="#forgotCard" data-bs-toggle="collapse" class="small">Esqueci minha senha</a>
+                    </label>
+                    <input type="password" class="form-control" id="loginPassword" name="password" minlength="8" required>
+                </div>
+                <div class="col-12 d-grid">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-sign-in-alt me-2"></i> Entrar</button>
+                </div>
+                <div class="col-12 d-grid">
+                    <a href="<?= base_url('register') . ($redirectTarget ? '?redirect=' . urlencode($redirectTarget) : '') ?>" class="btn btn-outline-secondary">
+                        <i class="fas fa-user-plus me-2"></i> Criar conta autorizada
+                    </a>
+                </div>
+            </form>
         </div>
+    </div>
 
         <div class="collapse" id="forgotCard">
             <div class="card shadow-sm mb-3 border-0">
@@ -96,32 +101,6 @@
                         </div>
                     </form>
                 </div>
-            </div>
-        </div>
-
-        <div class="card shadow-sm mb-3 border-0">
-            <div class="card-body">
-                <h6 class="fw-bold mb-2">Criar acesso autorizado</h6>
-                <p class="text-muted small">Cadastro permitido apenas para o e-mail <?= esc($allowedEmail) ?>.</p>
-                <form action="<?= base_url('register') ?>" method="POST" class="row g-3">
-                    <?= csrf_field() ?>
-                    <input type="hidden" name="redirect" value="<?= esc($redirectTarget) ?>">
-                    <div class="col-12">
-                        <label class="form-label" for="registerName">Nome completo</label>
-                        <input type="text" class="form-control" id="registerName" name="name" value="<?= esc(old('name')) ?>" required>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label" for="registerEmail">E-mail autorizado</label>
-                        <input type="email" class="form-control" id="registerEmail" name="email" value="<?= esc($allowedEmail) ?>" required>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label" for="registerPassword">Senha</label>
-                        <input type="password" class="form-control" id="registerPassword" name="password" minlength="8" required>
-                    </div>
-                    <div class="col-12 d-grid">
-                        <button type="submit" class="btn btn-outline-primary"><i class="fas fa-user-plus me-2"></i> Criar conta</button>
-                    </div>
-                </form>
             </div>
         </div>
 

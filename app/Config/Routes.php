@@ -128,6 +128,7 @@ $routes->get('queue/process', 'QueueController::process');
 // Auth routes (to be implemented)
 $routes->get('login', 'AuthController::login');
 $routes->post('login', 'AuthController::authenticate');
+$routes->get('register', 'AuthController::registerForm');
 $routes->post('register', 'AuthController::register');
 $routes->post('auth/forgot-password', 'AuthController::forgotPassword');
 $routes->post('auth/reset-password', 'AuthController::resetPassword');
