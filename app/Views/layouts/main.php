@@ -114,6 +114,13 @@
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="<?= base_url('profile') ?>"><i class="fas fa-user me-2"></i> Perfil</a></li>
                         <li><a class="dropdown-item" href="<?= base_url('settings') ?>"><i class="fas fa-cog me-2"></i> Configurações</a></li>
+                        <li><a class="dropdown-item" href="<?= base_url('profile#password') ?>"><i class="fas fa-key me-2"></i> Alterar senha</a></li>
+                        <li>
+                            <form action="<?= base_url('profile/unlink-google') ?>" method="POST" class="px-3 py-1">
+                                <?= csrf_field() ?>
+                                <button type="submit" class="btn btn-link dropdown-item text-danger p-0"><i class="fab fa-google me-2"></i> Desvincular Google</button>
+                            </form>
+                        </li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="<?= base_url('logout') ?>"><i class="fas fa-sign-out-alt me-2"></i> Sair</a></li>
                     </ul>

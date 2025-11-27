@@ -27,6 +27,8 @@ class UserModel extends Model
         'is_active',
         'last_login',
         'password_hash',
+        'reset_code',
+        'reset_expires_at',
         'created_at',
         'updated_at',
     ];

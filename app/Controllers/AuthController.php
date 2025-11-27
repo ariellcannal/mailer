@@ -7,6 +7,9 @@ namespace App\Controllers;
 use App\Models\UserModel;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\I18n\Time;
+use Config\Services;
+use Google_Client;
+use Google_Service_Oauth2;
 
 /**
  * Controlador responsável por autenticação básica.
@@ -18,17 +21,22 @@ class AuthController extends BaseController
 
     /**
      * Exibe a tela de login e cadastro.
+     *
+     * @return string
      */
     public function login(): string
     {
         return view('auth/login', [
             'pageTitle' => 'Entrar',
             'allowedEmail' => $this->allowedEmail,
+            'redirectTarget' => $this->getRedirectTarget(),
         ]);
     }
 
     /**
      * Finaliza a sessão do usuário.
+     *
+     * @return RedirectResponse
      */
     public function logout(): RedirectResponse
     {
@@ -39,6 +47,8 @@ class AuthController extends BaseController
 
     /**
      * Autentica via e-mail e senha.
+     *
+     * @return RedirectResponse
      */
     public function authenticate(): RedirectResponse
     {
@@ -64,11 +74,13 @@ class AuthController extends BaseController
 
         $this->persistUserSession($user, 'password');
 
-        return redirect()->to('/')->with('success', 'Login realizado com sucesso.');
+        return redirect()->to($this->getRedirectTarget() ?: '/')->with('success', 'Login realizado com sucesso.');
     }
 
     /**
      * Registra novo usuário autorizado.
+     *
+     * @return RedirectResponse
      */
     public function register(): RedirectResponse
     {
@@ -105,37 +117,124 @@ class AuthController extends BaseController
         $user = $userModel->find((int) $userId);
         $this->persistUserSession($user, 'password');
 
-        return redirect()->to('/')->with('success', 'Cadastro realizado com sucesso.');
+        return redirect()->to($this->getRedirectTarget() ?: '/')->with('success', 'Cadastro realizado com sucesso.');
+    }
+
+    /**
+     * Dispara código de redefinição de senha.
+     *
+     * @return RedirectResponse
+     */
+    public function forgotPassword(): RedirectResponse
+    {
+        $email = (string) $this->request->getPost('forgot_email');
+
+        if ($email !== $this->allowedEmail) {
+            return redirect()->back()->withInput()->with('error', 'Informe o e-mail autorizado para recuperar a senha.');
+        }
+
+        $userModel = new UserModel();
+        $user = $userModel->findByEmail($email);
+
+        if (!$user) {
+            return redirect()->back()->withInput()->with('error', 'Usuário não encontrado para redefinição.');
+        }
+
+        if (!(bool) ($user['is_active'] ?? true)) {
+            return redirect()->back()->with('error', 'Usuário inativo. Contate o administrador.');
+        }
+
+        $resetCode = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $expiresAt = Time::now()->addMinutes(30)->toDateTimeString();
+
+        $userModel->update((int) $user['id'], [
+            'reset_code' => $resetCode,
+            'reset_expires_at' => $expiresAt,
+        ]);
+
+        if (!$this->sendResetEmail($email, $resetCode)) {
+            return redirect()->back()->with('error', 'Não foi possível enviar o código. Verifique as configurações de e-mail.');
+        }
+
+        return redirect()->back()->with('success', 'Código enviado para o e-mail autorizado. Verifique sua caixa de entrada.');
+    }
+
+    /**
+     * Confirma o código e redefine a senha.
+     *
+     * @return RedirectResponse
+     */
+    public function resetPassword(): RedirectResponse
+    {
+        $email = (string) $this->request->getPost('reset_email');
+        $code = (string) $this->request->getPost('reset_code');
+        $newPassword = (string) $this->request->getPost('reset_new_password');
+        $confirmPassword = (string) $this->request->getPost('reset_new_password_confirm');
+
+        if ($email !== $this->allowedEmail) {
+            return redirect()->back()->withInput()->with('error', 'Informe o e-mail autorizado para recuperar a senha.');
+        }
+
+        if ($newPassword !== $confirmPassword) {
+            return redirect()->back()->withInput()->with('error', 'A confirmação de senha não confere.');
+        }
+
+        if (strlen($newPassword) < 8) {
+            return redirect()->back()->withInput()->with('error', 'A nova senha deve ter pelo menos 8 caracteres.');
+        }
+
+        $userModel = new UserModel();
+        $user = $userModel->findByEmail($email);
+
+        if (!$user || empty($user['reset_code']) || empty($user['reset_expires_at'])) {
+            return redirect()->back()->with('error', 'Código de validação inválido ou expirado.');
+        }
+
+        if ($code !== (string) $user['reset_code']) {
+            return redirect()->back()->with('error', 'Código de validação inválido.');
+        }
+
+        if (Time::now()->isAfter(Time::parse($user['reset_expires_at']))) {
+            return redirect()->back()->with('error', 'Código expirado. Solicite um novo envio.');
+        }
+
+        $userModel->update((int) $user['id'], [
+            'password_hash' => password_hash($newPassword, PASSWORD_DEFAULT),
+            'reset_code' => null,
+            'reset_expires_at' => null,
+        ]);
+
+        $redirect = $this->getRedirectTarget();
+        $loginUrl = $redirect ? '/login?redirect=' . rawurlencode($redirect) : '/login';
+
+        return redirect()->to($loginUrl)->with('success', 'Senha redefinida com sucesso. Faça login com a nova senha.');
     }
 
     /**
      * Inicia o fluxo de autenticação com Google.
+     *
+     * @return RedirectResponse
      */
     public function google(): RedirectResponse
     {
-        $clientId = getenv('GOOGLE_CLIENT_ID');
-        $redirectUri = site_url('auth/google/callback');
-        $scopes = urlencode('openid email profile');
-        $state = bin2hex(random_bytes(16));
-        session()->set('google_oauth_state', $state);
+        $client = $this->createGoogleClient();
 
-        if (!$clientId) {
+        if (!$client) {
             return redirect()->back()->with('error', 'Configure as variáveis de ambiente do Google OAuth.');
         }
 
-        $authUrl = 'https://accounts.google.com/o/oauth2/v2/auth'
-            . '?response_type=code'
-            . '&client_id=' . urlencode($clientId)
-            . '&redirect_uri=' . urlencode($redirectUri)
-            . '&scope=' . $scopes
-            . '&state=' . $state
-            . '&prompt=select_account';
+        $state = bin2hex(random_bytes(16));
+        session()->set('google_oauth_state', $state);
+        session()->set('login_redirect', $this->getRedirectTarget());
+        $client->setState($state);
 
-        return redirect()->to($authUrl);
+        return redirect()->to($client->createAuthUrl());
     }
 
     /**
      * Finaliza o fluxo de autenticação com Google.
+     *
+     * @return RedirectResponse
      */
     public function googleCallback(): RedirectResponse
     {
@@ -147,8 +246,33 @@ class AuthController extends BaseController
             return redirect()->to('/login')->with('error', 'Validação do Google falhou. Tente novamente.');
         }
 
-        $email = (string) $this->request->getGet('debug_email');
-        $sub = (string) $this->request->getGet('debug_sub');
+        $authorizationCode = (string) $this->request->getGet('code');
+
+        if (!$authorizationCode) {
+            return redirect()->to('/login')->with('error', 'Código de autorização ausente.');
+        }
+
+        $client = $this->createGoogleClient();
+
+        if (!$client) {
+            return redirect()->to('/login')->with('error', 'Configure as variáveis de ambiente do Google OAuth.');
+        }
+
+        $token = $client->fetchAccessTokenWithAuthCode($authorizationCode);
+
+        if (isset($token['error'])) {
+            return redirect()->to('/login')->with('error', 'Não foi possível validar o login com o Google.');
+        }
+
+        $client->setAccessToken($token);
+
+        $oauth2 = new Google_Service_Oauth2($client);
+        $googleUser = $oauth2->userinfo->get();
+
+        $email = (string) $googleUser->getEmail();
+        $googleId = (string) $googleUser->getId();
+        $name = (string) ($googleUser->getName() ?: 'Usuário Google');
+        $avatar = (string) $googleUser->getPicture();
 
         if (!$email) {
             return redirect()->to('/login')->with('error', 'E-mail não retornado pelo Google.');
@@ -160,16 +284,35 @@ class AuthController extends BaseController
 
         $userModel = new UserModel();
         $user = $userModel->findByEmail($email);
-        $googleId = $sub ?: 'google-' . hash('sha256', $email);
 
         if ($user) {
+            if (!(bool) ($user['is_active'] ?? true)) {
+                return redirect()->to('/login')->with('error', 'Usuário inativo. Contate o administrador.');
+            }
+
+            $updates = [];
+
             if (empty($user['google_id'])) {
-                $userModel->update((int) $user['id'], ['google_id' => $googleId]);
+                $updates['google_id'] = $googleId;
+            }
+
+            if ($avatar && (!isset($user['avatar']) || $user['avatar'] !== $avatar)) {
+                $updates['avatar'] = $avatar;
+            }
+
+            if ($name && empty($user['name'])) {
+                $updates['name'] = $name;
+            }
+
+            if ($updates) {
+                $userModel->update((int) $user['id'], $updates);
+                $user = $userModel->find((int) $user['id']);
             }
         } else {
             $userId = $userModel->insert([
                 'email' => $email,
-                'name' => 'Usuário Google',
+                'name' => $name,
+                'avatar' => $avatar,
                 'google_id' => $googleId,
                 'is_active' => 1,
                 'last_login' => Time::now()->toDateTimeString(),
@@ -185,19 +328,108 @@ class AuthController extends BaseController
         $userModel->touchLastLogin((int) $user['id']);
         $this->persistUserSession($user, 'google');
 
-        return redirect()->to('/')->with('success', 'Login pelo Google concluído.');
+        $redirectTarget = (string) session()->get('login_redirect');
+        session()->remove('login_redirect');
+
+        return redirect()->to($redirectTarget ?: '/')->with('success', 'Login pelo Google concluído.');
     }
 
     /**
      * Persiste dados mínimos do usuário na sessão.
+     *
+     * @param array<string, string|int|null> $user
+     * @param string                         $provider
      */
     private function persistUserSession(array $user, string $provider): void
     {
+        session()->regenerate(true);
         session()->set([
             'user_id' => $user['id'],
             'user_email' => $user['email'],
             'user_name' => $user['name'],
             'auth_provider' => $provider,
         ]);
+    }
+
+    /**
+     * Obtém destino de redirecionamento seguro.
+     *
+     * @return string
+     */
+    private function getRedirectTarget(): string
+    {
+        $redirect = (string) ($this->request->getPost('redirect') ?? $this->request->getGet('redirect') ?? '');
+
+        if ($redirect === '') {
+            return '';
+        }
+
+        $parsed = parse_url($redirect);
+
+        if ($parsed === false) {
+            return '';
+        }
+
+        if (!isset($parsed['host'])) {
+            return $redirect;
+        }
+
+        $currentHost = parse_url(site_url(), PHP_URL_HOST);
+
+        if ($parsed['host'] === $currentHost) {
+            return $redirect;
+        }
+
+        return '';
+    }
+
+    /**
+     * Envia o código de redefinição para o e-mail autorizado.
+     *
+     * @param string $email Destinatário autorizado.
+     * @param string $code  Código de validação.
+     * @return bool
+     */
+    private function sendResetEmail(string $email, string $code): bool
+    {
+        $emailService = Services::email();
+
+        $emailService->setTo($email);
+        $emailService->setSubject('Código para redefinição de senha');
+        $emailService->setMessage("Olá,\n\nSeu código de verificação é: {$code}. Ele expira em 30 minutos.\n\nSe você não solicitou, ignore esta mensagem.");
+
+        return $emailService->send();
+    }
+
+    /**
+     * Cria o cliente Google OAuth 2.0 com dados do ambiente.
+     *
+     * @return Google_Client|null
+     */
+    private function createGoogleClient(): ?Google_Client
+    {
+        if (!class_exists(Google_Client::class)) {
+            return null;
+        }
+
+        $clientId = (string) env('GOOGLE_CLIENT_ID');
+        $clientSecret = (string) env('GOOGLE_CLIENT_SECRET');
+
+        if (!$clientId || !$clientSecret) {
+            return null;
+        }
+
+        $redirectUri = (string) (env('GOOGLE_REDIRECT_URI') ?: env('google.redirectUri') ?: site_url('auth/google/callback'));
+
+        $client = new Google_Client();
+        $client->setClientId($clientId);
+        $client->setClientSecret($clientSecret);
+        $client->setRedirectUri($redirectUri);
+        $client->setScopes(['openid', 'email', 'profile']);
+        $client->setPrompt('select_account');
+        $client->setAccessType('offline');
+        $client->setIncludeGrantedScopes(true);
+
+        return $client;
     }
 }
