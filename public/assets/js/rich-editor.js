@@ -151,6 +151,42 @@
                 fileUploadUrl: configElement.dataset.fileUploadUrl || ''
         };
 
+        let editorInstance = null;
+
+        /**
+         * Recupera o elemento de origem associado ao editor.
+         *
+         * @returns {HTMLTextAreaElement|null}
+         */
+        const getEditorSourceElement = () => document.getElementById('richEditor')
+                || document.querySelector('textarea[name="html_content"]');
+
+        /**
+         * Retorna o HTML atual do editor, mesmo antes da instância carregar.
+         *
+         * @returns {string}
+         */
+        window.getRichEditorData = function getRichEditorData() {
+                if (editorInstance?.getData) {
+                        return editorInstance.getData();
+                }
+
+                const sourceElement = getEditorSourceElement();
+                return sourceElement ? sourceElement.value : '';
+        };
+
+        /**
+         * Sincroniza o editor com o campo original para submissões e salvamentos parciais.
+         *
+         * @returns {void}
+         */
+        window.syncRichEditors = function syncRichEditors() {
+                const sourceElement = getEditorSourceElement();
+                if (sourceElement) {
+                        sourceElement.value = window.getRichEditorData();
+                }
+        };
+
         /**
          * Garante a altura configurada para o editor, inclusive ao alternar para o modo de código-fonte.
          *
@@ -707,8 +743,8 @@
                 if (!previewElement) {
                         return;
                 }
-                const messageElement = document.getElementById('messageEditor');
-                const fallback = messageElement ? messageElement.value : '';
+                const sourceElement = getEditorSourceElement();
+                const fallback = sourceElement ? sourceElement.value : '';
                 const content = typeof window.getRichEditorData === 'function' ? window.getRichEditorData() : fallback;
                 previewElement.innerHTML = content || '<p class="text-muted">Nenhum conteúdo para pré-visualizar.</p>';
         }
@@ -923,30 +959,10 @@
                                         }
                                 })
                                 .then((editor) => {
+                                        editorInstance = editor;
                                         window.editor = editor;
 
                                         enforceEditorHeight(editor, settings.height);
-
-                                        /**
-                                         * Recupera o conteúdo atual do editor principal.
-                                         *
-                                         * @returns {string}
-                                         */
-                                        window.getRichEditorData = function getRichEditorData() {
-                                                return editor.getData();
-                                        };
-
-                                        /**
-                                         * Sincroniza o conteúdo do editor com o campo de mensagem.
-                                         *
-                                         * @returns {void}
-                                         */
-                                        window.syncRichEditors = function syncRichEditors() {
-                                                const messageElement = document.getElementById('messageEditor');
-                                                if (messageElement) {
-                                                        messageElement.value = editor.getData();
-                                                }
-                                        };
 
                                         window.switchEditorMode = switchEditorMode;
                                         window.renderEditorPreview = renderEditorPreview;
