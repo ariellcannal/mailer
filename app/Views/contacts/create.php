@@ -12,14 +12,15 @@
         <form action="<?= base_url('contacts/store') ?>" method="POST">
             <?= csrf_field() ?>
             <div class="mb-3">
+                <label class="form-label">E-mail *</label>
+                <input type="email" class="form-control" name="email" value="<?= old('email') ?>" required>
+            </div>
+			
+			<div class="mb-3">
                 <label class="form-label">Nome</label>
                 <input type="text" class="form-control" name="name" value="<?= old('name') ?>">
             </div>
-            <div class="mb-3">
-                <label class="form-label">Email</label>
-                <input type="email" class="form-control" name="email" value="<?= old('email') ?>" required>
-            </div>
-
+            
             <?php if (!empty($lists)): ?>
             <div class="mb-3">
                 <label class="form-label">Listas</label>
