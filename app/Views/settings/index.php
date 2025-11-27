@@ -10,7 +10,7 @@
         <?php endif; ?>
 
         <div class="alert alert-info d-flex align-items-center gap-3">
-            <img src="<?= base_url('assets/images/icon.svg') ?>" alt="Ícone da CANNAL" width="48" height="48">
+            <img src="<?= base_url('assets/images/icon.png') ?>" alt="Ícone da CANNAL" width="48" height="48">
             <div>
                 <strong>Credenciais AWS SES</strong><br>
                 Os dados de autenticação são carregados exclusivamente do arquivo <code>.env</code>.<br>
@@ -33,11 +33,6 @@
                 <div class="col-md-4">
                     <label class="form-label">Remetente padrão</label>
                     <input type="email" class="form-control" name="settings[default_sender]" value="<?= esc($settings['default_sender'] ?? '') ?>">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Editor de conteúdo</label>
-                    <input type="hidden" name="settings[editor_engine]" value="ckeditor">
-                    <div class="form-control bg-light">CKEditor 5 (padrão)</div>
                 </div>
             </div>
 

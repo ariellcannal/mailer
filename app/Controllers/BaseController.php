@@ -59,6 +59,7 @@ abstract class BaseController extends Controller
         'imagens',
         'assets',
         'favicon.ico',
+        'deploy',
     ];
 
     /**

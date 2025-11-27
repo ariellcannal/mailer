@@ -13,7 +13,7 @@
                 <i class="fas fa-shield-alt fa-2x me-3"></i>
                 <div>
                     <small class="d-block">Autenticação protegida</small>
-                    <small class="fw-bold">Somente o e-mail autorizado pode acessar.</small>
+                    <small class="fw-bold">Somente usuários autorizado.</small>
                 </div>
             </div>
         </div>
@@ -22,8 +22,8 @@
     <div class="col-lg-6 p-4 p-lg-5">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-                <h4 class="fw-bold mb-1">Entrar no painel</h4>
-                <small class="text-muted">Use seu e-mail autorizado (<?= esc($allowedEmail) ?>)</small>
+                <h4 class="fw-bold mb-1">CANNAL Mailing</h4>
+                <small class="text-muted">Acesso ao painel</small>
             </div>
             <img src="<?= base_url('assets/images/icon.png') ?>" alt="Ícone" width="48" height="48">
         </div>
@@ -56,7 +56,7 @@
                 </div>
                 <div class="col-12 d-grid">
                     <a href="<?= base_url('register') . ($redirectTarget ? '?redirect=' . urlencode($redirectTarget) : '') ?>" class="btn btn-outline-secondary">
-                        <i class="fas fa-user-plus me-2"></i> Criar conta autorizada
+                        <i class="fas fa-user-plus me-2"></i> Criar Conta
                     </a>
                 </div>
             </form>

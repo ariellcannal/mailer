@@ -70,10 +70,10 @@ class SettingsController extends BaseController
             if (($quota['success'] ?? false) === true) {
                 return $this->response->setJSON([
                     'success' => true,
-                    'max24HourSend' => number_format((float) $quota['max24HourSend'], 0, '.', ''),
-                    'maxSendRate' => number_format((float) $quota['maxSendRate'], 2, '.', ''),
-                    'sentLast24Hours' => number_format((float) $quota['sentLast24Hours'], 0, '.', ''),
-                    'remaining' => number_format((float) $quota['remaining'], 0, '.', ''),
+                    'max24HourSend' => number_format((float) $quota['max24HourSend'], 0, '', '.'),
+                    'maxSendRate' => number_format((float) $quota['maxSendRate'], 2, '', '.'),
+                    'sentLast24Hours' => number_format((float) $quota['sentLast24Hours'], 0, '', '.'),
+                    'remaining' => number_format((float) $quota['remaining'], 0, ',', '.'),
                 ]);
             }
 

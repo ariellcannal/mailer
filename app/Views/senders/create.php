@@ -17,7 +17,7 @@
             </div>
 
             <div class="alert alert-info d-flex gap-3 align-items-center">
-                <img src="<?= base_url('assets/images/icon.svg') ?>" alt="Ícone CANNAL" width="40" height="40">
+                <img src="<?= base_url('assets/images/icon.png') ?>" alt="Ícone CANNAL" width="40" height="40">
                 <div>
                     O remetente será registrado automaticamente na Amazon SES.
                     Após salvar, configure os registros DNS exibidos para concluir a verificação.
