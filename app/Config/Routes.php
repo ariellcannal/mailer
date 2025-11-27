@@ -90,7 +90,7 @@ $routes->group('files', function($routes) {
     $routes->get('list', 'FileManagerController::list');
     $routes->post('upload', 'FileManagerController::upload');
 });
-$routes->get('imagens/(:segment)', 'FileManagerController::get/$1');
+$routes->get('imagens/(:segment)', 'TrackController::getImage/$1');
 
 // Senders
 $routes->group('senders', function($routes) {
