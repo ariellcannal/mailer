@@ -148,6 +148,7 @@ composer install
 Dependências instaladas automaticamente:
 - `codeigniter4/framework` ^4.6
 - `aws/aws-sdk-php` ^3.359
+- `google/apiclient` ^2.0
 - `phpoffice/phpspreadsheet` ^5.2
 
 ### 3. Configurar Banco de Dados
@@ -178,9 +179,9 @@ database.default.password = sua_senha
 app.throttleRate = 14
 
 # Google OAuth (opcional)
-google.clientId = SEU_CLIENT_ID
-google.clientSecret = SEU_CLIENT_SECRET
-google.redirectUri = 'http://localhost:8080/auth/google/callback'
+GOOGLE_CLIENT_ID = SEU_CLIENT_ID
+GOOGLE_CLIENT_SECRET = SEU_CLIENT_SECRET
+GOOGLE_REDIRECT_URI = 'http://localhost:8080/auth/google/callback'
 
 # AWS SES (obrigatório)
 aws.ses.region = us-east-1
