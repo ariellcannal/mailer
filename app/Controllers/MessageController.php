@@ -77,10 +77,12 @@ class MessageController extends BaseController {
 
         $defaultCampaignId = (int) $this->request->getGet('campaign_id');
 
-        return view('messages/create', [
+        return view('messages/detail', [
             'campaigns' => $campaignModel->where('is_active', 1)->findAll(),
             'senders' => $senderModel->where('is_active', 1)->where('ses_verified', 1)->findAll(),
             'contactLists' => $contactListModel->orderBy('name', 'ASC')->findAll(),
+            'message' => [],
+            'selectedLists' => [],
             'activeMenu' => 'messages',
             'pageTitle' => 'Nova Mensagem',
             'selectedCampaignId' => $defaultCampaignId > 0 ? $defaultCampaignId : null,
@@ -162,20 +164,16 @@ class MessageController extends BaseController {
             $resendLocks[(int) $rule['id']] = $this->hasQueuedResend($id, (int) $rule['resend_number']);
         }
 
-        return view('messages/edit', [
+        return view('messages/detail', [
             'message' => $message,
             'campaigns' => $campaignModel->where('is_active', 1)->findAll(),
             'senders' => $senderModel->where('is_active', 1)->where('ses_verified', 1)->findAll(),
             'resendRules' => $resendRules,
             'contactLists' => $contactListModel->orderBy('name', 'ASC')->findAll(),
             'selectedLists' => $preselectedLists,
-            'recipientBreakdown' => $this->getRecipientListBreakdown($id),
-            'canEditRecipients' => $canEditRecipients,
-            'currentRecipients' => $this->countMessageRecipients($id),
-            'canReschedule' => $this->canRescheduleMessage($message),
-            'resendLocks' => $resendLocks,
             'activeMenu' => 'messages',
             'pageTitle' => 'Editar Mensagem',
+            'selectedCampaignId' => null,
         ]);
     }
 

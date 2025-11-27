@@ -1,12 +1,18 @@
 <?php
-/** @var int|null    $height */
+/**
+ * Bloco de editor rich text compartilhado entre criação e edição.
+ */
+
+/** @var int|null $height */
+/** @var string|null $htmlContent */
 
 $height = $height ?? 500;
+$htmlContent = $htmlContent ?? old('html_content');
 ?>
 <div class="row g-3 mb-3" id="editorWrapper" aria-live="polite">
     <div class="col-12">
         <div id="editorCreatePanel" class="editor-panel card shadow-sm">
-			<textarea id="richEditor" name="html_content" class="form-control js-rich-editor" rows="15" required><?= old('html_content') ?></textarea>
+            <textarea id="richEditor" name="html_content" class="form-control js-rich-editor" rows="15" required><?= esc($htmlContent) ?></textarea>
         </div>
 
         <div id="editorPreviewPanel" class="editor-panel card shadow-sm d-none bg-light">

@@ -19,6 +19,15 @@
     const recipientTotal = document.getElementById('recipientTotal');
     const scheduledAt = document.getElementById('scheduledAt');
 
+    function showFeedback(message, type = 'error') {
+        if (window.alertify && typeof window.alertify[type] === 'function') {
+            window.alertify[type](message);
+            return;
+        }
+
+        window.alert(message);
+    }
+
     function updateScheduleSummary() {
         const selectedText = (selectedLists?.textContent || '').trim() || 'Nenhuma lista selecionada.';
         const total = recipientTotal?.textContent || '0';
@@ -83,7 +92,7 @@
             const html = typeof getRichEditorData === 'function' ? getRichEditorData() : '';
 
             if (!html || html.trim() === '') {
-                window.alertify?.error('Preencha o conteúdo do email antes de continuar.');
+                showFeedback('Preencha o conteúdo do email antes de continuar.');
                 return false;
             }
         }
@@ -93,7 +102,7 @@
             const hasOptions = contactSelect ? contactSelect.options.length > 0 : false;
 
             if (hasOptions && selected.length === 0) {
-                window.alertify?.error('Selecione pelo menos uma lista de contato.');
+                showFeedback('Selecione pelo menos uma lista de contato.');
                 return false;
             }
         }
@@ -112,10 +121,14 @@
 
         try {
             const response = await fetch(progressUrl, { method: 'POST', body: formData });
+            if (!response.ok) {
+                showFeedback('Não foi possível salvar o progresso.');
+                return false;
+            }
             const payload = await response.json();
 
             if (!payload.success) {
-                window.alertify?.error(payload.error || 'Não foi possível salvar o progresso.');
+                showFeedback(payload.error || 'Não foi possível salvar o progresso.');
                 return false;
             }
 
@@ -125,7 +138,7 @@
 
             return true;
         } catch (error) {
-            window.alertify?.error('Falha ao salvar o progresso.');
+            showFeedback('Falha ao salvar o progresso.');
             return false;
         }
     }
@@ -179,9 +192,7 @@
             .then((response) => response.json())
             .then((payload) => {
                 if (!payload.success) {
-                    if (window.alertify) {
-                        window.alertify.error(payload.error || 'Não foi possível carregar os contatos.');
-                    }
+                    showFeedback(payload.error || 'Não foi possível carregar os contatos.');
                     return;
                 }
                 const summary = (payload.lists || [])
@@ -195,9 +206,7 @@
                 }
             })
             .catch(() => {
-                if (window.alertify) {
-                    window.alertify.error('Erro ao buscar contatos das listas.');
-                }
+                showFeedback('Erro ao buscar contatos das listas.');
             });
     }
 
@@ -229,15 +238,13 @@
             .then((response) => response.json())
             .then((payload) => {
                 if (payload.success) {
-                    if (window.alertify) {
-                        window.alertify.success('Mensagem salva com sucesso!');
-                    }
+                    showFeedback('Mensagem salva com sucesso!', 'success');
                     setTimeout(() => { window.location.href = indexUrl; }, 1500);
-                } else if (window.alertify) {
-                    window.alertify.error(payload.error || 'Erro ao salvar mensagem');
+                } else {
+                    showFeedback(payload.error || 'Erro ao salvar mensagem');
                 }
             })
-            .catch(() => { window.alertify?.error('Erro ao salvar mensagem'); });
+            .catch(() => { showFeedback('Erro ao salvar mensagem'); });
     });
 
     window.nextStep = nextStep;

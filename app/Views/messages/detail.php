@@ -9,7 +9,11 @@
 
 <div class="card">
     <div class="card-body">
-        <h4 class="mb-4"><i class="fas fa-paper-plane"></i> Nova Mensagem</h4>
+        <?php $isEdit = !empty($message['id'] ?? null); ?>
+        <h4 class="mb-4">
+            <i class="fas fa-paper-plane"></i>
+            <?= $isEdit ? 'Editar Mensagem' : 'Nova Mensagem' ?>
+        </h4>
         
         <!-- Step Wizard -->
         <div class="step-wizard">
@@ -45,7 +49,8 @@
             data-index-url="<?= base_url('messages') ?>"
             data-progress-url="<?= base_url('messages/save-progress') ?>"
             data-contacts-url="<?= base_url('contact-lists/buscar-contatos') ?>">
-            <input type="hidden" name="message_id" id="messageId" value="">
+            <?= csrf_field() ?>
+            <input type="hidden" name="message_id" id="messageId" value="<?= esc($message['id'] ?? '') ?>">
             <!-- Step 1: Informações Básicas -->
             <div class="step-content" data-step="1">
                 <div class="row">
@@ -53,9 +58,7 @@
                         <label class="form-label">Campanha *</label>
                         <select class="form-select" name="campaign_id" required>
                             <option value="">Selecione...</option>
-                            <?php
-                                $campaignDefault = old('campaign_id', $selectedCampaignId ?? '');
-                            ?>
+                            <?php $campaignDefault = old('campaign_id', $message['campaign_id'] ?? ($selectedCampaignId ?? '')); ?>
                             <?php foreach ($campaigns as $campaign): ?>
                                 <option value="<?= $campaign['id'] ?>" <?= (string) $campaignDefault === (string) $campaign['id'] ? 'selected' : '' ?>>
                                     <?= esc($campaign['name']) ?>
@@ -69,24 +72,43 @@
                         <select class="form-select" name="sender_id" required>
                             <option value="">Selecione...</option>
                             <?php foreach ($senders as $sender): ?>
-                                <option value="<?= $sender['id'] ?>"><?= esc($sender['name']) ?> (<?= esc($sender['email']) ?>)</option>
+                                <option value="<?= $sender['id'] ?>" <?= (string) old('sender_id', $message['sender_id'] ?? '') === (string) $sender['id'] ? 'selected' : '' ?>>
+                                    <?= esc($sender['name']) ?> (<?= esc($sender['email']) ?>)
+                                </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
                     
                     <div class="col-md-12 mb-3">
                         <label class="form-label">Assunto *</label>
-                        <input type="text" class="form-control" name="subject" required placeholder="Digite o assunto do email">
+                        <input
+                            type="text"
+                            class="form-control"
+                            name="subject"
+                            required
+                            placeholder="Digite o assunto do email"
+                            value="<?= esc(old('subject', $message['subject'] ?? '')) ?>">
                     </div>
                     
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Nome do Remetente *</label>
-                        <input type="text" class="form-control" name="from_name" required placeholder="Ex: Equipe Suporte">
+                        <input
+                            type="text"
+                            class="form-control"
+                            name="from_name"
+                            required
+                            placeholder="Ex: Equipe Suporte"
+                            value="<?= esc(old('from_name', $message['from_name'] ?? '')) ?>">
                     </div>
                     
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Reply-To</label>
-                        <input type="email" class="form-control" name="reply_to" placeholder="resposta@seudominio.com">
+                        <input
+                            type="email"
+                            class="form-control"
+                            name="reply_to"
+                            placeholder="resposta@seudominio.com"
+                            value="<?= esc(old('reply_to', $message['reply_to'] ?? '')) ?>">
                     </div>
                 </div>
                 
@@ -99,6 +121,7 @@
             <div class="step-content" data-step="2" style="display:none;">
                 <?= view('partials/rich_editor', [
                     'height' => 600,
+                    'htmlContent' => old('html_content', $message['html_content'] ?? ''),
                 ]) ?>
                 <div class="d-flex justify-content-between mt-3">
                     <button type="button" class="btn btn-secondary me-2" onclick="prevStep()">
@@ -137,8 +160,12 @@
                 <div class="mb-3">
                     <label class="form-label" for="contactListSelect">Listas de contato</label>
                     <select id="contactListSelect" name="contact_lists[]" class="form-select" multiple data-placeholder="Selecione as listas">
+                        <?php $preselectedLists = $selectedLists ?? []; ?>
                         <?php foreach ($contactLists as $list): ?>
-                            <option value="<?= $list['id'] ?>" data-total="<?= $list['total_contacts'] ?? 0 ?>">
+                            <option
+                                value="<?= $list['id'] ?>"
+                                data-total="<?= $list['total_contacts'] ?? 0 ?>"
+                                <?= in_array((int) $list['id'], array_map('intval', $preselectedLists), true) ? 'selected' : '' ?>>
                                 <?= esc($list['name']) ?> (<?= (int) ($list['total_contacts'] ?? 0) ?> contatos)
                             </option>
                         <?php endforeach; ?>
@@ -177,7 +204,13 @@
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <label class="form-label" for="scheduledAt">Primeiro envio *</label>
-                        <input type="datetime-local" id="scheduledAt" name="scheduled_at" class="form-control" value="<?= date('Y-m-d\TH:i') ?>" required>
+                        <input
+                            type="datetime-local"
+                            id="scheduledAt"
+                            name="scheduled_at"
+                            class="form-control"
+                            value="<?= esc(old('scheduled_at', isset($message['scheduled_at']) ? date('Y-m-d\TH:i', strtotime($message['scheduled_at'])) : date('Y-m-d\TH:i'))) ?>"
+                            required>
                         <small class="text-muted">A aplicação iniciará o disparo automaticamente neste horário.</small>
                     </div>
                     <div class="col-md-6 d-flex align-items-end">
@@ -200,57 +233,53 @@
                 <h5 class="mb-3">Configurar Reenvios Automáticos</h5>
                 <p class="text-muted">Configure até 3 reenvios automáticos para contatos que não abriram a mensagem.</p>
 
+                <?php
+                    $resendDefaults = [
+                        1 => ['scheduled_at' => null, 'subject' => $message['subject'] ?? ''],
+                        2 => ['scheduled_at' => null, 'subject' => $message['subject'] ?? ''],
+                        3 => ['scheduled_at' => null, 'subject' => $message['subject'] ?? ''],
+                    ];
+
+                    if (!empty($resendRules ?? [])) {
+                        foreach ($resendRules as $rule) {
+                            $number = (int) ($rule['resend_number'] ?? 0);
+                            if ($number >= 1 && $number <= 3) {
+                                $resendDefaults[$number] = [
+                                    'scheduled_at' => $rule['scheduled_at'] ?? null,
+                                    'subject' => $rule['subject_override'] ?? ($rule['subject'] ?? ($message['subject'] ?? '')),
+                                ];
+                            }
+                        }
+                    }
+                ?>
                 <div id="resends-container">
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h6>Reenvio 1</h6>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <label class="form-label">Agendar em</label>
-                                    <input type="datetime-local" class="form-control" name="resends[0][scheduled_at]">
-                                    <input type="hidden" name="resends[0][number]" value="1">
-                                </div>
-                                <div class="col-md-8">
-                                    <label class="form-label">Novo assunto</label>
-                                    <input type="text" class="form-control" name="resends[0][subject]" placeholder="Assunto da mensagem" value="<?= esc($message['subject'] ?? '') ?>">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h6>Reenvio 2</h6>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <label class="form-label">Agendar em</label>
-                                    <input type="datetime-local" class="form-control" name="resends[1][scheduled_at]">
-                                    <input type="hidden" name="resends[1][number]" value="2">
-                                </div>
-                                <div class="col-md-8">
-                                    <label class="form-label">Novo assunto</label>
-                                    <input type="text" class="form-control" name="resends[1][subject]" placeholder="Assunto da mensagem" value="<?= esc($message['subject'] ?? '') ?>">
+                    <?php foreach ($resendDefaults as $index => $resend): ?>
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h6>Reenvio <?= (int) $index ?></h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Agendar em</label>
+                                        <input
+                                            type="datetime-local"
+                                            class="form-control"
+                                            name="resends[<?= (int) ($index - 1) ?>][scheduled_at]"
+                                            value="<?= esc($resend['scheduled_at'] ? date('Y-m-d\TH:i', strtotime($resend['scheduled_at'])) : '') ?>">
+                                        <input type="hidden" name="resends[<?= (int) ($index - 1) ?>][number]" value="<?= (int) $index ?>">
+                                    </div>
+                                    <div class="col-md-8">
+                                        <label class="form-label">Novo assunto</label>
+                                        <input
+                                            type="text"
+                                            class="form-control"
+                                            name="resends[<?= (int) ($index - 1) ?>][subject]"
+                                            placeholder="Assunto da mensagem"
+                                            value="<?= esc($resend['subject'] ?? '') ?>">
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h6>Reenvio 3</h6>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <label class="form-label">Agendar em</label>
-                                    <input type="datetime-local" class="form-control" name="resends[2][scheduled_at]">
-                                    <input type="hidden" name="resends[2][number]" value="3">
-                                </div>
-                                <div class="col-md-8">
-                                    <label class="form-label">Novo assunto</label>
-                                    <input type="text" class="form-control" name="resends[2][subject]" placeholder="Assunto da mensagem" value="<?= esc($message['subject'] ?? '') ?>">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <?php endforeach; ?>
                 </div>
 
                 <button type="button" class="btn btn-secondary me-2" onclick="prevStep()">
@@ -264,8 +293,4 @@
     </div>
 </div>
 
-<?= $this->endSection() ?>
-
-<?= $this->section('scripts') ?>
-<script src="<?= base_url('assets/js/messages-form.js') ?>" defer></script>
 <?= $this->endSection() ?>
