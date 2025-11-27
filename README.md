@@ -179,8 +179,8 @@ database.default.password = sua_senha
 app.throttleRate = 14
 
 # Google OAuth (opcional)
-GOOGLE_CLIENT_ID = SEU_CLIENT_ID
-GOOGLE_CLIENT_SECRET = SEU_CLIENT_SECRET
+google.clientId = SEU_CLIENT_ID
+google.clientSecret = SEU_CLIENT_SECRET
 GOOGLE_REDIRECT_URI = 'http://localhost:8080/auth/google/callback'
 
 # AWS SES (obrigatório)

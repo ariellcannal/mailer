@@ -20,7 +20,7 @@ class AuthController extends BaseController
     private string $allowedEmail = 'ariell@cannal.com.br';
 
     /**
-     * Exibe a tela de login e cadastro.
+     * Exibe a tela de login.
      *
      * @return string
      */
@@ -118,6 +118,20 @@ class AuthController extends BaseController
         $this->persistUserSession($user, 'password');
 
         return redirect()->to($this->getRedirectTarget() ?: '/')->with('success', 'Cadastro realizado com sucesso.');
+    }
+
+    /**
+     * Exibe a tela de cadastro autorizado.
+     *
+     * @return string
+     */
+    public function registerForm(): string
+    {
+        return view('auth/register', [
+            'pageTitle' => 'Criar acesso',
+            'allowedEmail' => $this->allowedEmail,
+            'redirectTarget' => $this->getRedirectTarget(),
+        ]);
     }
 
     /**
@@ -412,8 +426,8 @@ class AuthController extends BaseController
             return null;
         }
 
-        $clientId = (string) env('GOOGLE_CLIENT_ID');
-        $clientSecret = (string) env('GOOGLE_CLIENT_SECRET');
+        $clientId = (string) (env('google.clientId') ?: env('GOOGLE_CLIENT_ID'));
+        $clientSecret = (string) (env('google.clientSecret') ?: env('GOOGLE_CLIENT_SECRET'));
 
         if (!$clientId || !$clientSecret) {
             return null;
