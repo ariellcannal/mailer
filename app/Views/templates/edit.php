@@ -36,7 +36,7 @@
                 <div class="col-12">
                     <label class="form-label">Template</label>
                     <?= view('partials/rich_editor', [
-                        'height' => 600,
+                        'height' => 400,
                     ]) ?>
                 </div>
             </div>

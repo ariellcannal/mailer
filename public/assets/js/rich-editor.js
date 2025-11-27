@@ -776,26 +776,12 @@
                 }
         }
 
-        function switchEditorMode(mode) {
-                if (mode !== 'create' && mode !== 'preview') {
-                        return;
-                }
-                if (mode === 'preview') {
-                        renderEditorPreview();
-                }
-                document.getElementById('editorModeCreate')?.classList.toggle('active', mode === 'create');
-                document.getElementById('editorModePreview')?.classList.toggle('active', mode === 'preview');
-                document.getElementById('editorCreatePanel')?.classList.toggle('d-none', mode !== 'create');
-                document.getElementById('editorPreviewPanel')?.classList.toggle('d-none', mode !== 'preview');
-        }
-
         function syncEditors() {
                 if (typeof window.syncRichEditors === 'function') {
                         window.syncRichEditors();
                 }
         }
 
-        window.switchEditorMode = switchEditorMode;
         window.renderEditorPreview = renderEditorPreview;
         window.toggleEditorFullscreen = toggleEditorFullscreen;
         window.syncEditors = syncEditors;
@@ -964,7 +950,6 @@
 
                                         enforceEditorHeight(editor, settings.height);
 
-                                        window.switchEditorMode = switchEditorMode;
                                         window.renderEditorPreview = renderEditorPreview;
                                         window.toggleEditorFullscreen = () => toggleEditorFullscreen(editor);
 
