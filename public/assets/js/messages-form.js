@@ -87,16 +87,21 @@
      *
      * @returns {Promise<unknown>}
      */
-    async function waitForEditorReady() {
-        if (window.richEditorReady && typeof window.richEditorReady.then === 'function') {
-            try {
-                return await window.richEditorReady;
-            } catch (error) {
-                console.error('Falha ao aguardar o editor rico:', error);
-                return null;
-            }
+    async function waitForEditorReady(timeoutMs = 5000) {
+        const readyPromise = (window.richEditorReady && typeof window.richEditorReady.then === 'function')
+            ? window.richEditorReady
+            : Promise.resolve(null);
+
+        const timeout = new Promise((resolve) => {
+            setTimeout(() => resolve(null), timeoutMs);
+        });
+
+        try {
+            return await Promise.race([readyPromise, timeout]);
+        } catch (error) {
+            console.error('Falha ao aguardar o editor rico:', error);
+            return null;
         }
-        return null;
     }
 
     async function validateCurrentStep() {

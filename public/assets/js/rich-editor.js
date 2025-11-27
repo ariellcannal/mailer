@@ -1,11 +1,6 @@
 (function($) {
         'use strict';
 
-        if (typeof CKEDITOR === 'undefined') {
-                console.error('CKEDITOR global is not available. Make sure ckeditor5.umd.js is loaded before rich-editor.js.');
-                return;
-        }
-
         const editorReadyDeferred = (() => {
                 let resolveReady;
                 let rejectReady;
@@ -18,6 +13,12 @@
         })();
 
         window.richEditorReady = editorReadyDeferred.promise;
+
+        if (typeof CKEDITOR === 'undefined') {
+                console.error('CKEDITOR global is not available. Make sure ckeditor5.umd.js is loaded before rich-editor.js.');
+                editorReadyDeferred.resolveReady(null);
+                return;
+        }
 
         const DEFAULT_HEX_COLORS = [
                 { color: '#000000', label: 'Black' },

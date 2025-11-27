@@ -4,6 +4,7 @@
     --color-danger: #c04c4c;
     --color-white: #f8f8f7;
     --color-dark: #333333;
+    --sidebar-bg: #2b3035;
     --sidebar-width: 260px;
     --header-height: 70px;
 }
@@ -39,29 +40,37 @@ h1, h2, h3, h4, h5, h6 {
     left: 0;
     height: 100vh;
     width: var(--sidebar-width);
-    background: var(--color-primary);
+    background: var(--sidebar-bg);
     color: var(--color-white);
     overflow-y: auto;
     z-index: 1000;
-    box-shadow: 2px 0 16px rgba(0, 0, 0, 0.15);
+    box-shadow: 2px 0 16px rgba(0, 0, 0, 0.25);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .sidebar-brand {
-    padding: 24px 20px;
+    display: block;
+    padding: 16px 12px;
     text-align: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .sidebar-brand img {
     max-width: 180px;
+    filter: brightness(1.1);
+}
+
+.sidebar-divider {
+    border-color: rgba(255, 255, 255, 0.15);
+    margin: 0.5rem 0 1rem;
 }
 
 .sidebar-menu {
-    padding: 24px 0;
+    padding-left: 0;
+    list-style: none;
 }
 
 .sidebar-menu-item {
-    padding: 14px 24px;
+    padding: 12px 14px;
     color: var(--color-white);
     text-decoration: none;
     display: flex;
@@ -69,13 +78,16 @@ h1, h2, h3, h4, h5, h6 {
     gap: 12px;
     font-weight: 500;
     letter-spacing: 0.5px;
-    transition: all 0.3s ease;
-    border-left: 4px solid transparent;
+    transition: all 0.2s ease;
+    border-radius: 0.75rem;
+    margin-bottom: 6px;
+    background-color: transparent;
 }
 
 .sidebar-menu-item i {
     font-size: 18px;
-    color: var(--color-secondary);
+    color: var(--color-white);
+    opacity: 0.85;
 }
 
 .sidebar-menu-item span {
@@ -87,13 +99,11 @@ h1, h2, h3, h4, h5, h6 {
 .sidebar-menu-item:hover {
     background: rgba(255, 255, 255, 0.08);
     color: var(--color-white);
-    border-left-color: var(--color-secondary);
 }
 
 .sidebar-menu-item.active {
-    background: rgba(237, 109, 34, 0.15);
+    background: var(--color-primary);
     color: var(--color-white);
-    border-left-color: var(--color-secondary);
 }
 
 .main-content {
