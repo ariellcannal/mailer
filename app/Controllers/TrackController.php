@@ -411,10 +411,38 @@ class TrackController extends BaseController
         $htmlContent = str_replace('{{optout_link}}', $optoutUrl, $htmlContent);
         $htmlContent = str_replace('{{unsubscribe_link}}', $optoutUrl, $htmlContent);
 
-        $htmlContent = str_replace('{{webview_link}}', '#', $htmlContent);
-        $htmlContent = str_replace('{{view_online}}', '#', $htmlContent);
+        $webviewUrl = $baseUrl . 'webview/' . $hash;
+        $htmlContent = str_replace('{{webview_link}}', $webviewUrl, $htmlContent);
+        $htmlContent = str_replace('{{view_online}}', $webviewUrl, $htmlContent);
 
-        return $htmlContent;
+        return $this->neutralizeWebviewAnchor($htmlContent, $webviewUrl);
+    }
+
+    /**
+     * Neutraliza o link de visualização externa apenas no contexto da webview.
+     *
+     * @param string $htmlContent Conteúdo HTML já preparado.
+     * @param string $webviewUrl  URL pública de visualização externa.
+     *
+     * @return string HTML com apenas o link de webview neutralizado.
+     */
+    protected function neutralizeWebviewAnchor(string $htmlContent, string $webviewUrl): string
+    {
+        $pattern = '/<a\b[^>]*?href=(["\'])(?<url>.*?)\1[^>]*>/i';
+
+        return preg_replace_callback($pattern, function(array $matches) use ($webviewUrl): string {
+            $fullTag = $matches[0];
+            $href = $matches['url'];
+            $quote = $matches[1];
+
+            if ($href !== $webviewUrl) {
+                return $fullTag;
+            }
+
+            $tagWithoutTarget = preg_replace('/\s+target=(["\']).*?\1/i', '', $fullTag) ?? $fullTag;
+
+            return preg_replace('/\bhref=(["\']).*?\1/i', 'href=' . $quote . '#' . $quote, $tagWithoutTarget, 1) ?? $tagWithoutTarget;
+        }, $htmlContent) ?? $htmlContent;
     }
 
     /**

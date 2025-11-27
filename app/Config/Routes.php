@@ -18,6 +18,7 @@ $routes->group('dashboard', function($routes) {
 // Tracking routes (public)
 $routes->get('track/open/(:segment)', 'TrackController::open/$1');
 $routes->get('track/click/(:segment)', 'TrackController::click/$1');
+$routes->get('webview/(:segment)', 'TrackController::webview/$1');
 $routes->match(['get', 'post'], 'optout/(:segment)', 'TrackController::optout/$1');
 
 // Campaigns

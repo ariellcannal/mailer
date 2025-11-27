@@ -362,9 +362,10 @@ class QueueManager
         $htmlContent = str_replace('{{optout_link}}', $optoutUrl, $htmlContent);
         $htmlContent = str_replace('{{unsubscribe_link}}', $optoutUrl, $htmlContent);
 
-        // Substitui link de visualização web desativando a rota
-        $htmlContent = str_replace('{{webview_link}}', '#', $htmlContent);
-        $htmlContent = str_replace('{{view_online}}', '#', $htmlContent);
+        // Substitui link de visualização externa
+        $webviewUrl = $baseUrl . 'webview/' . $trackingHash;
+        $htmlContent = str_replace('{{webview_link}}', $webviewUrl, $htmlContent);
+        $htmlContent = str_replace('{{view_online}}', $webviewUrl, $htmlContent);
 
         return $htmlContent;
     }
