@@ -139,7 +139,6 @@ h1, h2, h3, h4, h5, h6 {
 .btn-primary {
     background: var(--color-primary);
     border-color: var(--color-primary);
-    text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
@@ -252,8 +251,4 @@ h1, h2, h3, h4, h5, h6 {
 .header-icon {
     width: 36px;
     height: 36px;
-}
-
-.ck-powered-by-balloon{
-	display: none!important;
 }

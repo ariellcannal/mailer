@@ -1,7 +1,5 @@
 <?php
-
-declare(strict_types=1);
-
+declare(strict_types = 1);
 namespace App\Controllers;
 
 use CodeIgniter\HTTP\ResponseInterface;
@@ -11,6 +9,18 @@ use CodeIgniter\HTTP\ResponseInterface;
  */
 class FileManagerController extends BaseController
 {
+
+    private string $fileRepository = '';
+
+    private string $publicUrl = '';
+
+    public function __construct()
+    {
+        $this->fileRepository = rtrim(FCPATH, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'writable' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'imagens' . DIRECTORY_SEPARATOR . 'banco' . DIRECTORY_SEPARATOR;
+
+        $this->publicUrl = 'imagens/';
+    }
+
     /**
      * Lista arquivos disponíveis para utilização no editor.
      *
@@ -22,7 +32,7 @@ class FileManagerController extends BaseController
 
         return $this->response->setJSON([
             'success' => true,
-            'files' => $files,
+            'files' => $files
         ]);
     }
 
@@ -35,17 +45,17 @@ class FileManagerController extends BaseController
     {
         $upload = $this->request->getFile('file');
 
-        if ($upload === null || !$upload->isValid() || $upload->hasMoved()) {
+        if ($upload === null || ! $upload->isValid() || $upload->hasMoved()) {
             return $this->response->setJSON([
                 'success' => false,
-                'error' => 'Arquivo inválido para upload.',
+                'error' => 'Arquivo inválido para upload.'
             ])->setStatusCode(400);
         }
 
         if ($upload->getSizeByUnit('mb') > 5) {
             return $this->response->setJSON([
                 'success' => false,
-                'error' => 'Tamanho máximo permitido é 5MB.',
+                'error' => 'Tamanho máximo permitido é 5MB.'
             ])->setStatusCode(400);
         }
 
@@ -53,38 +63,49 @@ class FileManagerController extends BaseController
             'image/jpeg',
             'image/png',
             'image/gif',
-            'image/webp',
+            'image/webp'
         ];
 
-        if (!in_array($upload->getMimeType(), $allowedMimeTypes, true)) {
+        if (! in_array($upload->getMimeType(), $allowedMimeTypes, true)) {
             return $this->response->setJSON([
                 'success' => false,
-                'error' => 'Tipo de arquivo não permitido. Envie apenas imagens.',
+                'error' => 'Tipo de arquivo não permitido. Envie apenas imagens.'
             ])->setStatusCode(400);
         }
 
-        $targetDirectory = rtrim(FCPATH, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'imagens' . DIRECTORY_SEPARATOR . 'banco';
-
-        if (!is_dir($targetDirectory) && !mkdir($targetDirectory, 0755, true) && !is_dir($targetDirectory)) {
+        if (! is_dir($this->fileRepository) && ! mkdir($this->fileRepository, 0755, true) && ! is_dir($this->fileRepository)) {
             return $this->response->setJSON([
                 'success' => false,
-                'error' => 'Não foi possível preparar o diretório de uploads.',
+                'error' => 'Não foi possível preparar o diretório de uploads.'
             ])->setStatusCode(500);
         }
 
         $newName = $upload->getRandomName();
-        $upload->move($targetDirectory, $newName);
+        $upload->move($this->fileRepository, $newName);
 
-        $filePath = 'uploads/imagens/banco/' . $newName;
+        $filePath = $this->publicUrl . $newName;
 
         return $this->response->setJSON([
             'success' => true,
             'file' => [
                 'name' => $upload->getClientName(),
                 'path' => $filePath,
-                'url' => base_url($filePath),
-            ],
+                'url' => base_url($filePath)
+            ]
         ]);
+    }
+
+    /**
+     * Retorna a imagem
+     *
+     * @return ResponseInterface
+     */
+    public function get(string $name): ResponseInterface
+    {
+        if (! is_file($this->fileRepository . $name) || ! mime_content_type($this->fileRepository . $name)) {
+            return $this->response->setStatusCode(404);
+        }
+        return $this->response->setContentType(mime_content_type($this->fileRepository . $name))->setBody(file_get_contents($this->fileRepository . $name));
     }
 
     /**
@@ -96,7 +117,7 @@ class FileManagerController extends BaseController
     {
         $directory = rtrim(FCPATH, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'imagens' . DIRECTORY_SEPARATOR . 'banco';
 
-        if (!is_dir($directory)) {
+        if (! is_dir($directory)) {
             return [];
         }
 
@@ -116,7 +137,7 @@ class FileManagerController extends BaseController
                     'path' => 'uploads/imagens/banco/' . $entry,
                     'url' => base_url('uploads/imagens/banco/' . $entry),
                     'size' => filesize($fullPath) ?: 0,
-                    'updated_at' => date('Y-m-d H:i:s', (int) filemtime($fullPath)),
+                    'updated_at' => date('Y-m-d H:i:s', (int) filemtime($fullPath))
                 ];
             }
         }
