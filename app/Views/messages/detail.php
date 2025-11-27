@@ -120,7 +120,7 @@
             <!-- Step 2: Editor GrapesJS -->
             <div class="step-content" data-step="2" style="display:none;">
                 <?= view('partials/rich_editor', [
-                    'height' => 600,
+                    'height' => 400,
                     'htmlContent' => old('html_content', $message['html_content'] ?? ''),
                 ]) ?>
                 <div class="d-flex justify-content-between mt-3">

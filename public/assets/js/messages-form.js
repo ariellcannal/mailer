@@ -293,7 +293,6 @@
 
     window.nextStep = nextStep;
     window.prevStep = prevStep;
-    window.switchEditorMode = switchEditorMode;
     window.renderEditorPreview = renderEditorPreview;
     window.toggleEditorFullscreen = toggleEditorFullscreen;
 })();
