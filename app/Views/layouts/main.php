@@ -30,57 +30,68 @@
 </head>
 <body>
     <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-brand">
+    <div class="sidebar d-flex flex-column flex-shrink-0 p-3" id="sidebar">
+        <a href="<?= base_url('dashboard') ?>" class="sidebar-brand d-flex align-items-center mb-3 text-decoration-none text-white">
             <img src="<?= base_url('assets/images/logo.png') ?>" alt="CANNAL Mídias Digitais" class="img-fluid">
-        </div>
+        </a>
         <?php $activeMenu = $activeMenu ?? ''; ?>
-        <div class="sidebar-menu">
-            <a href="<?= base_url('dashboard') ?>" class="sidebar-menu-item <?= $activeMenu === 'dashboard' ? 'active' : '' ?>">
-                <i class="fas fa-home"></i>
-                <span>Dashboard</span>
-            </a>
-            
-            <a href="<?= base_url('campaigns') ?>" class="sidebar-menu-item <?= $activeMenu === 'campaigns' ? 'active' : '' ?>">
-                <i class="fas fa-bullhorn"></i>
-                <span>Campanhas</span>
-            </a>
-            
-            <a href="<?= base_url('messages') ?>" class="sidebar-menu-item <?= $activeMenu === 'messages' ? 'active' : '' ?>">
-                <i class="fas fa-paper-plane"></i>
-                <span>Mensagens</span>
-            </a>
-            
-            <a href="<?= base_url('contacts') ?>" class="sidebar-menu-item <?= $activeMenu === 'contacts' ? 'active' : '' ?>">
-                <i class="fas fa-users"></i>
-                <span>Contatos</span>
-            </a>
-
-            <a href="<?= base_url('contact-lists') ?>" class="sidebar-menu-item <?= $activeMenu === 'contact_lists' ? 'active' : '' ?>">
-                <i class="fas fa-list-ul"></i>
-                <span>Listas</span>
-            </a>
-            
-            <a href="<?= base_url('templates') ?>" class="sidebar-menu-item <?= $activeMenu === 'templates' ? 'active' : '' ?>">
-                <i class="fas fa-file-code"></i>
-                <span>Templates</span>
-            </a>
-            
-            <a href="<?= base_url('senders') ?>" class="sidebar-menu-item <?= $activeMenu === 'senders' ? 'active' : '' ?>">
-                <i class="fas fa-at"></i>
-                <span>Remetentes</span>
-            </a>
-            
-            <a href="<?= base_url('tracking') ?>" class="sidebar-menu-item <?= $activeMenu === 'tracking' ? 'active' : '' ?>">
-                <i class="fas fa-chart-line"></i>
-                <span>Análises</span>
-            </a>
-            
-            <a href="<?= base_url('settings') ?>" class="sidebar-menu-item <?= $activeMenu === 'settings' ? 'active' : '' ?>">
-                <i class="fas fa-cog"></i>
-                <span>Configurações</span>
-            </a>
-        </div>
+        <hr class="sidebar-divider">
+        <ul class="nav nav-pills flex-column mb-auto sidebar-menu">
+            <li class="nav-item">
+                <a href="<?= base_url('dashboard') ?>" class="sidebar-menu-item nav-link <?= $activeMenu === 'dashboard' ? 'active' : '' ?>">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="<?= base_url('campaigns') ?>" class="sidebar-menu-item nav-link <?= $activeMenu === 'campaigns' ? 'active' : '' ?>">
+                    <i class="fas fa-bullhorn"></i>
+                    <span>Campanhas</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="<?= base_url('messages') ?>" class="sidebar-menu-item nav-link <?= $activeMenu === 'messages' ? 'active' : '' ?>">
+                    <i class="fas fa-paper-plane"></i>
+                    <span>Mensagens</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="<?= base_url('contacts') ?>" class="sidebar-menu-item nav-link <?= $activeMenu === 'contacts' ? 'active' : '' ?>">
+                    <i class="fas fa-users"></i>
+                    <span>Contatos</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="<?= base_url('contact-lists') ?>" class="sidebar-menu-item nav-link <?= $activeMenu === 'contact_lists' ? 'active' : '' ?>">
+                    <i class="fas fa-list-ul"></i>
+                    <span>Listas</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="<?= base_url('templates') ?>" class="sidebar-menu-item nav-link <?= $activeMenu === 'templates' ? 'active' : '' ?>">
+                    <i class="fas fa-file-code"></i>
+                    <span>Templates</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="<?= base_url('senders') ?>" class="sidebar-menu-item nav-link <?= $activeMenu === 'senders' ? 'active' : '' ?>">
+                    <i class="fas fa-at"></i>
+                    <span>Remetentes</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="<?= base_url('tracking') ?>" class="sidebar-menu-item nav-link <?= $activeMenu === 'tracking' ? 'active' : '' ?>">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Análises</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="<?= base_url('settings') ?>" class="sidebar-menu-item nav-link <?= $activeMenu === 'settings' ? 'active' : '' ?>">
+                    <i class="fas fa-cog"></i>
+                    <span>Configurações</span>
+                </a>
+            </li>
+        </ul>
     </div>
     
     <!-- Main Content -->
