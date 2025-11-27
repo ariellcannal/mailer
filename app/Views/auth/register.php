@@ -22,8 +22,7 @@
     <div class="col-lg-6 p-4 p-lg-5">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-                <h4 class="fw-bold mb-1">Criar conta autorizada</h4>
-                <small class="text-muted">O único e-mail permitido é <?= esc($allowedEmail) ?>.</small>
+                <h4 class="fw-bold mb-1">Criar conta </h4>
             </div>
             <img src="<?= base_url('assets/images/icon.png') ?>" alt="Ícone" width="48" height="48">
         </div>
@@ -46,7 +45,7 @@
                     </div>
                     <div class="col-12">
                         <label class="form-label" for="registerEmail">E-mail autorizado</label>
-                        <input type="email" class="form-control" id="registerEmail" name="email" value="<?= esc($allowedEmail) ?>" required>
+                        <input type="email" class="form-control" id="registerEmail" name="email" value="" required>
                     </div>
                     <div class="col-12">
                         <label class="form-label" for="registerPassword">Senha</label>
