@@ -653,7 +653,7 @@ class MessageController extends BaseController {
     }
 
     /**
-     * Remove atributos de largura e altura das imagens para evitar distorções.
+     * Remove atributos de largura e altura das imagens para evitar distorções e preserva placeholders.
      *
      * @param string|null $htmlContent Conteúdo HTML recebido do formulário.
      *
@@ -685,7 +685,25 @@ class MessageController extends BaseController {
 
         $sanitized = $document->saveHTML();
 
-        return $sanitized === false ? $content : $sanitized;
+        if ($sanitized === false) {
+            return $content;
+        }
+
+        $preservedPlaceholders = strtr(
+            $sanitized,
+            [
+                '%7B%7B' => '{{',
+                '%7D%7D' => '}}',
+                '%7b%7b' => '{{',
+                '%7d%7d' => '}}',
+                '&#123;&#123;' => '{{',
+                '&#125;&#125;' => '}}',
+                '&lbrace;&lbrace;' => '{{',
+                '&rbrace;&rbrace;' => '}}',
+            ]
+        );
+
+        return $preservedPlaceholders;
     }
 
     /**
