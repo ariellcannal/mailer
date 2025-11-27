@@ -96,19 +96,6 @@ class FileManagerController extends BaseController
     }
 
     /**
-     * Retorna a imagem
-     *
-     * @return ResponseInterface
-     */
-    public function get(string $name): ResponseInterface
-    {
-        if (! is_file($this->fileRepository . $name) || ! mime_content_type($this->fileRepository . $name)) {
-            return $this->response->setStatusCode(404);
-        }
-        return $this->response->setContentType(mime_content_type($this->fileRepository . $name))->setBody(file_get_contents($this->fileRepository . $name));
-    }
-
-    /**
      * Mapeia arquivos públicos disponíveis.
      *
      * @return array<int, array<string, string|int>>

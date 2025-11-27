@@ -7,6 +7,7 @@ use App\Models\MessageOpenModel;
 use App\Models\MessageClickModel;
 use App\Models\ContactModel;
 use App\Models\MessageModel;
+use CodeIgniter\HTTP\ResponseInterface;
 
 /**
  * Track Controller
@@ -19,6 +20,18 @@ use App\Models\MessageModel;
  */
 class TrackController extends BaseController
 {
+    /**
+     * Caminho completo para as imagens hospedadas.
+     *
+     * @var string
+     */
+    protected string $imageRepository;
+
+    public function __construct()
+    {
+        $this->imageRepository = rtrim(FCPATH, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'writable' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'imagens' . DIRECTORY_SEPARATOR . 'banco' . DIRECTORY_SEPARATOR;
+    }
+
     /**
      * Tracking de abertura (pixel transparente)
      * 
@@ -75,6 +88,34 @@ class TrackController extends BaseController
 
         // Redireciona para URL original
         return redirect()->to($url);
+    }
+
+    /**
+     * Entrega imagens da biblioteca e registra abertura quando aplicável.
+     *
+     * @param string $name Nome do arquivo solicitado.
+     *
+     * @return ResponseInterface
+     */
+    public function getImage(string $name): ResponseInterface
+    {
+        $trackingHash = (string) $this->request->getGet('hash');
+
+        if ($trackingHash !== '') {
+            $this->registerOpenByHash($trackingHash);
+        }
+
+        $filePath = $this->imageRepository . $name;
+
+        if (! is_file($filePath)) {
+            return $this->response->setStatusCode(404);
+        }
+
+        $mimeType = mime_content_type($filePath) ?: 'application/octet-stream';
+
+        return $this->response
+            ->setContentType($mimeType)
+            ->setBody((string) file_get_contents($filePath));
     }
 
     /**
@@ -154,6 +195,23 @@ class TrackController extends BaseController
         if ($message && $message['campaign_id'] && $isFirstOpen) {
             $campaignModel = new \App\Models\CampaignModel();
             $campaignModel->increment($message['campaign_id'], 'total_opens');
+        }
+    }
+
+    /**
+     * Registra abertura com base no hash de tracking presente na requisição.
+     *
+     * @param string $hash Hash do envio.
+     *
+     * @return void
+     */
+    protected function registerOpenByHash(string $hash): void
+    {
+        $sendModel = new MessageSendModel();
+        $send = $sendModel->where('tracking_hash', $hash)->first();
+
+        if ($send) {
+            $this->recordOpen($send);
         }
     }
 

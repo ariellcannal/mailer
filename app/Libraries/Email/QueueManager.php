@@ -354,6 +354,9 @@ class QueueManager
         // Substitui links por links de tracking
         $htmlContent = $this->replaceLinksWithTracking($htmlContent, $trackingHash);
 
+        // Substitui imagens para incluir o hash de tracking
+        $htmlContent = $this->replaceImagesWithTracking($htmlContent, $trackingHash);
+
         // Substitui link de opt-out
         $optoutUrl = $baseUrl . 'optout/' . $trackingHash;
         $htmlContent = str_replace('{{optout_link}}', $optoutUrl, $htmlContent);
@@ -378,30 +381,111 @@ class QueueManager
     protected function replaceLinksWithTracking(string $html, string $trackingHash): string
     {
         $baseUrl = $this->getBaseUrl();
-        
-        // Regex para encontrar links
-        $pattern = '/<a\s+(?:[^>]*?\s+)?href=(["\'])((?:(?!\1).)*)\1/i';
-        
-        $html = preg_replace_callback($pattern, function($matches) use ($trackingHash, $baseUrl) {
+
+        $pattern = '/<a\b[^>]*?\bhref=(["\'])(.*?)\1[^>]*>/i';
+
+        return preg_replace_callback($pattern, function(array $matches) use ($trackingHash, $baseUrl): string {
+            $fullTag = $matches[0];
             $quote = $matches[1];
             $url = $matches[2];
-            
-            // Ignora links especiais
-            if (strpos($url, 'mailto:') === 0 || 
-                strpos($url, 'tel:') === 0 ||
-                strpos($url, '#') === 0 ||
-                strpos($url, 'javascript:') === 0 ||
-                strpos($url, '{{') !== false) {
-                return $matches[0];
-            }
-            
-            // Cria URL de tracking
-            $trackingUrl = $baseUrl . 'track/click/' . $trackingHash . '?url=' . urlencode($url);
-            
-            return '<a href=' . $quote . $trackingUrl . $quote;
-        }, $html);
 
-        return $html;
+            if (
+                str_starts_with($url, 'mailto:') ||
+                str_starts_with($url, 'tel:') ||
+                str_starts_with($url, '#') ||
+                str_starts_with($url, 'javascript:') ||
+                str_contains($url, '{{')
+            ) {
+                return $fullTag;
+            }
+
+            $trackingUrl = $baseUrl . 'track/click/' . $trackingHash . '?url=' . urlencode($url);
+
+            return preg_replace('/\bhref=(["\']).*?\1/i', 'href=' . $quote . $trackingUrl . $quote, $fullTag, 1) ?? $fullTag;
+        }, $html) ?? $html;
+    }
+
+    /**
+     * Acrescenta o hash de tracking às imagens utilizadas no corpo do e-mail.
+     *
+     * @param string $html Conteúdo HTML original.
+     * @param string $trackingHash Hash de tracking do envio.
+     *
+     * @return string HTML atualizado com query string de tracking nas imagens.
+     */
+    protected function replaceImagesWithTracking(string $html, string $trackingHash): string
+    {
+        $pattern = '/<img\b[^>]*?\bsrc=(["\'])(.*?)\1[^>]*>/i';
+
+        return preg_replace_callback($pattern, function(array $matches) use ($trackingHash): string {
+            $fullTag = $matches[0];
+            $quote = $matches[1];
+            $src = $matches[2];
+
+            if (
+                str_contains($src, 'track/open/') ||
+                str_starts_with(strtolower($src), 'data:') ||
+                str_starts_with(strtolower($src), 'cid:') ||
+                str_contains($src, '{{') ||
+                ! str_contains($src, '/imagens/')
+            ) {
+                return $fullTag;
+            }
+
+            $updatedSrc = $this->appendTrackingHashToUrl($src, $trackingHash);
+
+            return preg_replace('/\bsrc=(["\']).*?\1/i', 'src=' . $quote . $updatedSrc . $quote, $fullTag, 1) ?? $fullTag;
+        }, $html) ?? $html;
+    }
+
+    /**
+     * Anexa o hash de tracking mantendo a URL original intacta.
+     *
+     * @param string $url URL original da imagem.
+     * @param string $trackingHash Hash de tracking do envio.
+     *
+     * @return string URL com a query string de tracking.
+     */
+    protected function appendTrackingHashToUrl(string $url, string $trackingHash): string
+    {
+        $parsedUrl = parse_url($url);
+        $query = [];
+
+        if (! empty($parsedUrl['query'])) {
+            parse_str((string) $parsedUrl['query'], $query);
+        }
+
+        if (! array_key_exists('hash', $query)) {
+            $query['hash'] = $trackingHash;
+        }
+
+        $rebuiltUrl = '';
+
+        if (! empty($parsedUrl['scheme'])) {
+            $rebuiltUrl .= $parsedUrl['scheme'] . '://';
+        }
+
+        if (! empty($parsedUrl['host'])) {
+            $rebuiltUrl .= $parsedUrl['host'];
+        }
+
+        if (! empty($parsedUrl['port'])) {
+            $rebuiltUrl .= ':' . $parsedUrl['port'];
+        }
+
+        $rebuiltUrl .= $parsedUrl['path'] ?? '';
+
+        $queryString = http_build_query($query);
+
+        if ($queryString !== '') {
+            $rebuiltUrl .= '?' . $queryString;
+        }
+
+        if (! empty($parsedUrl['fragment'])) {
+            $rebuiltUrl .= '#' . $parsedUrl['fragment'];
+        }
+
+        return $rebuiltUrl;
     }
 
     /**
