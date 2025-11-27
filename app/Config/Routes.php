@@ -40,6 +40,7 @@ $routes->group('messages', function($routes) {
     $routes->get('view/(:num)', 'MessageController::view/$1');
     $routes->get('edit/(:num)', 'MessageController::edit/$1');
     $routes->post('update/(:num)', 'MessageController::update/$1');
+    $routes->post('save-progress', 'MessageController::saveProgress');
     $routes->post('duplicate/(:num)', 'MessageController::duplicate/$1');
     $routes->post('cancel/(:num)', 'MessageController::cancel/$1');
     $routes->post('reschedule/(:num)', 'MessageController::reschedule/$1');

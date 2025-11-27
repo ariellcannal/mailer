@@ -77,10 +77,12 @@ class MessageController extends BaseController {
 
         $defaultCampaignId = (int) $this->request->getGet('campaign_id');
 
-        return view('messages/create', [
+        return view('messages/detail', [
             'campaigns' => $campaignModel->where('is_active', 1)->findAll(),
             'senders' => $senderModel->where('is_active', 1)->where('ses_verified', 1)->findAll(),
             'contactLists' => $contactListModel->orderBy('name', 'ASC')->findAll(),
+            'message' => [],
+            'selectedLists' => [],
             'activeMenu' => 'messages',
             'pageTitle' => 'Nova Mensagem',
             'selectedCampaignId' => $defaultCampaignId > 0 ? $defaultCampaignId : null,
@@ -162,20 +164,16 @@ class MessageController extends BaseController {
             $resendLocks[(int) $rule['id']] = $this->hasQueuedResend($id, (int) $rule['resend_number']);
         }
 
-        return view('messages/edit', [
+        return view('messages/detail', [
             'message' => $message,
             'campaigns' => $campaignModel->where('is_active', 1)->findAll(),
             'senders' => $senderModel->where('is_active', 1)->where('ses_verified', 1)->findAll(),
             'resendRules' => $resendRules,
             'contactLists' => $contactListModel->orderBy('name', 'ASC')->findAll(),
             'selectedLists' => $preselectedLists,
-            'recipientBreakdown' => $this->getRecipientListBreakdown($id),
-            'canEditRecipients' => $canEditRecipients,
-            'currentRecipients' => $this->countMessageRecipients($id),
-            'canReschedule' => $this->canRescheduleMessage($message),
-            'resendLocks' => $resendLocks,
             'activeMenu' => 'messages',
             'pageTitle' => 'Editar Mensagem',
+            'selectedCampaignId' => null,
         ]);
     }
 
@@ -186,20 +184,26 @@ class MessageController extends BaseController {
      */
     public function store(): ResponseInterface {
         $model = new MessageModel();
-        
+
+        $messageId = (int) ($this->request->getPost('message_id') ?? 0);
+
         // Validar opt-out link
         $htmlContent = $this->request->getPost('html_content');
         $validation = $this->validateOptOutLink($htmlContent);
-        
+
         if (!$validation['valid']) {
             return $this->response->setJSON([
                 'success' => false,
                 'error' => $validation['message']
             ]);
         }
-        
+
         $scheduledAt = $this->normalizeScheduleInput($this->request->getPost('scheduled_at'));
         $contactLists = (array) $this->request->getPost('contact_lists');
+
+        if (empty($contactLists) && $messageId > 0) {
+            $contactLists = $this->getDraftContactLists($messageId);
+        }
 
         if (empty($contactLists)) {
             return $this->response->setJSON([
@@ -228,9 +232,18 @@ class MessageController extends BaseController {
             'optout_link_visible' => $validation['is_visible'],
             'status' => 'scheduled',
             'scheduled_at' => $scheduledAt ?: $this->getCurrentDateTime(),
+            'progress_data' => null,
         ];
 
-        if ($messageId = $model->insert($data)) {
+        $resendData = (array) $this->request->getPost('resends');
+
+        if ($messageId > 0) {
+            $model->update($messageId, $data);
+        } else {
+            $messageId = $model->insert($data);
+        }
+
+        if ($messageId > 0) {
             $queue = new QueueManager();
             $queue->queueMessage($messageId, $contactIds, 0);
 
@@ -238,17 +251,64 @@ class MessageController extends BaseController {
                 'total_recipients' => count($contactIds),
             ]);
 
-            $this->saveResendRules($messageId, $data['scheduled_at']);
+            $this->saveResendRules($messageId, $data['scheduled_at'], $resendData);
 
             return $this->response->setJSON([
                 'success' => true,
                 'message_id' => $messageId
             ]);
         }
-        
+
         return $this->response->setJSON([
             'success' => false,
             'error' => 'Erro ao salvar mensagem'
+        ]);
+    }
+
+    /**
+     * Salva o progresso da criação de mensagem etapa a etapa.
+     *
+     * @return ResponseInterface
+     */
+    public function saveProgress(): ResponseInterface
+    {
+        $model = new MessageModel();
+        $messageId = (int) ($this->request->getPost('message_id') ?? 0);
+        $current = $messageId > 0 ? $model->find($messageId) : null;
+
+        $step = (int) ($this->request->getPost('step') ?? 1);
+        $htmlContent = $this->request->getPost('html_content') ?? '';
+        $validation = $this->validateStepData($step, $htmlContent);
+
+        if (!$validation['valid']) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => $validation['message'],
+            ]);
+        }
+
+        $data = $this->collectStepFields($step, $htmlContent, $validation);
+
+        if ($current) {
+            $data = array_filter($data, static fn ($value) => $value !== null);
+            $model->update((int) $current['id'], $data);
+            $messageId = (int) $current['id'];
+        } else {
+            $messageId = $model->insert($data);
+        }
+
+        if ($messageId <= 0) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'Não foi possível salvar o progresso da mensagem.',
+            ]);
+        }
+
+        $this->storeStepProgressData($messageId, $step);
+
+        return $this->response->setJSON([
+            'success' => true,
+            'message_id' => $messageId,
         ]);
     }
 
@@ -494,10 +554,11 @@ class MessageController extends BaseController {
      *
      * @param int         $messageId        ID da mensagem
      * @param string|null $firstScheduledAt Data e hora do primeiro disparo
+     * @param array|null  $resendPayload    Dados de reenvio enviados pelo formulário
      */
-    protected function saveResendRules(int $messageId, ?string $firstScheduledAt): void
+    protected function saveResendRules(int $messageId, ?string $firstScheduledAt, ?array $resendPayload = null): void
     {
-        $resends = $this->request->getPost('resends');
+        $resends = $resendPayload ?? $this->request->getPost('resends');
 
         if (empty($resends)) {
             return;
@@ -528,6 +589,149 @@ class MessageController extends BaseController {
     }
 
     /**
+     * Valida dados obrigatórios de acordo com a etapa do assistente.
+     *
+     * @param int    $step        Etapa atual
+     * @param string $htmlContent Conteúdo HTML recebido
+     * @return array<string, mixed>
+     */
+    protected function validateStepData(int $step, string $htmlContent): array
+    {
+        $required = [
+            'campaign_id' => 'Campanha é obrigatória.',
+            'sender_id' => 'Remetente é obrigatório.',
+            'subject' => 'Assunto é obrigatório.',
+            'from_name' => 'Nome do remetente é obrigatório.',
+        ];
+
+        foreach ($required as $field => $message) {
+            if (trim((string) $this->request->getPost($field)) === '') {
+                return ['valid' => false, 'message' => $message];
+            }
+        }
+
+        if (in_array($step, [2, 3], true)) {
+            if (trim(strip_tags($htmlContent)) === '') {
+                return [
+                    'valid' => false,
+                    'message' => 'Preencha o conteúdo da mensagem antes de avançar.',
+                ];
+            }
+
+            $validation = $this->validateOptOutLink($htmlContent);
+
+            if (!$validation['valid']) {
+                return $validation;
+            }
+
+            return $validation;
+        }
+
+        if ($step === 4) {
+            $contactLists = (array) $this->request->getPost('contact_lists');
+
+            if (empty($contactLists)) {
+                return [
+                    'valid' => false,
+                    'message' => 'Selecione ao menos uma lista de contatos para continuar.',
+                ];
+            }
+        }
+
+        if ($step === 5) {
+            $scheduledAt = $this->normalizeScheduleInput($this->request->getPost('scheduled_at'));
+
+            if (empty($scheduledAt)) {
+                return [
+                    'valid' => false,
+                    'message' => 'Informe uma data e hora válidas para agendamento.',
+                ];
+            }
+        }
+
+        return ['valid' => true, 'message' => 'OK'];
+    }
+
+    /**
+     * Monta os campos para salvar conforme a etapa atual.
+     *
+     * @param int   $step        Etapa atual
+     * @param string $htmlContent Conteúdo HTML recebido
+     * @param array $validation  Resultado da validação
+     * @return array<string, mixed>
+     */
+    protected function collectStepFields(int $step, string $htmlContent, array $validation): array
+    {
+        $data = [
+            'status' => 'draft',
+            'campaign_id' => $this->request->getPost('campaign_id'),
+            'sender_id' => $this->request->getPost('sender_id'),
+            'subject' => $this->request->getPost('subject'),
+            'from_name' => $this->request->getPost('from_name'),
+            'reply_to' => $this->request->getPost('reply_to'),
+            'html_content' => $htmlContent ?? '',
+            'has_optout_link' => $validation['has_optout'] ?? false,
+            'optout_link_visible' => $validation['is_visible'] ?? false,
+        ];
+
+        if ($step === 5) {
+            $data['scheduled_at'] = $this->normalizeScheduleInput($this->request->getPost('scheduled_at'));
+        }
+
+        return $data;
+    }
+
+    /**
+     * Persiste dados adicionais da etapa atual dentro de progress_data.
+     *
+     * @param int $messageId ID da mensagem
+     * @param int $step      Etapa atual
+     * @return void
+     */
+    protected function storeStepProgressData(int $messageId, int $step): void
+    {
+        $model = new MessageModel();
+        $message = $model->find($messageId);
+
+        if (!$message) {
+            return;
+        }
+
+        $progress = $this->decodeProgressData($message['progress_data'] ?? null);
+
+        if ($step === 4) {
+            $progress['contact_lists'] = array_values(array_filter((array) $this->request->getPost('contact_lists')));
+        }
+
+        if ($step === 6) {
+            $progress['resends'] = $this->request->getPost('resends');
+        }
+
+        if (!empty($progress)) {
+            $model->update($messageId, [
+                'progress_data' => json_encode($progress, JSON_UNESCAPED_UNICODE),
+            ]);
+        }
+    }
+
+    /**
+     * Decodifica o JSON de progresso salvo.
+     *
+     * @param string|null $payload Conteúdo em JSON
+     * @return array<string, mixed>
+     */
+    protected function decodeProgressData(?string $payload): array
+    {
+        if (empty($payload)) {
+            return [];
+        }
+
+        $decoded = json_decode($payload, true);
+
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    /**
      * Retorna IDs de contatos ativos pertencentes às listas selecionadas.
      *
      * @param array $contactLists IDs das listas selecionadas
@@ -550,6 +754,22 @@ class MessageController extends BaseController {
         $result = $builder->get()->getResultArray();
 
         return array_column($result, 'id');
+    }
+
+    /**
+     * Recupera listas de contatos salvas como rascunho.
+     *
+     * @param int $messageId ID da mensagem
+     * @return array<int>
+     */
+    protected function getDraftContactLists(int $messageId): array
+    {
+        $model = new MessageModel();
+        $message = $model->find($messageId);
+
+        $progress = $this->decodeProgressData($message['progress_data'] ?? null);
+
+        return array_map('intval', $progress['contact_lists'] ?? []);
     }
 
     /**

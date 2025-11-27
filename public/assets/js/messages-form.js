@@ -9,12 +9,24 @@
     const storeUrl = form.dataset.storeUrl;
     const indexUrl = form.dataset.indexUrl;
     const contactsUrl = form.dataset.contactsUrl;
+    const progressUrl = form.dataset.progressUrl;
+    const messageIdInput = document.getElementById('messageId');
+    const maxStep = 6;
     let currentStep = 1;
 
     const contactSelect = document.getElementById('contactListSelect');
     const selectedLists = document.getElementById('selectedLists');
     const recipientTotal = document.getElementById('recipientTotal');
     const scheduledAt = document.getElementById('scheduledAt');
+
+    function showFeedback(message, type = 'error') {
+        if (window.alertify && typeof window.alertify[type] === 'function') {
+            window.alertify[type](message);
+            return;
+        }
+
+        window.alert(message);
+    }
 
     function updateScheduleSummary() {
         const selectedText = (selectedLists?.textContent || '').trim() || 'Nenhuma lista selecionada.';
@@ -43,6 +55,12 @@
         }
     }
 
+    /**
+     * Exibe a etapa solicitada e dispara a pré-visualização quando necessário.
+     *
+     * @param {number} step Número da etapa a ser exibida.
+     * @returns {void}
+     */
     function showStep(step) {
         document.querySelectorAll('.step-content').forEach((element) => {
             const elementStep = Number(element.getAttribute('data-step'));
@@ -53,24 +71,133 @@
             element.classList.toggle('active', elementStep === step);
             element.classList.toggle('completed', elementStep < step);
         });
+
+        if (step === 3) {
+            waitForEditorReady().then(() => {
+                const previewRenderer = window.renderEditorPreview;
+                if (typeof previewRenderer === 'function') {
+                    previewRenderer('previewPane');
+                }
+            });
+        }
     }
 
-    function nextStep() {
-        if (currentStep === 2) {
-            syncEditors();
-        }
-        const selected = window.jQuery ? window.jQuery('#contactListSelect').val() || [] : [];
-        const hasOptions = contactSelect ? contactSelect.options.length > 0 : false;
-        if (currentStep === 3 && hasOptions && selected.length === 0) {
-            if (window.alertify) {
-                window.alertify.error('Selecione pelo menos uma lista de contato.');
+    /**
+     * Aguarda a inicialização do editor rico.
+     *
+     * @returns {Promise<unknown>}
+     */
+    async function waitForEditorReady() {
+        if (window.richEditorReady && typeof window.richEditorReady.then === 'function') {
+            try {
+                return await window.richEditorReady;
+            } catch (error) {
+                console.error('Falha ao aguardar o editor rico:', error);
+                return null;
             }
+        }
+        return null;
+    }
+
+    async function validateCurrentStep() {
+        const currentContainer = document.querySelector(`.step-content[data-step="${currentStep}"]`);
+
+        if (!currentContainer) {
+            return true;
+        }
+
+        const fields = currentContainer.querySelectorAll('input, select, textarea');
+
+        for (let index = 0; index < fields.length; index++) {
+            const field = fields[index];
+
+            if (typeof field.reportValidity === 'function' && !field.reportValidity()) {
+                return false;
+            }
+        }
+
+        if (currentStep === 2 || currentStep === 3) {
+            await waitForEditorReady();
+            const html = typeof getRichEditorData === 'function' ? getRichEditorData() : '';
+
+            if (!html || html.trim() === '') {
+                showFeedback('Preencha o conteúdo do email antes de continuar.');
+                return false;
+            }
+        }
+
+        if (currentStep === 4) {
+            const selected = window.jQuery ? window.jQuery('#contactListSelect').val() || [] : [];
+            const hasOptions = contactSelect ? contactSelect.options.length > 0 : false;
+
+            if (hasOptions && selected.length === 0) {
+                showFeedback('Selecione pelo menos uma lista de contato.');
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    async function persistStep() {
+        if (!progressUrl) {
+            return true;
+        }
+
+        await waitForEditorReady();
+
+        if (typeof window.syncEditors === 'function') {
+            window.syncEditors();
+        }
+        const formData = new FormData(form);
+        formData.set('step', currentStep);
+
+        try {
+            const response = await fetch(progressUrl, { method: 'POST', body: formData });
+            if (!response.ok) {
+                showFeedback('Não foi possível salvar o progresso.');
+                return false;
+            }
+            const payload = await response.json();
+
+            if (!payload.success) {
+                showFeedback(payload.error || 'Não foi possível salvar o progresso.');
+                return false;
+            }
+
+            if (payload.message_id && messageIdInput) {
+                messageIdInput.value = payload.message_id;
+            }
+
+            return true;
+        } catch (error) {
+            showFeedback('Falha ao salvar o progresso.');
+            return false;
+        }
+    }
+
+    async function nextStep() {
+        if (!(await validateCurrentStep())) {
             return;
         }
-        currentStep = Math.min(4, currentStep + 1);
-        if (currentStep === 4) {
+
+        if (!(await persistStep())) {
+            return;
+        }
+
+        if (currentStep === 2) {
+            await waitForEditorReady();
+            if (typeof window.renderEditorPreview === 'function') {
+                window.renderEditorPreview('previewPane');
+            }
+        }
+
+        currentStep = Math.min(maxStep, currentStep + 1);
+
+        if (currentStep === 5) {
             updateScheduleSummary();
         }
+
         showStep(currentStep);
     }
 
@@ -101,9 +228,7 @@
             .then((response) => response.json())
             .then((payload) => {
                 if (!payload.success) {
-                    if (window.alertify) {
-                        window.alertify.error(payload.error || 'Não foi possível carregar os contatos.');
-                    }
+                    showFeedback(payload.error || 'Não foi possível carregar os contatos.');
                     return;
                 }
                 const summary = (payload.lists || [])
@@ -117,9 +242,7 @@
                 }
             })
             .catch(() => {
-                if (window.alertify) {
-                    window.alertify.error('Erro ao buscar contatos das listas.');
-                }
+                showFeedback('Erro ao buscar contatos das listas.');
             });
     }
 
@@ -139,23 +262,28 @@
     updateScheduleSummary();
     showStep(currentStep);
 
-    form.addEventListener('submit', (event) => {
+    form.addEventListener('submit', async (event) => {
         event.preventDefault();
-        syncEditors();
+        if (!(await validateCurrentStep())) {
+            return;
+        }
+        await persistStep();
+        await waitForEditorReady();
+        if (typeof window.syncEditors === 'function') {
+            window.syncEditors();
+        }
         const body = new URLSearchParams(new FormData(form));
         fetch(storeUrl, { method: 'POST', body })
             .then((response) => response.json())
             .then((payload) => {
-                if (payload.success) {
-                    if (window.alertify) {
-                        window.alertify.success('Mensagem salva com sucesso!');
-                    }
-                    setTimeout(() => { window.location.href = indexUrl; }, 1500);
-                } else if (window.alertify) {
-                    window.alertify.error(payload.error || 'Erro ao salvar mensagem');
-                }
-            })
-            .catch(() => { window.alertify?.error('Erro ao salvar mensagem'); });
+            if (payload.success) {
+                showFeedback('Mensagem salva com sucesso!', 'success');
+                setTimeout(() => { window.location.href = indexUrl; }, 1500);
+            } else {
+                showFeedback(payload.error || 'Erro ao salvar mensagem');
+            }
+        })
+        .catch(() => { showFeedback('Erro ao salvar mensagem'); });
     });
 
     window.nextStep = nextStep;
