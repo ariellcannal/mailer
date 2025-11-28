@@ -22,7 +22,7 @@ $routes->get('webview/(:segment)', 'TrackController::webview/$1');
 $routes->match(['get', 'post'], 'optout/(:segment)', 'TrackController::optout/$1');
 
 // Deploy route
-$routes->get('/deploy', 'DeployController::index');
+$routes->post('deploy', 'DeployController::index');
 
 // Campaigns
 $routes->group('campaigns', function($routes) {

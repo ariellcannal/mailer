@@ -44,7 +44,6 @@ abstract class BaseController extends Controller
      * @var list<string>
      */
     protected array $publicRoutes = [
-        '',
         'login',
         'register',
         'logout',
