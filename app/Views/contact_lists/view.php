@@ -50,6 +50,7 @@
                     <tr>
                         <th>Email</th>
                         <th>Nome</th>
+                        <th>Apelido</th>
                         <th>Status</th>
                         <th class="text-end">Ações</th>
                     </tr>
@@ -57,13 +58,14 @@
                 <tbody>
                     <?php if (empty($contacts)): ?>
                         <tr>
-                            <td colspan="4" class="text-center text-muted py-4">Nenhum contato encontrado nesta lista.</td>
+                            <td colspan="5" class="text-center text-muted py-4">Nenhum contato encontrado nesta lista.</td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($contacts as $contact): ?>
                             <tr>
                                 <td><?= esc($contact['email']) ?></td>
                                 <td><?= esc($contact['name']) ?></td>
+                                <td><?= esc($contact['nickname'] ?? '') ?></td>
                                 <td>
                                     <?php if ((int) $contact['is_active'] === 1): ?>
                                         <span class="badge bg-success">Ativo</span>
