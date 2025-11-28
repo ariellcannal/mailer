@@ -6,13 +6,13 @@
         <div class="auth-banner-content h-100 d-flex flex-column justify-content-between">
             <div>
                 <img src="<?= base_url('assets/images/logo.png') ?>" alt="Cannal" class="img-fluid mb-4" style="max-width: 200px;">
-                <h2 class="fw-bold">Cadastro autorizado</h2>
-                <p class="mb-0">Crie sua credencial apenas com o e-mail permitido para acessar o painel.</p>
+                <h2 class="fw-bold">Cadastro</h2>
+                <p class="mb-0">Crie sua credencial para acessar o painel de forma segura.</p>
             </div>
             <div class="d-flex align-items-center">
                 <i class="fas fa-user-check fa-2x me-3"></i>
                 <div>
-                    <small class="d-block">Apenas <?= esc($allowedEmail) ?> pode ser usado.</small>
+                    <small class="d-block">Use um e-mail válido para concluir o cadastro.</small>
                     <small class="fw-bold">Segurança e conformidade garantidas.</small>
                 </div>
             </div>
@@ -44,8 +44,8 @@
                         <input type="text" class="form-control" id="registerName" name="name" value="<?= esc(old('name')) ?>" required>
                     </div>
                     <div class="col-12">
-                        <label class="form-label" for="registerEmail">E-mail autorizado</label>
-                        <input type="email" class="form-control" id="registerEmail" name="email" value="" required>
+                        <label class="form-label" for="registerEmail">E-mail</label>
+                        <input type="email" class="form-control" id="registerEmail" name="email" value="<?= esc(old('email')) ?>" required>
                     </div>
                     <div class="col-12">
                         <label class="form-label" for="registerPassword">Senha</label>

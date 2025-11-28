@@ -4,6 +4,7 @@ namespace App\Controllers;
 use App\Models\ContactListMemberModel;
 use App\Models\ContactListModel;
 use App\Models\ContactModel;
+use CodeIgniter\HTTP\Files\UploadedFile;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class ContactController extends BaseController {
@@ -56,7 +57,7 @@ class ContactController extends BaseController {
 
         $selectedLists = array_values(array_unique(array_filter($selectedLists)));
 
-        return view('contacts/create', [
+        return view('contacts/entry', [
             'activeMenu' => 'contacts',
             'pageTitle' => 'Novo Contato',
             'lists' => $listModel->orderBy('name', 'ASC')->findAll(),
@@ -70,6 +71,7 @@ class ContactController extends BaseController {
         $data = [
             'email' => $this->request->getPost('email'),
             'name' => $this->request->getPost('name'),
+            'nickname' => $model->generateNickname($this->request->getPost('name'), (string) $this->request->getPost('email')),
             'is_active' => 1,
             'quality_score' => 3,
         ];
@@ -81,6 +83,7 @@ class ContactController extends BaseController {
             $updates = [];
             if (!empty($data['name']) && $data['name'] !== ($existing['name'] ?? '')) {
                 $updates['name'] = $data['name'];
+                $updates['nickname'] = $model->generateNickname($data['name'], $data['email']);
             }
 
             if (!empty($updates)) {
@@ -114,38 +117,117 @@ class ContactController extends BaseController {
     }
     
     public function importProcess() {
+        $model = new ContactModel();
         $file = $this->request->getFile('file');
-        
-        if (!$file->isValid()) {
-            return redirect()->back()->with('error', 'Arquivo inválido');
-        }
-        
+        $listIds = (array) $this->request->getPost('lists');
+        $emailColumn = $this->request->getPost('email_column');
+        $nameColumn = $this->request->getPost('name_column');
+        $tempFile = $this->request->getPost('temp_file');
+
         try {
-            $spreadsheet = IOFactory::load($file->getTempName());
-            $sheet = $spreadsheet->getActiveSheet();
-            $rows = $sheet->toArray();
-            
-            $contacts = [];
-            $listIds = (array) $this->request->getPost('lists');
-            foreach ($rows as $index => $row) {
-                if ($index === 0) continue; // Skip header
-                
-                if (!empty($row[0])) {
-                    $contacts[] = [
-                        'email' => $row[0],
-                        'name' => $row[1] ?? null,
-                    ];
-                }
+            $tempPath = $this->persistImportFile($file, $tempFile);
+            $rows = $this->loadSpreadsheetRows($tempPath);
+
+            if (empty($rows)) {
+                return redirect()->back()->with('contacts_error', 'Arquivo vazio ou inválido.');
             }
-            
-            $model = new ContactModel();
+
+            $headers = array_map('trim', $rows[0]);
+
+            if ($emailColumn === null && count($headers) > 1) {
+                return view('contacts/import_mapping', [
+                    'activeMenu' => 'contacts',
+                    'pageTitle' => 'Mapear Colunas',
+                    'headers' => $headers,
+                    'tempFile' => $tempPath,
+                    'lists' => (new ContactListModel())->orderBy('name', 'ASC')->findAll(),
+                    'selectedLists' => $listIds,
+                ]);
+            }
+
+            $emailIndex = $emailColumn !== null ? (int) $emailColumn : 0;
+            $nameIndex = $nameColumn !== null ? (int) $nameColumn : null;
+
+            if (!isset($headers[$emailIndex])) {
+                return redirect()->back()->with('contacts_error', 'Selecione a coluna de e-mail.');
+            }
+
+            $contacts = [];
+
+            foreach ($rows as $index => $row) {
+                if ($index === 0) {
+                    continue;
+                }
+
+                $email = trim((string) ($row[$emailIndex] ?? ''));
+
+                if ($email === '') {
+                    continue;
+                }
+
+                $name = $nameIndex !== null ? trim((string) ($row[$nameIndex] ?? '')) : null;
+
+                $contacts[] = [
+                    'email' => $email,
+                    'name' => $name !== '' ? $name : null,
+                ];
+            }
+
             $result = $model->importContacts($contacts, $listIds);
 
-            return redirect()->to('/contacts')->with('contacts_success',
-                "Importados: {$result['imported']}, Ignorados: {$result['skipped']}");
+            if ($tempPath && is_file($tempPath)) {
+                @unlink($tempPath);
+            }
+
+            return redirect()->to('/contacts')->with(
+                'contacts_success',
+                "Importados: {$result['imported']}, Ignorados: {$result['skipped']}"
+            );
         } catch (\Exception $e) {
             return redirect()->back()->with('contacts_error', 'Erro ao importar: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Persiste o arquivo temporariamente para processamento e reutilização.
+     *
+     * @param \CodeIgniter\HTTP\Files\UploadedFile|null $file     Arquivo enviado.
+     * @param string|null                                  $tempFile Caminho temporário recebido do passo anterior.
+     * @return string Caminho do arquivo temporário.
+     */
+    protected function persistImportFile(?UploadedFile $file, ?string $tempFile): string
+    {
+        $destination = WRITEPATH . 'uploads' . DIRECTORY_SEPARATOR . 'imports';
+        if (!is_dir($destination)) {
+            mkdir($destination, 0775, true);
+        }
+
+        if (!empty($tempFile) && is_file($tempFile)) {
+            return $tempFile;
+        }
+
+        if ($file === null || !$file->isValid()) {
+            throw new \RuntimeException('Arquivo inválido.');
+        }
+
+        $tempPath = $destination . DIRECTORY_SEPARATOR . uniqid('contacts_', true) . '.' . $file->getClientExtension();
+        $file->move($destination, basename($tempPath));
+
+        return $tempPath;
+    }
+
+    /**
+     * Carrega linhas de uma planilha suportando CSV, XLS e XLSX.
+     *
+     * @param string $path Caminho do arquivo temporário.
+     * @return array<array-key, array>
+     */
+    protected function loadSpreadsheetRows(string $path): array
+    {
+        $spreadsheet = IOFactory::load($path);
+        $sheet = $spreadsheet->getActiveSheet();
+
+        return $sheet->toArray();
     }
     
     public function view($id) {
@@ -189,7 +271,7 @@ class ContactController extends BaseController {
             ->where('contact_id', $id)
             ->findColumn('list_id') ?? [];
 
-        return view('contacts/edit', [
+        return view('contacts/entry', [
             'contact' => $contact,
             'lists' => $listModel->orderBy('name', 'ASC')->findAll(),
             'selectedLists' => $selectedLists,
@@ -201,19 +283,24 @@ class ContactController extends BaseController {
     public function update($id) {
         $model = new ContactModel();
 
+        $email = (string) $this->request->getPost('email');
+        $name = (string) $this->request->getPost('name');
+
         $data = [
-            'email' => $this->request->getPost('email'),
-            'name' => $this->request->getPost('name'),
+            'id' => (int) $id,
+            'email' => $email,
+            'name' => $name,
+            'nickname' => $model->generateNickname($name, $email),
         ];
         $listIds = (array) $this->request->getPost('lists');
 
-        if ($model->update($id, $data)) {
-            $model->replaceContactLists($id, $listIds);
-
-            return redirect()->to('/contacts/view/' . $id)->with('contacts_success', 'Contato atualizado!');
+        if (!$model->save($data)) {
+            return redirect()->back()->with('contacts_error', 'Erro ao atualizar: ' . implode(' ', $model->errors()))->withInput();
         }
 
-        return redirect()->back()->with('contacts_error', 'Erro ao atualizar')->withInput();
+        $model->replaceContactLists((int) $id, $listIds);
+
+        return redirect()->to('/contacts/view/' . $id)->with('contacts_success', 'Contato atualizado!');
     }
 
     /**

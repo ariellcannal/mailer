@@ -18,7 +18,8 @@ class CampaignController extends BaseController {
     }
     
     public function create() {
-        return view('campaigns/create', [
+        return view('campaigns/entry', [
+            'campaign' => null,
             'activeMenu' => 'campaigns',
             'pageTitle' => 'Nova Campanha'
         ]);
@@ -61,12 +62,12 @@ class CampaignController extends BaseController {
     public function edit($id) {
         $model = new CampaignModel();
         $campaign = $model->find($id);
-        
+
         if (!$campaign) {
             return redirect()->to('/campaigns')->with('error', 'Campanha não encontrada');
         }
-        
-        return view('campaigns/edit', [
+
+        return view('campaigns/entry', [
             'campaign' => $campaign,
             'activeMenu' => 'campaigns',
             'pageTitle' => 'Editar Campanha'

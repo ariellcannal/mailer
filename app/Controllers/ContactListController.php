@@ -32,6 +32,42 @@ class ContactListController extends BaseController
     }
 
     /**
+     * Exibe o formulário de criação de listas.
+     *
+     * @return string
+     */
+    public function create(): string
+    {
+        return view('contact_lists/entry', [
+            'list' => null,
+            'activeMenu' => 'contact_lists',
+            'pageTitle' => 'Nova Lista',
+        ]);
+    }
+
+    /**
+     * Exibe o formulário de edição de uma lista.
+     *
+     * @param int $id Identificador da lista.
+     * @return string|RedirectResponse
+     */
+    public function edit(int $id)
+    {
+        $model = new ContactListModel();
+        $list = $model->find($id);
+
+        if ($list === null) {
+            return redirect()->to('/contact-lists')->with('contact_lists_error', 'Lista não encontrada.');
+        }
+
+        return view('contact_lists/entry', [
+            'list' => $list,
+            'activeMenu' => 'contact_lists',
+            'pageTitle' => 'Editar Lista',
+        ]);
+    }
+
+    /**
      * Cria uma nova lista.
      *
      * @return RedirectResponse

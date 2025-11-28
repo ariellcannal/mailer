@@ -71,8 +71,8 @@
                         <?= csrf_field() ?>
                         <input type="hidden" name="redirect" value="<?= esc($redirectTarget) ?>">
                         <div class="mb-3">
-                            <label class="form-label" for="forgotEmail">E-mail autorizado</label>
-                            <input type="email" class="form-control" id="forgotEmail" name="forgot_email" value="<?= esc($allowedEmail) ?>" required>
+                            <label class="form-label" for="forgotEmail">E-mail cadastrado</label>
+                            <input type="email" class="form-control" id="forgotEmail" name="forgot_email" value="<?= esc(old('forgot_email', session('user_email') ?? '')) ?>" required>
                         </div>
                         <button type="submit" class="btn btn-outline-primary w-100"><i class="fas fa-paper-plane me-2"></i> Enviar código</button>
                     </form>
@@ -82,11 +82,11 @@
                         <input type="hidden" name="redirect" value="<?= esc($redirectTarget) ?>">
                         <div class="col-md-6">
                             <label class="form-label" for="resetEmail">E-mail</label>
-                            <input type="email" class="form-control" id="resetEmail" name="reset_email" value="<?= esc($allowedEmail) ?>" required>
+                            <input type="email" class="form-control" id="resetEmail" name="reset_email" value="<?= esc(old('reset_email', session('user_email') ?? '')) ?>" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label" for="resetCode">Código recebido</label>
-                            <input type="text" class="form-control" id="resetCode" name="reset_code" maxlength="6" minlength="6" required>
+                            <input type="text" class="form-control" id="resetCode" name="user_code" maxlength="6" minlength="6" required>
                         </div>
                         <div class="col-12">
                             <label class="form-label" for="resetNewPassword">Nova senha</label>

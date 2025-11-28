@@ -122,8 +122,16 @@ abstract class BaseController extends Controller
         $session->set([
             'user_email' => $user['email'],
             'user_name' => $user['name'],
+            'user_avatar' => $user['avatar'] ?? null,
             'auth_provider' => $session->get('auth_provider') ?? 'password',
         ]);
+
+        $renderer = service('renderer');
+
+        if ($renderer !== null) {
+            $renderer->setVar('userName', $user['name']);
+            $renderer->setVar('userAvatar', $user['avatar'] ?? null);
+        }
     }
 
     /**

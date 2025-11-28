@@ -28,7 +28,6 @@ class TemplateModel extends Model
         'name',
         'description',
         'html_content',
-        'thumbnail',
         'is_active',
     ];
 

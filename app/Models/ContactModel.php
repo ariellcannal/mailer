@@ -25,6 +25,7 @@ class ContactModel extends Model
     protected $allowedFields = [
         'email',
         'name',
+        'nickname',
         'quality_score',
         'total_opens',
         'total_clicks',
@@ -47,6 +48,7 @@ class ContactModel extends Model
     protected $validationRules = [
         'email' => 'required|valid_email|is_unique[contacts.email,id,{id}]',
         'name' => 'permit_empty|max_length[255]',
+        'nickname' => 'permit_empty|max_length[255]',
         'quality_score' => 'permit_empty|integer|in_list[1,2,3,4,5]',
     ];
 
@@ -275,6 +277,13 @@ class ContactModel extends Model
                 $existing = $this->where('email', $contact['email'])->first();
 
                 if ($existing) {
+                    if (!empty($contact['name']) && $contact['name'] !== ($existing['name'] ?? '')) {
+                        $this->update((int) $existing['id'], [
+                            'name' => $contact['name'],
+                            'nickname' => $this->generateNickname($contact['name'], $contact['email']),
+                        ]);
+                    }
+
                     if (!empty($listIds)) {
                         $this->syncContactLists((int) $existing['id'], $listIds, $listMemberModel, $listModel);
                     }
@@ -286,6 +295,7 @@ class ContactModel extends Model
                 $contactId = $this->insert([
                     'email' => $contact['email'],
                     'name' => $contact['name'] ?? null,
+                    'nickname' => $this->generateNickname($contact['name'] ?? null, $contact['email']),
                     'quality_score' => 3, // Score padrão
                     'is_active' => 1,
                 ]);
@@ -308,6 +318,26 @@ class ContactModel extends Model
             'skipped' => $skipped,
             'errors' => $errors,
         ];
+    }
+
+    /**
+     * Gera o apelido do contato com base no primeiro nome ou no usuário do e-mail.
+     *
+     * @param string|null $name  Nome completo informado.
+     * @param string      $email Endereço de e-mail do contato.
+     * @return string Apelido capitalizado.
+     */
+    public function generateNickname(?string $name, string $email): string
+    {
+        $source = trim((string) $name);
+
+        if ($source === '') {
+            $source = strstr($email, '@', true) ?: $email;
+        }
+
+        $firstName = explode(' ', $source)[0];
+
+        return mb_convert_case($firstName, MB_CASE_TITLE, 'UTF-8');
     }
 
     /**

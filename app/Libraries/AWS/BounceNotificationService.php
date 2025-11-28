@@ -270,4 +270,27 @@ class BounceNotificationService
 
         return trim((string) $slug, '-');
     }
+
+    /**
+     * Retorna o cliente SQS configurado.
+     *
+     * @return SqsClient
+     */
+    public function getSqsClient(): SqsClient
+    {
+        return $this->sqsClient;
+    }
+
+    /**
+     * Calcula o nome da fila de bounces para a identidade informada.
+     *
+     * @param string $identity Domínio ou e-mail configurado.
+     * @return string Nome da fila configurada.
+     */
+    public function getBounceQueueName(string $identity): string
+    {
+        $normalizedIdentity = $this->normalizeIdentity($identity);
+
+        return getenv('aws.sqs.bounceQueue') ?: 'mailer-bounce-' . $normalizedIdentity;
+    }
 }
