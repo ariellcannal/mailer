@@ -21,6 +21,9 @@ $routes->get('track/click/(:segment)', 'TrackController::click/$1');
 $routes->get('webview/(:segment)', 'TrackController::webview/$1');
 $routes->match(['get', 'post'], 'optout/(:segment)', 'TrackController::optout/$1');
 
+// Deploy route
+$routes->get('/deploy', 'DeployController::index');
+
 // Campaigns
 $routes->group('campaigns', function($routes) {
     $routes->get('/', 'CampaignController::index');
@@ -65,6 +68,8 @@ $routes->group('contacts', function($routes) {
 // Contact Lists
 $routes->group('contact-lists', function($routes) {
     $routes->get('/', 'ContactListController::index');
+    $routes->get('create', 'ContactListController::create');
+    $routes->get('edit/(:num)', 'ContactListController::edit/$1');
     $routes->get('view/(:num)', 'ContactListController::view/$1');
     $routes->post('store', 'ContactListController::store');
     $routes->post('update/(:num)', 'ContactListController::update/$1');
@@ -124,6 +129,8 @@ $routes->group('settings', function($routes) {
 // Processamento da fila (CLI ou cron)
 $routes->cli('queue/process', 'QueueController::process');
 $routes->get('queue/process', 'QueueController::process');
+$routes->cli('queue/process-bounces', 'QueueController::processBounces');
+$routes->get('queue/process-bounces', 'QueueController::processBounces');
 
 // Auth routes (to be implemented)
 $routes->get('login', 'AuthController::login');
@@ -136,5 +143,9 @@ $routes->get('logout', 'AuthController::logout');
 $routes->get('auth/google', 'AuthController::google');
 $routes->get('auth/google/callback', 'AuthController::googleCallback');
 $routes->get('profile', 'ProfileController::index');
+$routes->post('profile/update', 'ProfileController::updateProfile');
+$routes->post('profile/request-email-code', 'ProfileController::requestEmailCode');
+$routes->post('profile/confirm-email', 'ProfileController::confirmEmailChange');
+$routes->post('profile/link-google', 'ProfileController::linkGoogle');
 $routes->post('profile/change-password', 'ProfileController::changePassword');
 $routes->post('profile/unlink-google', 'ProfileController::unlinkGoogle');

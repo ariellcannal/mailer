@@ -28,12 +28,6 @@
             <p class="text-muted"><?= esc($template['description']) ?></p>
         <?php endif; ?>
 
-        <?php if (!empty($template['thumbnail'])): ?>
-            <div class="mb-3">
-                <img src="<?= esc($template['thumbnail']) ?>" alt="Thumbnail" class="img-fluid rounded shadow-sm">
-            </div>
-        <?php endif; ?>
-
         <h5 class="mt-4">Pré-visualização HTML</h5>
         <div class="border rounded p-3 bg-light">
             <?= $template['html_content'] ?>

@@ -5,20 +5,21 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
+<?php $isEdit = !empty($contact); ?>
 <div class="card">
     <div class="card-body">
-        <h4 class="mb-4"><i class="fas fa-edit"></i> Editar Contato</h4>
+        <h4 class="mb-4"><i class="fas <?= $isEdit ? 'fa-edit' : 'fa-user-plus' ?>"></i> <?= $isEdit ? 'Editar Contato' : 'Novo Contato' ?></h4>
 
-        <form action="<?= base_url('contacts/update/' . $contact['id']) ?>" method="POST">
+        <form action="<?= $isEdit ? base_url('contacts/update/' . $contact['id']) : base_url('contacts/store') ?>" method="POST">
             <?= csrf_field() ?>
             <div class="mb-3">
                 <label class="form-label">E-mail*</label>
-                <input type="email" class="form-control" name="email" value="<?= esc($contact['email']) ?>" required>
+                <input type="email" class="form-control" name="email" value="<?= esc(old('email', $contact['email'] ?? '')) ?>" required>
             </div>
-            
+
             <div class="mb-3">
                 <label class="form-label">Nome</label>
-                <input type="text" class="form-control" name="name" value="<?= esc($contact['name']) ?>">
+                <input type="text" class="form-control" name="name" value="<?= esc(old('name', $contact['name'] ?? '')) ?>">
             </div>
 
             <?php if (!empty($lists)): ?>
@@ -35,9 +36,9 @@
 
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save"></i> Atualizar
+                    <i class="fas fa-save"></i> Salvar
                 </button>
-                <a href="<?= base_url('contacts/view/' . $contact['id']) ?>" class="btn btn-secondary">Cancelar</a>
+                <a href="<?= $isEdit ? base_url('contacts/view/' . $contact['id']) : base_url('contacts') ?>" class="btn btn-secondary">Cancelar</a>
             </div>
         </form>
     </div>

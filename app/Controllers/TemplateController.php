@@ -33,7 +33,7 @@ class TemplateController extends BaseController
      */
     public function create(): string
     {
-        return view('templates/create', [
+        return view('templates/entry', [
             'activeMenu' => 'templates',
             'pageTitle' => 'Novo Template',
         ]);
@@ -58,7 +58,6 @@ class TemplateController extends BaseController
             'name' => (string) $this->request->getPost('name'),
             'description' => $this->request->getPost('description'),
             'html_content' => (string) $this->request->getPost('html_content'),
-            'thumbnail' => $this->request->getPost('thumbnail'),
             'is_active' => $this->request->getPost('is_active') ? 1 : 0,
         ]);
 
@@ -96,7 +95,7 @@ class TemplateController extends BaseController
             return redirect()->to('/templates')->with('error', 'Template não encontrado.');
         }
 
-        return view('templates/edit', [
+        return view('templates/entry', [
             'template' => $template,
             'activeMenu' => 'templates',
             'pageTitle' => 'Editar Template',
@@ -128,7 +127,6 @@ class TemplateController extends BaseController
             'name' => (string) $this->request->getPost('name'),
             'description' => $this->request->getPost('description'),
             'html_content' => (string) $this->request->getPost('html_content'),
-            'thumbnail' => $this->request->getPost('thumbnail'),
             'is_active' => $this->request->getPost('is_active') ? 1 : 0,
         ]);
 

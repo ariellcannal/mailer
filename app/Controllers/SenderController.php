@@ -47,7 +47,7 @@ class SenderController extends BaseController
      */
     public function create(): string
     {
-        return view('senders/create', [
+        return view('senders/entry', [
             'activeMenu' => 'senders',
             'pageTitle' => 'Novo Remetente',
         ]);
@@ -132,7 +132,7 @@ class SenderController extends BaseController
             return redirect()->to('/senders')->with('error', 'Remetente não encontrado');
         }
 
-        return view('senders/edit', [
+        return view('senders/entry', [
             'sender' => $sender,
             'activeMenu' => 'senders',
             'pageTitle' => 'Editar Remetente',

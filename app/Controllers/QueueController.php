@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Libraries\Email\QueueManager;
+use App\Libraries\Email\BounceProcessor;
 use CodeIgniter\CLI\CLI;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -50,6 +51,42 @@ class QueueController extends BaseController
     }
 
     /**
+     * Processa notificações de bounces e complaints no SNS/SQS.
+     *
+     * @return ResponseInterface
+     */
+    public function processBounces(): ResponseInterface
+    {
+        if (! is_cli() && ENVIRONMENT !== 'development') {
+            throw PageNotFoundException::forPageNotFound();
+        }
+
+        try {
+            $processor = new BounceProcessor();
+            $result = $processor->process();
+        } catch (\Throwable $exception) {
+            $result = [
+                'processed' => 0,
+                'bounced' => 0,
+                'complained' => 0,
+                'errors' => ['Falha ao processar bounces: ' . $exception->getMessage()],
+            ];
+        }
+
+        $output = $this->buildBounceOutput($result);
+
+        if (is_cli()) {
+            CLI::write($output . PHP_EOL);
+
+            return $this->response->setBody('');
+        }
+
+        return $this->response
+            ->setContentType('text/plain')
+            ->setBody($output . PHP_EOL);
+    }
+
+    /**
      * Monta o resumo do processamento da fila.
      *
      * @param array<string, mixed> $result Resultado do processamento.
@@ -65,6 +102,33 @@ class QueueController extends BaseController
             'Enviados: ' . ($result['sent'] ?? 0),
             'Falhas: ' . ($result['failed'] ?? 0),
             'Ignorados: ' . ($result['skipped'] ?? 0),
+        ];
+
+        if (!empty($result['errors'])) {
+            $lines[] = '';
+            $lines[] = 'Erros:';
+            foreach ($result['errors'] as $error) {
+                $lines[] = '- ' . $error;
+            }
+        }
+
+        return implode(PHP_EOL, $lines);
+    }
+
+    /**
+     * Monta resumo textual do processamento de bounces.
+     *
+     * @param array<string, mixed> $result Resultado do processamento.
+     * @return string
+     */
+    private function buildBounceOutput(array $result): string
+    {
+        $lines = [
+            'Bounces processados:',
+            '',
+            'Mensagens analisadas: ' . ($result['processed'] ?? 0),
+            'Bounces registrados: ' . ($result['bounced'] ?? 0),
+            'Complaints registradas: ' . ($result['complained'] ?? 0),
         ];
 
         if (!empty($result['errors'])) {

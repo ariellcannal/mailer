@@ -32,7 +32,12 @@ class DeployController extends BaseController
      */
     private string $logPath;
 
-    public function index(): string
+    /**
+     * Endpoint inicial do webhook de deploy.
+     *
+     * @return void
+     */
+    public function index(): void
     {
         $this->rootPath = ROOTPATH;
         $this->envPath = $this->rootPath . '/.env';

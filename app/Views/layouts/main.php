@@ -57,9 +57,16 @@
 			</a></li>
 		</ul>
 		<hr>
-		<div class="dropdown">
-			<a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser" data-bs-toggle="dropdown" aria-expanded="false"> <img src="<?= base_url($userAvar??'assets/images/icon_neg.png') ?>" alt="" width="32" height="32" class="rounded-circle me-2"> <strong><?= $userName ?? 'Mailer' ?></strong>
-			</a>
+                <div class="dropdown">
+                        <?php
+                        $avatarPath = $userAvatar ?? session('user_avatar');
+                        $avatarSrc = ($avatarPath && str_starts_with((string) $avatarPath, 'http'))
+                            ? $avatarPath
+                            : base_url($avatarPath ?: 'assets/images/icon_neg.png');
+                        $displayName = $userName ?? session('user_name') ?? 'Mailer';
+                        ?>
+                        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser" data-bs-toggle="dropdown" aria-expanded="false"> <img src="<?= esc($avatarSrc) ?>" alt="" width="32" height="32" class="rounded-circle me-2"> <strong><?= esc($displayName) ?></strong>
+                        </a>
 			<ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser">
 				<li><a class="dropdown-item" href="<?= base_url('profile') ?>"><i class="fas fa-user me-2"></i> Perfil</a></li>
 				<li><hr class="dropdown-divider"></li>
