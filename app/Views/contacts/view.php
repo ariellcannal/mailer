@@ -31,6 +31,7 @@
                     <h6>Informações Principais</h6>
                     <p class="mb-1"><strong>Email:</strong> <?= esc($contact['email']) ?></p>
                     <p class="mb-1"><strong>Nome:</strong> <?= esc($contact['name']) ?: '-' ?></p>
+                    <p class="mb-1"><strong>Apelido:</strong> <?= esc($contact['nickname'] ?? '') ?: '-' ?></p>
                     <p class="mb-1"><strong>Status:</strong>
                         <?= (int) $contact['is_active'] === 1 ? '<span class="badge bg-success">Ativo</span>' : '<span class="badge bg-secondary">Inativo</span>' ?>
                     </p>

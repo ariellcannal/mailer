@@ -68,10 +68,18 @@ class ContactController extends BaseController {
     public function store() {
         $model = new ContactModel();
 
+        $email = (string) $this->request->getPost('email');
+        $name = (string) $this->request->getPost('name');
+        $nickname = trim((string) $this->request->getPost('nickname'));
+
+        if ($nickname === '') {
+            $nickname = $model->generateNickname($name, $email);
+        }
+
         $data = [
-            'email' => $this->request->getPost('email'),
-            'name' => $this->request->getPost('name'),
-            'nickname' => $model->generateNickname($this->request->getPost('name'), (string) $this->request->getPost('email')),
+            'email' => $email,
+            'name' => $name,
+            'nickname' => $nickname,
             'is_active' => 1,
             'quality_score' => 3,
         ];
@@ -83,6 +91,11 @@ class ContactController extends BaseController {
             $updates = [];
             if (!empty($data['name']) && $data['name'] !== ($existing['name'] ?? '')) {
                 $updates['name'] = $data['name'];
+            }
+
+            if (!empty($data['nickname']) && $data['nickname'] !== ($existing['nickname'] ?? '')) {
+                $updates['nickname'] = $data['nickname'];
+            } elseif (!isset($existing['nickname']) || trim((string) $existing['nickname']) === '') {
                 $updates['nickname'] = $model->generateNickname($data['name'], $data['email']);
             }
 
@@ -285,12 +298,17 @@ class ContactController extends BaseController {
 
         $email = (string) $this->request->getPost('email');
         $name = (string) $this->request->getPost('name');
+        $nickname = trim((string) $this->request->getPost('nickname'));
+
+        if ($nickname === '') {
+            $nickname = $model->generateNickname($name, $email);
+        }
 
         $data = [
             'id' => (int) $id,
             'email' => $email,
             'name' => $name,
-            'nickname' => $model->generateNickname($name, $email),
+            'nickname' => $nickname,
         ];
         $listIds = (array) $this->request->getPost('lists');
 
