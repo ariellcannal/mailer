@@ -265,6 +265,7 @@ class ContactModel extends Model
     {
         $imported = 0;
         $skipped = 0;
+        $skippedDetails = [];
         $errors = [];
         $listIds = array_map('intval', array_unique(array_filter($listIds)));
 
@@ -289,6 +290,8 @@ class ContactModel extends Model
                     }
 
                     $skipped++;
+                    $skippedDetails[] = 'Email já existente e atualizado: ' . $contact['email'];
+
                     continue;
                 }
 
@@ -316,6 +319,7 @@ class ContactModel extends Model
         return [
             'imported' => $imported,
             'skipped' => $skipped,
+            'skipped_details' => $skippedDetails,
             'errors' => $errors,
         ];
     }

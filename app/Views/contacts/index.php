@@ -95,6 +95,7 @@
                         </th>
                         <th>Email</th>
                         <th>Nome</th>
+                        <th>Apelido</th>
                         <th>Listas</th>
                         <th>Qualidade</th>
                         <th>Status</th>
@@ -104,7 +105,7 @@
                 <tbody>
                     <?php if (empty($contacts)): ?>
                         <tr>
-                            <td colspan="7" class="text-center py-4">
+                            <td colspan="8" class="text-center py-4">
                                 <i class="fas fa-inbox fa-3x text-muted mb-3 d-block"></i>
                                 Nenhum contato encontrado
                             </td>
@@ -117,6 +118,7 @@
                                 </td>
                                 <td><?= esc($contact['email']) ?></td>
                                 <td><?= esc($contact['name']) ?></td>
+                                <td><?= esc($contact['nickname'] ?? '') ?></td>
                                 <td>
                                     <?php if (!empty($contactLists[$contact['id']] ?? [])): ?>
                                         <?php foreach ($contactLists[$contact['id']] as $list): ?>

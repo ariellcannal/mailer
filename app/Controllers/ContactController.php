@@ -167,6 +167,8 @@ class ContactController extends BaseController {
 
             $contacts = [];
 
+            $skippedReasons = [];
+
             foreach ($rows as $index => $row) {
                 if ($index === 0) {
                     continue;
@@ -175,26 +177,51 @@ class ContactController extends BaseController {
                 $email = trim((string) ($row[$emailIndex] ?? ''));
 
                 if ($email === '') {
+                    $skippedReasons[] = 'Linha ' . ($index + 1) . ': email vazio';
+                    continue;
+                }
+
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $skippedReasons[] = 'Linha ' . ($index + 1) . ': email inválido (' . $email . ')';
                     continue;
                 }
 
                 $name = $nameIndex !== null ? trim((string) ($row[$nameIndex] ?? '')) : null;
 
+                $formattedName = $this->formatNameUcFirst($name);
+
                 $contacts[] = [
                     'email' => $email,
-                    'name' => $name !== '' ? $name : null,
+                    'name' => $formattedName,
                 ];
             }
 
             $result = $model->importContacts($contacts, $listIds);
 
+            $skippedTotal = $result['skipped'] + count($skippedReasons);
+            $skippedMessages = array_merge($skippedReasons, $result['skipped_details']);
+
             if ($tempPath && is_file($tempPath)) {
                 @unlink($tempPath);
             }
 
+            $details = '';
+
+            if (!empty($skippedMessages)) {
+                $details = ' Motivos: ' . implode(' | ', $skippedMessages);
+            }
+
+            if (!empty($result['errors'])) {
+                $errorTexts = array_map(
+                    static fn (array $error): string => ($error['email'] ?? 'N/D') . ': ' . ($error['error'] ?? 'Erro desconhecido'),
+                    $result['errors']
+                );
+                $details .= ($details !== '' ? ' | ' : ' Motivos: ') . implode(' | ', $errorTexts);
+            }
+
             return redirect()->to('/contacts')->with(
                 'contacts_success',
-                "Importados: {$result['imported']}, Ignorados: {$result['skipped']}"
+                "Importados: {$result['imported']}, Ignorados: {$skippedTotal}" . $details
             );
         } catch (\Exception $e) {
             return redirect()->back()->with('contacts_error', 'Erro ao importar: ' . $e->getMessage());
@@ -241,6 +268,26 @@ class ContactController extends BaseController {
         $sheet = $spreadsheet->getActiveSheet();
 
         return $sheet->toArray();
+    }
+
+    /**
+     * Formata o nome para que a primeira letra seja maiúscula.
+     *
+     * @param string|null $name Nome original informado.
+     * @return string|null Nome formatado ou nulo.
+     */
+    protected function formatNameUcFirst(?string $name): ?string
+    {
+        $trimmed = trim((string) $name);
+
+        if ($trimmed === '') {
+            return null;
+        }
+
+        $firstChar = mb_strtoupper(mb_substr($trimmed, 0, 1, 'UTF-8'), 'UTF-8');
+        $rest = mb_substr($trimmed, 1, null, 'UTF-8');
+
+        return $firstChar . $rest;
     }
     
     public function view($id) {
