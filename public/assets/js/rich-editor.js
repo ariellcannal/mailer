@@ -728,13 +728,12 @@
 							'toggleImageCaption',
 							'imageTextAlternative',
 							'|',
-							'resizeImage:20', 'resizeImage:60', 'resizeImage:100'
+							'resizeImage:200', 'resizeImage:500'
 						],
-						resizeUnit: "%",
+						resizeUnit: "px",
 						resizeOptions: [
-							{ name: 'resizeImage:20', value: '20', icon: 'small', label: '20%' },
-							{ name: 'resizeImage:60', value: '60', icon: 'medium', label: '60%' },
-							{ name: 'resizeImage:100', value: '100', icon: 'large', label: '100%' }
+							{ name: 'resizeImage:200', value: '200', icon: 'small', label: '200px' },
+							{ name: 'resizeImage:500', value: '500', icon: 'medium', label: '500px' }
 						],
 						upload: {
 							types: ['jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'svg+xml']
