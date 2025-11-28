@@ -21,8 +21,9 @@ class ContactModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = false;
     protected $protectFields = true;
-    
+
     protected $allowedFields = [
+        'id',
         'email',
         'name',
         'nickname',
@@ -46,6 +47,7 @@ class ContactModel extends Model
     protected $updatedField = 'updated_at';
 
     protected $validationRules = [
+        'id' => 'permit_empty|integer',
         'email' => 'required|valid_email|is_unique[contacts.email,id,{id}]',
         'name' => 'permit_empty|max_length[255]',
         'nickname' => 'permit_empty|max_length[255]',
