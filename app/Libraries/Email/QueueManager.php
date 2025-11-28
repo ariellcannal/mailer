@@ -335,10 +335,14 @@ class QueueManager
      */
     protected function prepareEmailContent(string $htmlContent, array $contact, string $trackingHash): string
     {
+        $nickname = $this->resolveContactNickname($contact);
+
         // Substitui variáveis do contato
         $htmlContent = str_replace('{{nome}}', $contact['name'] ?? '', $htmlContent);
+        $htmlContent = str_replace('{{apelido}}', $nickname, $htmlContent);
         $htmlContent = str_replace('{{email}}', $contact['email'], $htmlContent);
         $htmlContent = str_replace('{{name}}', $contact['name'] ?? '', $htmlContent);
+        $htmlContent = str_replace('{{nickname}}', $nickname, $htmlContent);
 
         // Adiciona pixel de tracking (abertura)
         $baseUrl = $this->getBaseUrl();
@@ -368,6 +372,26 @@ class QueueManager
         $htmlContent = str_replace('{{view_online}}', $webviewUrl, $htmlContent);
 
         return $htmlContent;
+    }
+
+    /**
+     * Obtém o apelido do contato com fallback para o primeiro nome.
+     *
+     * @param array $contact Dados do contato utilizados na personalização.
+     * @return string Apelido capitalizado para substituir nas tags.
+     */
+    protected function resolveContactNickname(array $contact): string
+    {
+        $nickname = trim((string) ($contact['nickname'] ?? ''));
+
+        if ($nickname !== '') {
+            return $nickname;
+        }
+
+        $name = $contact['name'] ?? null;
+        $email = (string) ($contact['email'] ?? '');
+
+        return $this->contactModel->generateNickname($name, $email);
     }
 
     /**

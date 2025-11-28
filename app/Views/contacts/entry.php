@@ -22,6 +22,12 @@
                 <input type="text" class="form-control" name="name" value="<?= esc(old('name', $contact['name'] ?? '')) ?>">
             </div>
 
+            <div class="mb-3">
+                <label class="form-label">Apelido</label>
+                <input type="text" class="form-control" name="nickname" value="<?= esc(old('nickname', $contact['nickname'] ?? '')) ?>" placeholder="Primeiro nome ou apelido preferido">
+                <small class="text-muted">Usado para personalizar envios quando disponível.</small>
+            </div>
+
             <?php if (!empty($lists)): ?>
             <div class="mb-3">
                 <label class="form-label">Listas</label>

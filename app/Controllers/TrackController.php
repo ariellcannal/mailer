@@ -402,10 +402,13 @@ class TrackController extends BaseController
     protected function prepareWebviewContent(string $htmlContent, array $contact, string $hash): string
     {
         $baseUrl = $this->getTrackingBaseUrl();
+        $nickname = $this->resolveContactNickname($contact);
 
         $htmlContent = str_replace('{{nome}}', $contact['name'] ?? '', $htmlContent);
+        $htmlContent = str_replace('{{apelido}}', $nickname, $htmlContent);
         $htmlContent = str_replace('{{name}}', $contact['name'] ?? '', $htmlContent);
         $htmlContent = str_replace('{{email}}', $contact['email'] ?? '', $htmlContent);
+        $htmlContent = str_replace('{{nickname}}', $nickname, $htmlContent);
 
         $optoutUrl = $baseUrl . 'optout/' . $hash;
         $htmlContent = str_replace('{{optout_link}}', $optoutUrl, $htmlContent);
@@ -416,6 +419,25 @@ class TrackController extends BaseController
         $htmlContent = str_replace('{{view_online}}', $webviewUrl, $htmlContent);
 
         return $this->neutralizeWebviewAnchor($htmlContent, $webviewUrl);
+    }
+
+    /**
+     * Obtém o apelido do contato com base nos dados disponíveis.
+     *
+     * @param array $contact Dados do contato carregados para a visualização.
+     * @return string Apelido pronto para personalização de conteúdo.
+     */
+    protected function resolveContactNickname(array $contact): string
+    {
+        $nickname = trim((string) ($contact['nickname'] ?? ''));
+
+        if ($nickname !== '') {
+            return $nickname;
+        }
+
+        $contactModel = new ContactModel();
+
+        return $contactModel->generateNickname($contact['name'] ?? null, (string) ($contact['email'] ?? ''));
     }
 
     /**
