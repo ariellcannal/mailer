@@ -18,7 +18,7 @@ class QueueController extends BaseController
      *  CRON SETUP
      *  
      *  LINUX
-        * * * * * cd /caminho/para/Mailer && php index.php queue/process >> /dev/null 2>&1 
+        * * * * * /usr/local/bin/ea-php82 /home/cannal/public_html/mailer/public/index.php queue/process >> /dev/null 2>&1 
      */
 
     /**
