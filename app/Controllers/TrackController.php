@@ -405,18 +405,14 @@ class TrackController extends BaseController
         $nickname = $this->resolveContactNickname($contact);
 
         $htmlContent = str_replace('{{nome}}', $contact['name'] ?? '', $htmlContent);
-        $htmlContent = str_replace('{{apelido}}', $nickname, $htmlContent);
-        $htmlContent = str_replace('{{name}}', $contact['name'] ?? '', $htmlContent);
+        $htmlContent = str_replace('{{apelido}}', $contact['nickname'] ?? '', $htmlContent);
         $htmlContent = str_replace('{{email}}', $contact['email'] ?? '', $htmlContent);
-        $htmlContent = str_replace('{{nickname}}', $nickname, $htmlContent);
 
         $optoutUrl = $baseUrl . 'optout/' . $hash;
         $htmlContent = str_replace('{{optout_link}}', $optoutUrl, $htmlContent);
-        $htmlContent = str_replace('{{unsubscribe_link}}', $optoutUrl, $htmlContent);
 
         $webviewUrl = $baseUrl . 'webview/' . $hash;
         $htmlContent = str_replace('{{webview_link}}', $webviewUrl, $htmlContent);
-        $htmlContent = str_replace('{{view_online}}', $webviewUrl, $htmlContent);
 
         return $this->neutralizeWebviewAnchor($htmlContent, $webviewUrl);
     }

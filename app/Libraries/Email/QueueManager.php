@@ -339,10 +339,8 @@ class QueueManager
 
         // Substitui variáveis do contato
         $htmlContent = str_replace('{{nome}}', $contact['name'] ?? '', $htmlContent);
-        $htmlContent = str_replace('{{apelido}}', $nickname, $htmlContent);
+        $htmlContent = str_replace('{{apelido}}', $contact['nickname'] ?? '', $htmlContent);
         $htmlContent = str_replace('{{email}}', $contact['email'], $htmlContent);
-        $htmlContent = str_replace('{{name}}', $contact['name'] ?? '', $htmlContent);
-        $htmlContent = str_replace('{{nickname}}', $nickname, $htmlContent);
 
         // Adiciona pixel de tracking (abertura)
         $baseUrl = $this->getBaseUrl();
@@ -364,12 +362,10 @@ class QueueManager
         // Substitui link de opt-out
         $optoutUrl = $baseUrl . 'optout/' . $trackingHash;
         $htmlContent = str_replace('{{optout_link}}', $optoutUrl, $htmlContent);
-        $htmlContent = str_replace('{{unsubscribe_link}}', $optoutUrl, $htmlContent);
 
         // Substitui link de visualização externa
         $webviewUrl = $baseUrl . 'webview/' . $trackingHash;
         $htmlContent = str_replace('{{webview_link}}', $webviewUrl, $htmlContent);
-        $htmlContent = str_replace('{{view_online}}', $webviewUrl, $htmlContent);
 
         return $htmlContent;
     }
