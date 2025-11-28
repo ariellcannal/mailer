@@ -280,7 +280,8 @@ class MessageController extends BaseController {
         $htmlContent = $this->sanitizeHtmlContent($this->request->getPost('html_content') ?? '');
         $validation = $this->validateStepData($step, $htmlContent);
 
-        if (!$validation['valid']) {
+        if (!$validation['valid']) 
+        {
             return $this->response->setJSON([
                 'success' => false,
                 'error' => $validation['message'],
@@ -611,6 +612,7 @@ class MessageController extends BaseController {
         }
 
         if (in_array($step, [2, 3], true)) {
+            
             if (trim(strip_tags($htmlContent)) === '') {
                 return [
                     'valid' => false,
