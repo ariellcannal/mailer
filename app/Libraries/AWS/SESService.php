@@ -338,11 +338,27 @@ class SESService
                 'sentLast24Hours' => $result['SentLast24Hours'],
                 'remaining' => $remaining,
             ];
-        } catch (AwsException $e) {
+        } catch (AwsException $exception) {
+            $errorCode = $exception->getAwsErrorCode();
+            $errorMessage = $exception->getMessage();
+
+            $friendlyMessage = 'Não foi possível obter os limites no momento.';
+
+            if ($errorCode === 'AccessDenied' || str_contains($errorMessage, 'GetSendQuota')) {
+                $friendlyMessage = 'Permissão negada para consultar limites do SES (GetSendQuota). ' .
+                    'Verifique a política IAM e remova qualquer bloqueio explícito para esta operação.';
+            }
+
+            log_message(
+                'error',
+                sprintf('Erro ao consultar limites SES: [%s] %s', $errorCode ?? 'unknown', $errorMessage)
+            );
+
             return [
                 'success' => false,
-                'error' => $e->getMessage(),
-                'message' => 'Não foi possível obter os limites no momento. ' . $e->getMessage(),
+                'error' => $errorMessage,
+                'code' => $errorCode,
+                'message' => $friendlyMessage,
             ];
         }
     }
