@@ -729,7 +729,7 @@
 							'imageTextAlternative',
 							'|',
 							'resizeImage:200', 'resizeImage:500'
-						],
+						], 
 						resizeUnit: "px",
 						resizeOptions: [
 							{ name: 'resizeImage:200', value: '200', icon: 'small', label: '200px' },

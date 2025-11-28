@@ -145,7 +145,7 @@
 
 		$.when(persistStep()).done(function(payload) {
 			if (!payload.success) return;
-			
+
 			if (currentStep === 2 && typeof window.renderEditorPreview === 'function') {
 				window.renderEditorPreview('previewPane');
 			}
@@ -234,6 +234,21 @@
 			e.preventDefault();
 			if (!validateCurrentStep()) return;
 			persistStep();
+
+			const data = $form.serialize();
+
+			$.post(storeUrl, data, function(payload) {
+				if (payload.success) {
+					showFeedback('Mensagem agendada com sucesso!', 'success');
+					setTimeout(() => {
+						window.location.href = indexUrl;
+					}, 1500);
+				} else {
+					showFeedback(payload.error || 'Erro ao agendar mensagem');
+				} 
+			}).fail(function() {
+				showFeedback('Erro ao salvar mensagem');
+			});
 		});
 	});
 
