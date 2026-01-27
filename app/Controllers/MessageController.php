@@ -183,13 +183,22 @@ class MessageController extends BaseController {
      * @return ResponseInterface
      */
     public function store(): ResponseInterface {
-        $model = new MessageModel();
+        try {
+            $model = new MessageModel();
 
-        $messageId = (int) ($this->request->getPost('message_id') ?? 0);
+            $messageId = (int) ($this->request->getPost('message_id') ?? 0);
 
-        // Validar opt-out link
-        $htmlContent = $this->sanitizeHtmlContent($this->request->getPost('html_content'));
-        $validation = $this->validateOptOutLink($htmlContent);
+            // Validar opt-out link
+            $htmlContent = $this->sanitizeHtmlContent($this->request->getPost('html_content'));
+            
+            if (empty(trim($htmlContent))) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'error' => 'O conteúdo do email não pode estar vazio.'
+                ]);
+            }
+            
+            $validation = $this->validateOptOutLink($htmlContent);
 
         if (!$validation['valid']) {
             return $this->response->setJSON([
@@ -263,6 +272,13 @@ class MessageController extends BaseController {
             'success' => false,
             'error' => 'Erro ao salvar mensagem'
         ]);
+        } catch (\Exception $e) {
+            log_message('error', 'Erro ao salvar mensagem: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'Erro ao salvar mensagem: ' . $e->getMessage()
+            ]);
+        }
     }
 
     /**
@@ -272,7 +288,8 @@ class MessageController extends BaseController {
      */
     public function saveProgress(): ResponseInterface
     {
-        $model = new MessageModel();
+        try {
+            $model = new MessageModel();
         $messageId = (int) ($this->request->getPost('message_id') ?? 0);
         $current = $messageId > 0 ? $model->find($messageId) : null;
 
@@ -311,6 +328,13 @@ class MessageController extends BaseController {
             'success' => true,
             'message_id' => $messageId,
         ]);
+        } catch (\Exception $e) {
+            log_message('error', 'Erro ao salvar progresso: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'Erro ao salvar progresso: ' . $e->getMessage()
+            ]);
+        }
     }
 
     /**
@@ -734,16 +758,34 @@ class MessageController extends BaseController {
         }
 
         $progress = $this->decodeProgressData($message['progress_data'] ?? null);
+        $needsUpdate = false;
 
+        // Step 4: Destinatários
         if ($step === 4) {
-            $progress['contact_lists'] = array_values(array_filter((array) $this->request->getPost('contact_lists')));
+            $contactLists = (array) $this->request->getPost('contact_lists');
+            $progress['contact_lists'] = array_values(array_filter(array_map('intval', $contactLists)));
+            $needsUpdate = true;
         }
 
+        // Step 5: Agendamento
+        if ($step === 5) {
+            $scheduledAt = $this->request->getPost('scheduled_at');
+            if ($scheduledAt) {
+                $progress['scheduled_at'] = $scheduledAt;
+                $needsUpdate = true;
+            }
+        }
+
+        // Step 6: Reenvios
         if ($step === 6) {
-            $progress['resends'] = $this->request->getPost('resends');
+            $resends = $this->request->getPost('resends');
+            if ($resends) {
+                $progress['resends'] = $resends;
+                $needsUpdate = true;
+            }
         }
 
-        if (!empty($progress)) {
+        if ($needsUpdate) {
             $model->update($messageId, [
                 'progress_data' => json_encode($progress, JSON_UNESCAPED_UNICODE),
             ]);
