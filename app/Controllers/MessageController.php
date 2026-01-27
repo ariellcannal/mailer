@@ -230,6 +230,16 @@ class MessageController extends BaseController {
             ]);
         }
 
+        // Validar configuração AWS SES
+        $sesConfigured = !empty(getenv('aws.ses.accessKey')) && !empty(getenv('aws.ses.secretKey'));
+        
+        if (!$sesConfigured) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'Chave SES não configurada. Configure as credenciais AWS SES antes de agendar envios.'
+            ]);
+        }
+
         $data = [
             'campaign_id' => $this->request->getPost('campaign_id'),
             'sender_id' => $this->request->getPost('sender_id'),
@@ -767,17 +777,14 @@ class MessageController extends BaseController {
             $needsUpdate = true;
         }
 
-        // Step 5: Agendamento
+        // Step 5: Envios (Agendamento + Reenvios)
         if ($step === 5) {
             $scheduledAt = $this->request->getPost('scheduled_at');
             if ($scheduledAt) {
                 $progress['scheduled_at'] = $scheduledAt;
                 $needsUpdate = true;
             }
-        }
-
-        // Step 6: Reenvios
-        if ($step === 6) {
+            
             $resends = $this->request->getPost('resends');
             if ($resends) {
                 $progress['resends'] = $resends;

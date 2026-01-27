@@ -34,12 +34,8 @@
                 Destinatários
             </div>
             <div class="step" data-step="5">
-                <i class="fas fa-check"></i><br>
-                Agendamento
-            </div>
-            <div class="step" data-step="6">
-                <i class="fas fa-redo"></i><br>
-                Reenvios
+                <i class="fas fa-paper-plane"></i><br>
+                Envios
             </div>
         </div>
         
@@ -198,40 +194,44 @@
                 </button>
             </div>
 
-            <!-- Step 5: Agendamento -->
+            <!-- Step 5: Envios (Agendamento + Reenvios) -->
             <div class="step-content" data-step="5" style="display:none;">
-                <h5 class="mb-3">Agendamento</h5>
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <label class="form-label" for="scheduledAt">Primeiro envio *</label>
-                        <input
-                            type="datetime-local"
-                            id="scheduledAt"
-                            name="scheduled_at"
-                            class="form-control"
-                            value="<?= esc(old('scheduled_at', isset($message['scheduled_at']) ? date('Y-m-d\TH:i', strtotime($message['scheduled_at'])) : date('Y-m-d\TH:i'))) ?>"
-                            required>
-                        <small class="text-muted">A aplicação iniciará o disparo automaticamente neste horário.</small>
+                <h5 class="mb-4">Configurar Envios</h5>
+                
+                <!-- Bloco: Primeiro Envio -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0"><i class="fas fa-paper-plane"></i> Primeiro Envio</h6>
                     </div>
-                    <div class="col-md-6 d-flex align-items-end">
-                        <div class="alert alert-info mb-0 w-100" id="scheduleSummary" aria-live="polite">
-                            Defina a data e hora para iniciar o envio.
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="scheduledAt">Data e hora do envio *</label>
+                                <input
+                                    type="datetime-local"
+                                    id="scheduledAt"
+                                    name="scheduled_at"
+                                    class="form-control"
+                                    value="<?= esc(old('scheduled_at', isset($message['scheduled_at']) ? date('Y-m-d\TH:i', strtotime($message['scheduled_at'])) : date('Y-m-d\TH:i'))) ?>"
+                                    required>
+                                <small class="text-muted">A aplicação iniciará o disparo automaticamente neste horário.</small>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <div class="alert alert-info mb-0 w-100" id="scheduleSummary" aria-live="polite">
+                                    Defina a data e hora para iniciar o envio.
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <button type="button" class="btn btn-secondary me-2 prevStep">
-                    <i class="fas fa-arrow-left"></i> Anterior
-                </button>
-                <button type="button" class="btn btn-primary nextStep">
-                    Próximo <i class="fas fa-arrow-right"></i>
-                </button>
-            </div>
-
-            <!-- Step 6: Reenvios -->
-            <div class="step-content" data-step="6" style="display:none;">
-                <h5 class="mb-3">Configurar Reenvios Automáticos</h5>
-                <p class="text-muted">Configure até 3 reenvios automáticos para contatos que não abriram a mensagem.</p>
+                
+                <!-- Bloco: Reenvios -->
+                <div class="card mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h6 class="mb-0"><i class="fas fa-redo"></i> Reenvios</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">Configure até 3 reenvios automáticos para contatos que não abriram a mensagem.</p>
 
                 <?php
                     $resendDefaults = [
@@ -252,7 +252,7 @@
                         }
                     }
                 ?>
-                <div id="resends-container">
+                        <div id="resends-container">
                     <?php foreach ($resendDefaults as $index => $resend): ?>
                         <div class="card mb-3">
                             <div class="card-body">
@@ -280,14 +280,18 @@
                             </div>
                         </div>
                     <?php endforeach; ?>
+                        </div>
+                    </div>
                 </div>
 
-                <button type="button" class="btn btn-secondary me-2 prevStep">
-                    <i class="fas fa-arrow-left"></i> Anterior
-                </button>
-                <button type="submit" class="btn btn-success">
-                    <i class="fas fa-save"></i> Confirmar Agendamentos
-                </button>
+                <div class="d-flex justify-content-between">
+                    <button type="button" class="btn btn-secondary prevStep">
+                        <i class="fas fa-arrow-left"></i> Anterior
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check"></i> Confirmar Agendamento
+                    </button>
+                </div>
             </div>
         </form>
     </div>

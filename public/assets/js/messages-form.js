@@ -17,7 +17,7 @@
 	const $recipientTotal = $('#recipientTotal');
 	const $scheduledAt = $('#scheduledAt');
 
-	const maxStep = 6;
+	const maxStep = 5;
 	let currentStep = 1;
 
 	/* ===========================================================
