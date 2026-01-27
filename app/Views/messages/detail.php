@@ -131,12 +131,7 @@
 
             <!-- Step 3: Pré-visualização -->
             <div class="step-content" data-step="3" style="display:none;">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0">Pré-visualização do conteúdo</h5>
-                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="renderEditorPreview('previewPane')">
-                        Atualizar pré-visualização
-                    </button>
-                </div>
+                <h5 class="mb-3">Pré-visualização do conteúdo</h5>
                 <div id="previewPane" class="border rounded p-3 bg-light" aria-live="polite"></div>
 
                 <div class="mt-3">

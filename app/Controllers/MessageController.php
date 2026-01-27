@@ -230,16 +230,6 @@ class MessageController extends BaseController {
             ]);
         }
 
-        // Validar configuração AWS SES
-        $sesConfigured = !empty(getenv('aws.ses.accessKey')) && !empty(getenv('aws.ses.secretKey'));
-        
-        if (!$sesConfigured) {
-            return $this->response->setJSON([
-                'success' => false,
-                'error' => 'Chave SES não configurada. Configure as credenciais AWS SES antes de agendar envios.'
-            ]);
-        }
-
         $data = [
             'campaign_id' => $this->request->getPost('campaign_id'),
             'sender_id' => $this->request->getPost('sender_id'),
