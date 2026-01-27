@@ -345,6 +345,34 @@ class QueueManager
             $this->sendModel->update($send['id'], [
                 'status' => 'failed',
             ]);
+            
+            // Verificar se é um bounce (email inválido)
+            $errorMsg = strtolower($result['error'] ?? '');
+            $isBounce = str_contains($errorMsg, 'address') || 
+                        str_contains($errorMsg, 'mailbox') ||
+                        str_contains($errorMsg, 'recipient') ||
+                        str_contains($errorMsg, 'does not exist') ||
+                        str_contains($errorMsg, 'invalid');
+            
+            if ($isBounce) {
+                // Registrar bounce no contato
+                $this->contactModel->update($contact['id'], [
+                    'bounced' => 1,
+                    'bounce_type' => 'hard',
+                ]);
+                
+                // Registrar bounce na tabela de bounces
+                $db = \Config\Database::connect();
+                $db->table('bounces')->insert([
+                    'contact_id' => $contact['id'],
+                    'message_id' => $message['id'],
+                    'bounce_type' => 'hard',
+                    'reason' => substr($result['error'], 0, 255),
+                    'created_at' => $this->now(),
+                ]);
+                
+                log_message('info', "Bounce registrado para contato {$contact['id']}: {$result['error']}");
+            }
 
             return ['success' => false, 'error' => $result['error']];
         }
@@ -605,9 +633,25 @@ class QueueManager
         }
 
         foreach ($rules as $rule) {
+            // Verificar se o envio original já foi completado
+            $originalSent = $this->sendModel
+                ->where('message_id', $rule['message_id'])
+                ->where('resend_number', 0)
+                ->where('status', 'sent')
+                ->countAllResults();
+            
+            // Se nenhum envio original foi enviado ainda, pular este reenvio
+            if ($originalSent === 0) {
+                continue;
+            }
+            
             $contacts = $this->getMessageContacts((int) $rule['message_id']);
 
             if (empty($contacts)) {
+                // Se não há contatos para reenviar (todos abriram), marcar como completo
+                $db->table('resend_rules')
+                    ->where('id', $rule['id'])
+                    ->update(['status' => 'completed']);
                 continue;
             }
 
