@@ -90,6 +90,14 @@ $routes->group('templates', function($routes) {
     $routes->get('search', 'TemplateController::search');
 });
 
+// Receita Federal
+$routes->group('receita', function($routes) {
+    $routes->get('/', 'ReceitaController::index');          // Página principal com Select2 e Console
+    $routes->get('importar', 'ReceitaController::importar'); // Endpoint do processamento (Stream)
+    $routes->get('buscarCnaes', 'ReceitaController::buscarCnaes'); // Busca AJAX para o Select2
+    $routes->get('parar', 'ReceitaController::parar');       // Taskkill do PHP
+});
+
 // Gerenciador de arquivos
 $routes->group('files', function($routes) {
     $routes->get('list', 'FileManagerController::list');
@@ -129,7 +137,7 @@ $routes->group('settings', function($routes) {
 // Processamento da fila (CLI ou cron)
 $routes->cli('queue/process', 'QueueController::process');
 $routes->get('queue/process', 'QueueController::process');
-$routes->cli('queue/process-bounces', 'QueueController::processBounces');
+$routes->cli('queue/process-bounces', 'QueueController::processBounces');   
 $routes->get('queue/process-bounces', 'QueueController::processBounces');
 
 // Auth routes (to be implemented)

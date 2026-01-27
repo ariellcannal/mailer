@@ -37,23 +37,25 @@
         <?php $activeMenu = $activeMenu ?? ''; ?>
         
         <ul class="nav nav-pills flex-column mb-auto sidebar-menu">
-			<li class="nav-item"><a href="<?= base_url('dashboard') ?>" class="nav-link <?= $activeMenu === 'dashboard' ? 'active' : '' ?> sidebar-menu-item"> <i class="fas fa-home bi me-2"></i> <span>Dashboard</span>
+			<li class="nav-item"><a href="<?= base_url('dashboard') ?>" class="nav-link <?= $activeMenu === 'dashboard' ? 'active' : '' ?> sidebar-menu-item"> <i class="fas fa-home fa-fw bi me-2"></i> <span>Dashboard</span>
 			</a></li>
-			<li class="nav-item"><a href="<?= base_url('campaigns') ?>" class="nav-link <?= $activeMenu === 'campaigns' ? 'active' : '' ?> sidebar-menu-item"> <i class="fas fa-bullhorn bi me-2"></i> <span>Campanhas</span>
+			<li class="nav-item"><a href="<?= base_url('campaigns') ?>" class="nav-link <?= $activeMenu === 'campaigns' ? 'active' : '' ?> sidebar-menu-item"> <i class="fas fa-bullhorn fa-fw bi me-2"></i> <span>Campanhas</span>
 			</a></li>
-			<li class="nav-item"><a href="<?= base_url('messages') ?>" class="nav-link <?= $activeMenu === 'messages' ? 'active' : '' ?> sidebar-menu-item"> <i class="fas fa-paper-plane bi me-2"></i> <span>Mensagens</span>
+			<li class="nav-item"><a href="<?= base_url('messages') ?>" class="nav-link <?= $activeMenu === 'messages' ? 'active' : '' ?> sidebar-menu-item"> <i class="fas fa-paper-plane fa-fw bi me-2"></i> <span>Mensagens</span>
 			</a></li>
-			<li class="nav-item"><a href="<?= base_url('contacts') ?>" class="nav-link <?= $activeMenu === 'contacts' ? 'active' : '' ?> sidebar-menu-item"> <i class="fas fa-users bi me-2"></i> <span>Contatos</span>
+			<li class="nav-item"><a href="<?= base_url('contacts') ?>" class="nav-link <?= $activeMenu === 'contacts' ? 'active' : '' ?> sidebar-menu-item"> <i class="fas fa-users fa-fw bi me-2"></i> <span>Contatos</span>
 			</a></li>
-			<li class="nav-item"><a href="<?= base_url('contact-lists') ?>" class="nav-link <?= $activeMenu === 'contact_lists' ? 'active' : '' ?> sidebar-menu-item"> <i class="fas fa-list-ul bi me-2"></i> <span>Listas</span>
+			<li class="nav-item"><a href="<?= base_url('contact-lists') ?>" class="nav-link <?= $activeMenu === 'contact_lists' ? 'active' : '' ?> sidebar-menu-item"> <i class="fas fa-list-ul fa-fw bi me-2"></i> <span>Listas</span>
 			</a></li>
-			<li class="nav-item"><a href="<?= base_url('templates') ?>" class="nav-link <?= $activeMenu === 'templates' ? 'active' : '' ?> sidebar-menu-item"> <i class="fas fa-file-code bi me-2"></i> <span>Templates</span>
+			<li class="nav-item"><a href="<?= base_url('templates') ?>" class="nav-link <?= $activeMenu === 'templates' ? 'active' : '' ?> sidebar-menu-item"> <i class="fas fa-file-code fa-fw bi me-2"></i> <span>Templates</span>
 			</a></li>
-			<li class="nav-item"><a href="<?= base_url('senders') ?>" class="nav-link <?= $activeMenu === 'senders' ? 'active' : '' ?> sidebar-menu-item"> <i class="fas fa-at bi me-2"></i> <span>Remetentes</span>
+			<li class="nav-item"><a href="<?= base_url('senders') ?>" class="nav-link <?= $activeMenu === 'senders' ? 'active' : '' ?> sidebar-menu-item"> <i class="fas fa-at fa-fw bi me-2"></i> <span>Remetentes</span>
 			</a></li>
-			<li class="nav-item"><a href="<?= base_url('tracking') ?>" class="nav-link <?= $activeMenu === 'tracking' ? 'active' : '' ?> sidebar-menu-item"> <i class="fas fa-chart-line bi me-2"></i> <span>Análises</span>
+			<li class="nav-item"><a href="<?= base_url('tracking') ?>" class="nav-link <?= $activeMenu === 'tracking' ? 'active' : '' ?> sidebar-menu-item"> <i class="fas fa-chart-line fa-fw bi me-2"></i> <span>Análises</span>
 			</a></li>
-			<li class="nav-item"><a href="<?= base_url('settings') ?>" class="nav-link <?= $activeMenu === 'settings' ? 'active' : '' ?> sidebar-menu-item"> <i class="fas fa-cog bi me-2"></i> <span>Configurações</span>
+			<li class="nav-item"><a href="<?= base_url('receita') ?>" class="nav-link <?= $activeMenu === 'receita' ? 'active' : '' ?> sidebar-menu-item"> <i class="fas fa-database fa-fw bi me-2"></i> <span>Receita</span>
+			</a></li>
+			<li class="nav-item"><a href="<?= base_url('settings') ?>" class="nav-link <?= $activeMenu === 'settings' ? 'active' : '' ?> sidebar-menu-item"> <i class="fas fa-cog fa-fw bi me-2"></i> <span>Configurações</span>
 			</a></li>
 		</ul>
 		<hr>
