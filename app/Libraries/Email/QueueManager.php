@@ -63,9 +63,7 @@ class QueueManager
      * Construtor
      */
     public function __construct()
-    {
-        $this->sesService = new SESService();
-        $this->bounceService = new BounceNotificationService();
+    {        
         $this->sendModel = new MessageSendModel();
         $this->contactModel = new ContactModel();
         $this->messageModel = new MessageModel();
@@ -73,6 +71,34 @@ class QueueManager
         $this->timezone = config('App')->appTimezone ?? $this->timezone;
 
         $this->throttleRate = (int) getenv('app.throttleRate') ?: 14;
+    }
+    
+    /**
+     * Inicializa o serviço SES (lazy loading)
+     * 
+     * @return SESService
+     * @throws \Exception Se credenciais não estiverem configuradas
+     */
+    protected function getSESService(): SESService
+    {
+        if ($this->sesService === null) {
+            $this->sesService = new SESService();
+        }
+        return $this->sesService;
+    }
+    
+    /**
+     * Inicializa o serviço de bounce (lazy loading)
+     * 
+     * @return BounceNotificationService
+     * @throws \Exception Se credenciais não estiverem configuradas
+     */
+    protected function getBounceService(): BounceNotificationService
+    {
+        if ($this->bounceService === null) {
+            $this->bounceService = new BounceNotificationService();
+        }
+        return $this->bounceService;
     }
 
     /**
@@ -269,7 +295,7 @@ class QueueManager
         }
 
         if (empty($sender['bounce_flow_verified'])) {
-            $flowResult = $this->bounceService->ensureBounceFlow($sender['domain']);
+            $flowResult = $this->getBounceService()->ensureBounceFlow($sender['domain']);
 
             $senderModel->update((int) $sender['id'], [
                 'bounce_flow_verified' => $flowResult['success'] ? 1 : 0,
@@ -290,7 +316,7 @@ class QueueManager
         }
 
         // Envia via AWS SES
-        $result = $this->sesService->sendEmail(
+        $result = $this->getSESService()->sendEmail(
             from: $sender['email'],
             fromName: $message['from_name'],
             to: $contact['email'],
