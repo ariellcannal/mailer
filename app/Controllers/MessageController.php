@@ -131,6 +131,14 @@ class MessageController extends BaseController {
                 }
             }
         }
+        
+        // Buscar regras de reenvio
+        $db = \Config\Database::connect();
+        $resendRules = $db->table('resend_rules')
+            ->where('message_id', $id)
+            ->orderBy('resend_number', 'ASC')
+            ->get()
+            ->getResultArray();
 
         return view('messages/view', [
             'message' => $message,
@@ -138,6 +146,7 @@ class MessageController extends BaseController {
             'contactMap' => $contactMap,
             'campaignName' => $campaignName,
             'senderEmail' => $senderEmail,
+            'resendRules' => $resendRules,
             'activeMenu' => 'messages',
             'pageTitle' => $message['subject'],
         ]);
