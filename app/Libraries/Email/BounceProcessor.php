@@ -288,7 +288,6 @@ class BounceProcessor
             if ($send) {
                 $sendModel->update((int) $send['id'], [
                     'status' => 'bounced',
-                    'bounced' => 1,  // Adicionar flag bounced
                     'bounce_type' => $bounceType,
                     'bounce_reason' => $reason,
                     'bounced_at' => date('Y-m-d H:i:s'),

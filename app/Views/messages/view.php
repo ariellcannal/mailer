@@ -154,7 +154,7 @@
                                 <td><?= $send['opened'] ? '<span class="badge bg-success">Sim</span>' : '<span class="badge bg-secondary">Não</span>' ?></td>
                                 <td><?= $send['clicked'] ? '<span class="badge bg-success">Sim</span>' : '<span class="badge bg-secondary">Não</span>' ?></td>
                                 <td>
-                                    <?php if ($send['bounced']): ?>
+                                    <?php if (!empty($send['bounce_type'])): ?>
                                         <?php if ($send['bounce_type'] === 'hard'): ?>
                                             <span class="badge bg-danger" title="Bounce permanente">
                                                 <i class="fas fa-times-circle"></i> Hard

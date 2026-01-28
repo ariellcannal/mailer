@@ -357,8 +357,9 @@ class QueueManager
             if ($isBounce) {
                 // Atualizar message_sends com bounce
                 $this->sendModel->update($send['id'], [
-                    'bounced' => 1,
+                    'status' => 'bounced',
                     'bounce_type' => 'hard',
+                    'bounced_at' => $this->now(),
                 ]);
                 
                 // Registrar bounce no contato
