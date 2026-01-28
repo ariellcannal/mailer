@@ -120,6 +120,7 @@
                         <th>Enviado em</th>
                         <th>Abertura</th>
                         <th>Clique</th>
+                        <th>Bounce</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
@@ -152,6 +153,25 @@
                                 <td><?= $send['sent_at'] ? date('d/m/Y H:i', strtotime($send['sent_at'])) : '-' ?></td>
                                 <td><?= $send['opened'] ? '<span class="badge bg-success">Sim</span>' : '<span class="badge bg-secondary">Não</span>' ?></td>
                                 <td><?= $send['clicked'] ? '<span class="badge bg-success">Sim</span>' : '<span class="badge bg-secondary">Não</span>' ?></td>
+                                <td>
+                                    <?php if ($send['bounced']): ?>
+                                        <?php if ($send['bounce_type'] === 'hard'): ?>
+                                            <span class="badge bg-danger" title="Bounce permanente">
+                                                <i class="fas fa-times-circle"></i> Hard
+                                            </span>
+                                        <?php elseif ($send['bounce_type'] === 'soft'): ?>
+                                            <span class="badge bg-warning" title="Bounce temporário">
+                                                <i class="fas fa-exclamation-triangle"></i> Soft
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="badge bg-secondary">
+                                                <i class="fas fa-question-circle"></i> Bounce
+                                            </span>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        <span class="text-muted">-</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td>
                                     <a href="<?= base_url('contacts/view/' . $send['contact_id']) ?>" class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-user"></i> Ver contato

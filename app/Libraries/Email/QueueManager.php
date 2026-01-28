@@ -355,10 +355,17 @@ class QueueManager
                         str_contains($errorMsg, 'invalid');
             
             if ($isBounce) {
+                // Atualizar message_sends com bounce
+                $this->sendModel->update($send['id'], [
+                    'bounced' => 1,
+                    'bounce_type' => 'hard',
+                ]);
+                
                 // Registrar bounce no contato
                 $this->contactModel->update($contact['id'], [
                     'bounced' => 1,
                     'bounce_type' => 'hard',
+                    'is_active' => 0,  // Inativar contato em hard bounce
                 ]);
                 
                 // Registrar bounce na tabela de bounces
@@ -371,7 +378,7 @@ class QueueManager
                     'created_at' => $this->now(),
                 ]);
                 
-                log_message('info', "Bounce registrado para contato {$contact['id']}: {$result['error']}");
+                log_message('info', "Hard bounce registrado para contato {$contact['id']} - Contato inativado: {$result['error']}");
             }
 
             return ['success' => false, 'error' => $result['error']];

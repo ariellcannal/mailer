@@ -24,8 +24,41 @@ class BounceProcessor
 
     public function __construct()
     {
+        // Verificar configurações AWS antes de inicializar
+        $this->validateAwsConfiguration();
+        
         $this->notificationService = new BounceNotificationService();
         $this->sqsClient = $this->notificationService->getSqsClient();
+    }
+    
+    /**
+     * Valida se as configurações AWS estão corretas.
+     * 
+     * @throws \Exception Se configurações estiverem faltando
+     */
+    protected function validateAwsConfiguration(): void
+    {
+        $accessKey = getenv('aws.ses.accessKey');
+        $secretKey = getenv('aws.ses.secretKey');
+        $region = getenv('aws.ses.region') ?: 'us-east-1';
+        
+        $errors = [];
+        
+        if (empty($accessKey)) {
+            $errors[] = 'aws.ses.accessKey não configurada';
+        }
+        
+        if (empty($secretKey)) {
+            $errors[] = 'aws.ses.secretKey não configurada';
+        }
+        
+        if (!empty($errors)) {
+            $errorMsg = 'Configurações AWS SES faltando: ' . implode(', ', $errors);
+            log_message('error', $errorMsg);
+            throw new \Exception($errorMsg);
+        }
+        
+        log_message('info', "Configurações AWS validadas: Region={$region}, AccessKey=" . substr($accessKey, 0, 8) . '...');
     }
 
     /**
@@ -255,6 +288,7 @@ class BounceProcessor
             if ($send) {
                 $sendModel->update((int) $send['id'], [
                     'status' => 'bounced',
+                    'bounced' => 1,  // Adicionar flag bounced
                     'bounce_type' => $bounceType,
                     'bounce_reason' => $reason,
                     'bounced_at' => date('Y-m-d H:i:s'),
