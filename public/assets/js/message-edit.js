@@ -10,7 +10,9 @@ const MessageEdit = {
     tempusDominusConfig: {
         localization: {
             locale: 'pt-BR',
-            format: 'dd/MM/yyyy HH:mm'
+            format: 'dd/MM/yyyy HH:mm',
+            dayViewHeaderFormat: { month: 'long', year: 'numeric' },
+            startOfTheWeek: 0 // Domingo
         },
         display: {
             theme: 'light',
