@@ -621,6 +621,9 @@ class QueueManager
 
     /**
      * Gera filas para os reenvios que chegaram na data agendada.
+     * 
+     * Lógica: Para cada mensagem, processa APENAS o reenvio mais próximo de agora.
+     * Reenvios com data anterior ao mais recente são ignorados automaticamente.
      *
      * @param string $now Data/hora atual na zona configurada
      *
@@ -630,32 +633,31 @@ class QueueManager
     {
         $db = \Config\Database::connect();
 
-        // Buscar regras pendentes agrupadas por mensagem
-        // Ordenar por data DESC para processar o mais recente primeiro
-        $rules = $db->table('resend_rules')
+        // Buscar TODAS as regras pendentes com data <= agora
+        $allPendingRules = $db->table('resend_rules')
             ->where('status', 'pending')
             ->where('scheduled_at <=', $now)
             ->orderBy('message_id', 'ASC')
             ->orderBy('scheduled_at', 'DESC')  // Mais recente primeiro
-            ->orderBy('resend_number', 'DESC')  // Maior número primeiro
             ->get()
             ->getResultArray();
 
-        if (empty($rules)) {
+        if (empty($allPendingRules)) {
             return;
         }
 
-        // Agrupar regras por mensagem e processar apenas a mais antiga de cada
-        $processedMessages = [];
-        
-        foreach ($rules as $rule) {
+        // Agrupar regras por mensagem
+        $rulesByMessage = [];
+        foreach ($allPendingRules as $rule) {
             $messageId = (int) $rule['message_id'];
-            
-            // Se já processamos um reenvio desta mensagem neste ciclo, pular
-            if (in_array($messageId, $processedMessages)) {
-                continue;
+            if (!isset($rulesByMessage[$messageId])) {
+                $rulesByMessage[$messageId] = [];
             }
-            
+            $rulesByMessage[$messageId][] = $rule;
+        }
+        
+        // Processar cada mensagem
+        foreach ($rulesByMessage as $messageId => $rules) {
             // Verificar se o envio original já foi completado
             $originalSent = $this->sendModel
                 ->where('message_id', $messageId)
@@ -663,44 +665,90 @@ class QueueManager
                 ->where('status', 'sent')
                 ->countAllResults();
             
-            // Se nenhum envio original foi enviado ainda, pular este reenvio
+            // Se nenhum envio original foi enviado ainda, pular todos os reenvios desta mensagem
             if ($originalSent === 0) {
                 continue;
             }
             
-            // Como ordenamos DESC, este é o reenvio mais recente pendente
-            // Não precisa verificar anteriores
+            // Ordenar regras por data DESC (mais recente primeiro)
+            usort($rules, function($a, $b) {
+                return strtotime($b['scheduled_at']) - strtotime($a['scheduled_at']);
+            });
             
-            $contacts = $this->getMessageContacts($messageId);
-
-            if (empty($contacts)) {
-                // Se não há contatos para reenviar (todos abriram), marcar como completo
-                $db->table('resend_rules')
-                    ->where('id', $rule['id'])
-                    ->update(['status' => 'completed']);
-                continue;
+            // O primeiro da lista é o mais recente (mais próximo de agora)
+            $mostRecentRule = $rules[0];
+            $mostRecentDate = strtotime($mostRecentRule['scheduled_at']);
+            
+            // Processar APENAS o reenvio mais recente
+            $this->processSingleResend($mostRecentRule, $db);
+            
+            // Marcar todos os reenvios ANTERIORES (com data < mais recente) como 'skipped'
+            // Eles só serão processados se o usuário alterar manualmente a data
+            foreach ($rules as $rule) {
+                $ruleDate = strtotime($rule['scheduled_at']);
+                
+                // Se é anterior ao mais recente E ainda está pendente
+                if ($ruleDate < $mostRecentDate && $rule['status'] === 'pending') {
+                    $db->table('resend_rules')
+                        ->where('id', $rule['id'])
+                        ->update(['status' => 'skipped']);
+                    
+                    log_message('info', "Reenvio {$rule['id']} (mensagem {$messageId}) ignorado: data anterior ao reenvio mais recente");
+                }
             }
+        }
+    }
+    
+    /**
+     * Processa um único reenvio.
+     *
+     * @param array $rule Dados da regra de reenvio
+     * @param \CodeIgniter\Database\BaseConnection $db Conexão com banco
+     * @return void
+     */
+    protected function processSingleResend(array $rule, $db): void
+    {
+        $messageId = (int) $rule['message_id'];
+        $resendNumber = (int) $rule['resend_number'];
+        
+        // Buscar contatos que não abriram
+        $contacts = $this->getMessageContacts($messageId);
 
-            // Verificar se já existem envios para este resend_number
-            $existing = $this->sendModel
-                ->where('message_id', $messageId)
-                ->where('resend_number', $rule['resend_number'])
-                ->countAllResults();
-
-            if ($existing > 0) {
-                // Já existem envios para este reenvio, marcar regra como completa
-                $db->table('resend_rules')
-                    ->where('id', $rule['id'])
-                    ->update(['status' => 'completed']);
-                continue;
-            }
-
-            // Processar este reenvio
-            $this->queueMessage($messageId, $contacts, (int) $rule['resend_number']);
-
+        if (empty($contacts)) {
+            // Se não há contatos para reenviar (todos abriram), marcar como completo
             $db->table('resend_rules')
                 ->where('id', $rule['id'])
                 ->update(['status' => 'completed']);
+            
+            log_message('info', "Reenvio {$rule['id']} (mensagem {$messageId}) completo: nenhum contato para reenviar");
+            return;
+        }
+
+        // Verificar se já existem envios para este resend_number
+        $existing = $this->sendModel
+            ->where('message_id', $messageId)
+            ->where('resend_number', $resendNumber)
+            ->countAllResults();
+
+        if ($existing > 0) {
+            // Já existem envios para este reenvio, marcar regra como completa
+            $db->table('resend_rules')
+                ->where('id', $rule['id'])
+                ->update(['status' => 'completed']);
+            
+            log_message('info', "Reenvio {$rule['id']} (mensagem {$messageId}) já possui fila criada");
+            return;
+        }
+
+        // Criar fila de envios para este reenvio
+        $this->queueMessage($messageId, $contacts, $resendNumber);
+
+        // Marcar regra como completa
+        $db->table('resend_rules')
+            ->where('id', $rule['id'])
+            ->update(['status' => 'completed']);
+        
+        log_message('info', "Reenvio {$rule['id']} (mensagem {$messageId}, número {$resendNumber}) processado: " . count($contacts) . " contatos enfileirados");
             
             // Marcar mensagem como processada neste ciclo
             $processedMessages[] = $messageId;
