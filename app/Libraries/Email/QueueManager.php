@@ -749,10 +749,6 @@ class QueueManager
             ->update(['status' => 'completed']);
         
         log_message('info', "Reenvio {$rule['id']} (mensagem {$messageId}, número {$resendNumber}) processado: " . count($contacts) . " contatos enfileirados");
-            
-            // Marcar mensagem como processada neste ciclo
-            $processedMessages[] = $messageId;
-        }
     }
 
     /**

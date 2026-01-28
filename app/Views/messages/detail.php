@@ -201,13 +201,14 @@
                     <div class="card-body">
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label class="form-label" for="scheduledAt">Data e hora do envio *</label>
+                                <label class="form-label" for="scheduled_at">Data e hora do envio *</label>
                                 <input
-                                    type="datetime-local"
-                                    id="scheduledAt"
+                                    type="text"
+                                    id="scheduled_at"
                                     name="scheduled_at"
                                     class="form-control"
-                                    value="<?= esc(old('scheduled_at', isset($message['scheduled_at']) ? date('Y-m-d\TH:i', strtotime($message['scheduled_at'])) : date('Y-m-d\TH:i'))) ?>"
+                                    value="<?= esc(old('scheduled_at', isset($message['scheduled_at']) ? date('d/m/Y H:i', strtotime($message['scheduled_at'])) : date('d/m/Y H:i', strtotime('+10 minutes')))) ?>"
+                                    placeholder="dd/mm/aaaa hh:mm"
                                     required>
                                 <small class="text-muted">A aplicação iniciará o disparo automaticamente neste horário.</small>
                             </div>
@@ -256,10 +257,12 @@
                                     <div class="col-md-4">
                                         <label class="form-label">Agendar em</label>
                                         <input
-                                            type="datetime-local"
+                                            type="text"
+                                            id="resend_scheduled_<?= (int) $index ?>"
                                             class="form-control"
                                             name="resends[<?= (int) ($index - 1) ?>][scheduled_at]"
-                                            value="<?= esc($resend['scheduled_at'] ? date('Y-m-d\TH:i', strtotime($resend['scheduled_at'])) : '') ?>">
+                                            placeholder="dd/mm/aaaa hh:mm"
+                                            value="<?= esc($resend['scheduled_at'] ? date('d/m/Y H:i', strtotime($resend['scheduled_at'])) : '') ?>">
                                         <input type="hidden" name="resends[<?= (int) ($index - 1) ?>][number]" value="<?= (int) $index ?>">
                                     </div>
                                     <div class="col-md-8">
@@ -292,4 +295,32 @@
     </div>
 </div>
 
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+$(document).ready(function() {
+    console.log('Inicializando MessageEdit...');
+    
+    // Inicializar controle de edição
+    <?php if (isset($editPermissions)): ?>
+    const editPermissions = <?= json_encode($editPermissions) ?>;
+    console.log('Edit permissions:', editPermissions);
+    MessageEdit.init(editPermissions);
+    <?php else: ?>
+    // Modo criação: apenas inicializar date pickers
+    console.log('Modo criação');
+    MessageEdit.init({
+        edit_mode: 'full',
+        can_edit: true,
+        show_draft_prompt: false
+    });
+    <?php endif; ?>
+    
+    // Inicializar tooltips
+    if (typeof $('[data-toggle="tooltip"]').tooltip === 'function') {
+        $('[data-toggle="tooltip"]').tooltip();
+    }
+});
+</script>
 <?= $this->endSection() ?>

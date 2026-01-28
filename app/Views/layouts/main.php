@@ -24,6 +24,12 @@
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 
+<!-- Tempus Dominus V6 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@eonasdan/tempus-dominus@6.9.4/dist/css/tempus-dominus.min.css" crossorigin="anonymous">
+
+<!-- Custom CSS -->
+<link rel="stylesheet" href="<?= base_url('assets/css/message-edit.css') ?>">
+
 <!-- Icones -->
 <link href="<?= base_url('assets/images/icon.png') ?>" rel="icon" media="(prefers-color-scheme: light)">
 <link href="<?= base_url('assets/images/icon_neg.png') ?>" rel="icon" media="(prefers-color-scheme: dark)">
@@ -114,9 +120,21 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/pt-BR.js"></script>
 <script src="<?= base_url('assets/js/select2-init.js') ?>"></script>
 
-	<!-- Chart.js -->
-	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
-	<script src="<?= base_url('assets/js/layout.js') ?>" defer></script>
+		<!-- Popper.js (requerido pelo Tempus Dominus) -->
+		<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+
+		<!-- Tempus Dominus V6 JS -->
+		<script src="https://cdn.jsdelivr.net/npm/@eonasdan/tempus-dominus@6.9.4/dist/js/tempus-dominus.min.js" crossorigin="anonymous"></script>
+
+		<!-- Locale pt-BR -->
+		<script src="https://cdn.jsdelivr.net/npm/@eonasdan/tempus-dominus@6.9.4/dist/locales/pt-BR.js" crossorigin="anonymous"></script>
+
+		<!-- Message Edit JS -->
+		<script src="<?= base_url('assets/js/message-edit.js') ?>"></script>
+
+		<!-- Chart.js -->
+		<script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+		<script src="<?= base_url('assets/js/layout.js') ?>" defer></script>
     
     <?= $this->renderSection('scripts') ?>
 </body>

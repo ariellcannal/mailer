@@ -1,0 +1,26 @@
+/* Campos bloqueados */
+.field-locked {
+    background-color: #f5f5f5 !important;
+    cursor: not-allowed !important;
+    opacity: 0.7;
+}
+
+.field-locked:hover {
+    background-color: #ececec !important;
+}
+
+/* Aviso de edição restrita */
+.alert-warning {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* Tempus Dominus customização */
+.tempus-dominus-widget {
+    z-index: 9999 !important;
+}
+
+/* Garantir que o widget apareça acima de modais */
+.td-dropdown {
+    z-index: 10000 !important;
+}
