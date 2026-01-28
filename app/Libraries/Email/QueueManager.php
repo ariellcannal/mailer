@@ -681,12 +681,17 @@ class QueueManager
                 continue;
             }
 
+            // Verificar se já existem envios para este resend_number
             $existing = $this->sendModel
                 ->where('message_id', $messageId)
                 ->where('resend_number', $rule['resend_number'])
                 ->countAllResults();
 
             if ($existing > 0) {
+                // Já existem envios para este reenvio, marcar regra como completa
+                $db->table('resend_rules')
+                    ->where('id', $rule['id'])
+                    ->update(['status' => 'completed']);
                 continue;
             }
 
