@@ -650,18 +650,26 @@ class MessageController extends BaseController {
         $resends = $resendPayload ?? $this->request->getPost('resends');
 
         if (empty($resends)) {
+            log_message('info', "saveResendRules: Nenhum reenvio para salvar (mensagem {$messageId})");
             return;
         }
 
         $db = \Config\Database::connect();
         $defaultSubject = (string) $this->request->getPost('subject');
+        
+        log_message('info', "saveResendRules: Processando " . count($resends) . " reenvios para mensagem {$messageId}");
 
-        foreach ($resends as $resend) {
+        foreach ($resends as $index => $resend) {
+            log_message('info', "saveResendRules: Reenvio {$index} - scheduled_at: " . ($resend['scheduled_at'] ?? 'vazio'));
+            
             $scheduledAt = $this->normalizeScheduleInput($resend['scheduled_at'] ?? '');
 
             if (empty($scheduledAt)) {
+                log_message('warning', "saveResendRules: Reenvio {$index} ignorado - scheduled_at vazio após normalização");
                 continue;
             }
+            
+            log_message('info', "saveResendRules: Reenvio {$index} normalizado para: {$scheduledAt}");
 
             $subject = trim((string) ($resend['subject'] ?? ''));
             $subjectOverride = $subject !== '' ? $subject : null;
@@ -1049,9 +1057,23 @@ class MessageController extends BaseController {
         }
 
         try {
+            // Detectar formato brasileiro dd/MM/yyyy HH:mm
+            if (preg_match('/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/', $dateTime, $matches)) {
+                // Converter para formato ISO: yyyy-MM-dd HH:mm:ss
+                $day = $matches[1];
+                $month = $matches[2];
+                $year = $matches[3];
+                $hour = $matches[4];
+                $minute = $matches[5];
+                
+                $isoFormat = "{$year}-{$month}-{$day} {$hour}:{$minute}:00";
+                return Time::parse($isoFormat, $this->getAppTimezone())->toDateTimeString();
+            }
+            
+            // Tentar parse direto para outros formatos
             return Time::parse($dateTime, $this->getAppTimezone())->toDateTimeString();
         } catch (\Exception $exception) {
-            log_message('error', 'Data/hora inválida informada: ' . $exception->getMessage());
+            log_message('error', 'Data/hora inválida informada: ' . $dateTime . ' - ' . $exception->getMessage());
 
             return null;
         }
