@@ -49,6 +49,7 @@ $routes->group('messages', function($routes) {
     $routes->post('reschedule/(:num)', 'MessageController::reschedule/$1');
     $routes->post('send/(:num)', 'MessageController::send/$1');
     $routes->post('delete/(:num)', 'MessageController::delete/$1');
+    $routes->post('convert-to-draft/(:num)', 'MessageController::convertToDraft/$1');
 });
 
 // Contacts

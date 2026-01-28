@@ -147,18 +147,13 @@ class MessageController extends BaseController {
             return redirect()->to('/messages')->with('error', 'Mensagem não encontrada');
         }
 
-        // Validar se pode editar
-        if (in_array($message['status'], ['sending', 'sent', 'completed'], true)) {
-            return redirect()->to('/messages')->with('error', 'Mensagens em envio ou já enviadas não podem ser editadas.');
-        }
+        // Obter permissões de edição
+        $permissions = $this->getEditPermissions($message);
         
-        // Se status = scheduled e data do primeiro envio já passou, não permitir edição
-        if ($message['status'] === 'scheduled' && $message['scheduled_at']) {
-            $scheduledTime = strtotime($message['scheduled_at']);
-            $now = time();
-            if ($scheduledTime <= $now) {
-                return redirect()->to('/messages')->with('error', 'Não é possível editar mensagens agendadas cuja data de envio já passou.');
-            }
+        // Se não pode editar de forma alguma
+        if ($permissions['edit_mode'] === 'none' && !$permissions['show_draft_prompt']) {
+            return redirect()->to('/messages/view/' . $id)
+                ->with('error', $permissions['reason']);
         }
 
         $campaignModel = new CampaignModel();
@@ -184,6 +179,7 @@ class MessageController extends BaseController {
             'activeMenu' => 'messages',
             'pageTitle' => 'Editar Mensagem',
             'selectedCampaignId' => null,
+            'editPermissions' => $permissions,
         ]);
     }
 
@@ -363,20 +359,31 @@ class MessageController extends BaseController {
             return redirect()->to('/messages')->with('error', 'Mensagem não encontrada');
         }
 
-        // Validar se pode editar
-        if (in_array($message['status'], ['sending', 'sent', 'completed'], true)) {
-            return redirect()->to('/messages')->with('error', 'Mensagens em envio ou já enviadas não podem ser editadas.');
+        // Obter permissões de edição
+        $permissions = $this->getEditPermissions($message);
+        
+        // Se não pode editar
+        if (!$permissions['can_edit']) {
+            return redirect()->to('/messages/view/' . $id)
+                ->with('error', $permissions['reason']);
         }
         
-        // Se status = scheduled e data do primeiro envio já passou, não permitir edição
-        if ($message['status'] === 'scheduled' && $message['scheduled_at']) {
-            $scheduledTime = strtotime($message['scheduled_at']);
-            $now = time();
-            if ($scheduledTime <= $now) {
-                return redirect()->to('/messages')->with('error', 'Não é possível editar mensagens agendadas cuja data de envio já passou.');
+        // Se modo de edição é apenas reenvios
+        if ($permissions['edit_mode'] === 'resend_only') {
+            // Apenas permitir edição de reenvios
+            $resends = (array) $this->request->getPost('resends');
+            
+            if (empty($resends)) {
+                return redirect()->back()->with('error', 'Nenhum reenvio para atualizar.');
             }
+            
+            $this->rescheduleResends($id, $resends, $message['subject']);
+            
+            return redirect()->to('/messages/view/' . $id)
+                ->with('success', 'Reenvios atualizados com sucesso!');
         }
-
+        
+        // Modo de edição completa
         $htmlContent = $this->sanitizeHtmlContent($this->request->getPost('html_content'));
         $validation = $this->validateOptOutLink($htmlContent);
 
@@ -1166,5 +1173,213 @@ class MessageController extends BaseController {
             ->where('message_id', $messageId)
             ->where('resend_number', $resendNumber)
             ->countAllResults() > 0;
+    }
+
+    /**
+     * Determina as permissões de edição para uma mensagem.
+     *
+     * @param array $message Dados da mensagem
+     * @return array [
+     *   'can_edit' => bool,
+     *   'edit_mode' => 'full'|'resend_only'|'none',
+     *   'show_draft_prompt' => bool,
+     *   'time_until_send' => int (segundos),
+     *   'reason' => string
+     * ]
+     */
+    protected function getEditPermissions(array $message): array
+    {
+        $timezone = $this->getAppTimezone();
+        $now = Time::now($timezone);
+        
+        // Verificar se todos os envios (original + 3 reenvios) já passaram
+        if ($this->allSendsCompleted($message)) {
+            return [
+                'can_edit' => false,
+                'edit_mode' => 'none',
+                'show_draft_prompt' => false,
+                'time_until_send' => 0,
+                'reason' => 'Todos os envios foram concluídos'
+            ];
+        }
+        
+        // Verificar se o primeiro envio já passou
+        if ($this->firstSendPassed($message)) {
+            return [
+                'can_edit' => true,
+                'edit_mode' => 'resend_only',
+                'show_draft_prompt' => false,
+                'time_until_send' => 0,
+                'reason' => 'Primeiro envio já realizado, apenas reenvios podem ser editados'
+            ];
+        }
+        
+        // Mensagem agendada
+        if ($message['status'] === 'scheduled' && !empty($message['scheduled_at'])) {
+            try {
+                $scheduledTime = Time::parse($message['scheduled_at'], $timezone);
+                $timeUntilSend = $scheduledTime->getTimestamp() - $now->getTimestamp();
+                
+                // Menos de 1 minuto: mostrar prompt para transformar em rascunho
+                if ($timeUntilSend < 60 && $timeUntilSend > 0) {
+                    return [
+                        'can_edit' => false,
+                        'edit_mode' => 'none',
+                        'show_draft_prompt' => true,
+                        'time_until_send' => $timeUntilSend,
+                        'reason' => 'Envio agendado para menos de 1 minuto'
+                    ];
+                }
+                
+                // Agendado mas já passou: não permitir edição
+                if ($timeUntilSend <= 0) {
+                    return [
+                        'can_edit' => false,
+                        'edit_mode' => 'none',
+                        'show_draft_prompt' => false,
+                        'time_until_send' => 0,
+                        'reason' => 'Data de envio já passou'
+                    ];
+                }
+                
+                // Agendado com mais de 1 minuto: bloquear edição
+                return [
+                    'can_edit' => false,
+                    'edit_mode' => 'none',
+                    'show_draft_prompt' => false,
+                    'time_until_send' => $timeUntilSend,
+                    'reason' => 'Mensagem agendada não pode ser editada'
+                ];
+            } catch (\Exception $e) {
+                log_message('error', 'Erro ao calcular permissões de edição: ' . $e->getMessage());
+            }
+        }
+        
+        // Rascunho ou outros status: edição completa
+        return [
+            'can_edit' => true,
+            'edit_mode' => 'full',
+            'show_draft_prompt' => false,
+            'time_until_send' => 0,
+            'reason' => 'Mensagem pode ser editada livremente'
+        ];
+    }
+    
+    /**
+     * Verifica se o primeiro envio já foi realizado.
+     *
+     * @param array $message Dados da mensagem
+     * @return bool
+     */
+    protected function firstSendPassed(array $message): bool
+    {
+        if (empty($message['scheduled_at'])) {
+            return false;
+        }
+        
+        try {
+            $timezone = $this->getAppTimezone();
+            $scheduledTime = Time::parse($message['scheduled_at'], $timezone);
+            $now = Time::now($timezone);
+            
+            return $scheduledTime->getTimestamp() < $now->getTimestamp();
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+    
+    /**
+     * Verifica se todos os envios (original + 3 reenvios) já foram concluídos.
+     *
+     * @param array $message Dados da mensagem
+     * @return bool
+     */
+    protected function allSendsCompleted(array $message): bool
+    {
+        // Verificar se o primeiro envio passou
+        if (!$this->firstSendPassed($message)) {
+            return false;
+        }
+        
+        // Buscar todas as regras de reenvio
+        $db = \Config\Database::connect();
+        $resendRules = $db->table('resend_rules')
+            ->where('message_id', $message['id'])
+            ->orderBy('scheduled_at', 'DESC')
+            ->get()
+            ->getResultArray();
+        
+        // Se não há reenvios, considerar completo se o primeiro envio passou
+        if (empty($resendRules)) {
+            return true;
+        }
+        
+        // Verificar se todos os reenvios já passaram
+        $timezone = $this->getAppTimezone();
+        $now = Time::now($timezone);
+        
+        foreach ($resendRules as $rule) {
+            if (empty($rule['scheduled_at'])) {
+                // Se há reenvio sem data, não está completo
+                return false;
+            }
+            
+            try {
+                $resendTime = Time::parse($rule['scheduled_at'], $timezone);
+                if ($resendTime->getTimestamp() >= $now->getTimestamp()) {
+                    // Há pelo menos um reenvio futuro
+                    return false;
+                }
+            } catch (\Exception $e) {
+                log_message('error', 'Erro ao verificar data de reenvio: ' . $e->getMessage());
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Transforma mensagem agendada em rascunho.
+     * Usado quando usuário confirma edição de mensagem agendada para menos de 1 minuto.
+     *
+     * @param int $messageId ID da mensagem
+     * @return bool
+     */
+    public function convertToDraft(int $messageId): RedirectResponse
+    {
+        $model = new MessageModel();
+        $message = $model->find($messageId);
+        
+        if (!$message) {
+            return redirect()->to('/messages')->with('error', 'Mensagem não encontrada');
+        }
+        
+        // Verificar se está agendada
+        if ($message['status'] !== 'scheduled') {
+            return redirect()->to('/messages/edit/' . $messageId)
+                ->with('error', 'Apenas mensagens agendadas podem ser transformadas em rascunho');
+        }
+        
+        // Transformar em rascunho
+        $model->update($messageId, [
+            'status' => 'draft',
+            'scheduled_at' => null,
+        ]);
+        
+        // Remover filas de envio pendentes
+        $sendModel = new MessageSendModel();
+        $sendModel->where('message_id', $messageId)
+            ->where('status', 'pending')
+            ->delete();
+        
+        // Remover regras de reenvio
+        $db = \Config\Database::connect();
+        $db->table('resend_rules')
+            ->where('message_id', $messageId)
+            ->delete();
+        
+        return redirect()->to('/messages/edit/' . $messageId)
+            ->with('success', 'Mensagem transformada em rascunho. Você pode editá-la agora.');
     }
 }
