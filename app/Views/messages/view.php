@@ -65,6 +65,8 @@
                     <tr>
                         <th>ID</th>
                         <th>Contato</th>
+                        <th>Assunto</th>
+                        <th>Tipo</th>
                         <th>Status</th>
                         <th>Enviado em</th>
                         <th>Abertura</th>
@@ -79,9 +81,24 @@
                         </tr>
                     <?php else: ?>
                         <?php foreach ($sends as $send): ?>
+                            <?php 
+                                $sendType = 'Principal';
+                                if ($send['resend_number'] > 0) {
+                                    $sendType = 'Reenvio ' . $send['resend_number'];
+                                }
+                                $subject = $send['subject_override'] ?? $message['subject'];
+                            ?>
                             <tr>
                                 <td>#<?= $send['id'] ?></td>
                                 <td><?= esc($contactMap[$send['contact_id']] ?? $send['contact_id']) ?></td>
+                                <td><small><?= esc($subject) ?></small></td>
+                                <td>
+                                    <?php if ($send['resend_number'] == 0): ?>
+                                        <span class="badge bg-primary">Principal</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-info">Reenvio <?= $send['resend_number'] ?></span>
+                                    <?php endif; ?>
+                                </td>
                                 <td><?= esc($send['status']) ?></td>
                                 <td><?= $send['sent_at'] ? date('d/m/Y H:i', strtotime($send['sent_at'])) : '-' ?></td>
                                 <td><?= $send['opened'] ? '<span class="badge bg-success">Sim</span>' : '<span class="badge bg-secondary">Não</span>' ?></td>

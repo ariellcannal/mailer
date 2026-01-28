@@ -622,9 +622,14 @@ class QueueManager
     {
         $db = \Config\Database::connect();
 
+        // Buscar regras pendentes agrupadas por mensagem
+        // Ordenar por data DESC para processar o mais recente primeiro
         $rules = $db->table('resend_rules')
             ->where('status', 'pending')
             ->where('scheduled_at <=', $now)
+            ->orderBy('message_id', 'ASC')
+            ->orderBy('scheduled_at', 'DESC')  // Mais recente primeiro
+            ->orderBy('resend_number', 'DESC')  // Maior número primeiro
             ->get()
             ->getResultArray();
 
@@ -632,10 +637,20 @@ class QueueManager
             return;
         }
 
+        // Agrupar regras por mensagem e processar apenas a mais antiga de cada
+        $processedMessages = [];
+        
         foreach ($rules as $rule) {
+            $messageId = (int) $rule['message_id'];
+            
+            // Se já processamos um reenvio desta mensagem neste ciclo, pular
+            if (in_array($messageId, $processedMessages)) {
+                continue;
+            }
+            
             // Verificar se o envio original já foi completado
             $originalSent = $this->sendModel
-                ->where('message_id', $rule['message_id'])
+                ->where('message_id', $messageId)
                 ->where('resend_number', 0)
                 ->where('status', 'sent')
                 ->countAllResults();
@@ -645,7 +660,10 @@ class QueueManager
                 continue;
             }
             
-            $contacts = $this->getMessageContacts((int) $rule['message_id']);
+            // Como ordenamos DESC, este é o reenvio mais recente pendente
+            // Não precisa verificar anteriores
+            
+            $contacts = $this->getMessageContacts($messageId);
 
             if (empty($contacts)) {
                 // Se não há contatos para reenviar (todos abriram), marcar como completo
@@ -656,7 +674,7 @@ class QueueManager
             }
 
             $existing = $this->sendModel
-                ->where('message_id', $rule['message_id'])
+                ->where('message_id', $messageId)
                 ->where('resend_number', $rule['resend_number'])
                 ->countAllResults();
 
@@ -664,11 +682,15 @@ class QueueManager
                 continue;
             }
 
-            $this->queueMessage((int) $rule['message_id'], $contacts, (int) $rule['resend_number']);
+            // Processar este reenvio
+            $this->queueMessage($messageId, $contacts, (int) $rule['resend_number']);
 
             $db->table('resend_rules')
                 ->where('id', $rule['id'])
                 ->update(['status' => 'completed']);
+            
+            // Marcar mensagem como processada neste ciclo
+            $processedMessages[] = $messageId;
         }
     }
 
@@ -792,7 +814,7 @@ class QueueManager
             }
 
             $this->messageModel->update($messageId, [
-                'status' => 'sent',
+                'status' => 'completed',
                 'sent_at' => $now,
             ]);
         }

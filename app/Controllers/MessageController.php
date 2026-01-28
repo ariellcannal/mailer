@@ -247,9 +247,13 @@ class MessageController extends BaseController {
         $resendData = (array) $this->request->getPost('resends');
 
         if ($messageId > 0) {
+            log_message('info', "Atualizando mensagem {$messageId} com status: {$data['status']}");
             $model->update($messageId, $data);
+            log_message('info', "Mensagem {$messageId} atualizada");
         } else {
+            log_message('info', "Criando nova mensagem com status: {$data['status']}");
             $messageId = $model->insert($data);
+            log_message('info', "Mensagem criada com ID: {$messageId}");
         }
 
         if ($messageId > 0) {
