@@ -103,6 +103,7 @@ class MessageController extends BaseController {
 
         $sendModel = new MessageSendModel();
         $campaignModel = new CampaignModel();
+        $senderModel = new SenderModel();
 
         $sends = $sendModel->where('message_id', $id)
             ->orderBy('id', 'DESC')
@@ -112,6 +113,12 @@ class MessageController extends BaseController {
         if (!empty($message['campaign_id'])) {
             $campaign = $campaignModel->find($message['campaign_id']);
             $campaignName = $campaign['name'] ?? '';
+        }
+        
+        $senderEmail = '';
+        if (!empty($message['sender_id'])) {
+            $sender = $senderModel->find($message['sender_id']);
+            $senderEmail = $sender['email'] ?? '';
         }
 
         $contactMap = [];
@@ -130,6 +137,7 @@ class MessageController extends BaseController {
             'sends' => $sends,
             'contactMap' => $contactMap,
             'campaignName' => $campaignName,
+            'senderEmail' => $senderEmail,
             'activeMenu' => 'messages',
             'pageTitle' => $message['subject'],
         ]);

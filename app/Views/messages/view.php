@@ -93,13 +93,16 @@
                 <div class="border rounded p-3">
                     <h6>Detalhes do Remetente</h6>
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
+                            <p class="mb-1"><strong>Remetente:</strong> <?= esc($senderEmail ?: '-') ?></p>
+                        </div>
+                        <div class="col-md-3">
                             <p class="mb-1"><strong>Nome:</strong> <?= esc($message['from_name']) ?></p>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <p class="mb-1"><strong>Reply-To:</strong> <?= esc($message['reply_to']) ?: 'Não definido' ?></p>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <p class="mb-0"><strong>Campanha:</strong> <?= esc($campaignName ?: '-') ?></p>
                         </div>
                     </div>
