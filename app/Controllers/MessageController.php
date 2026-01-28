@@ -144,6 +144,31 @@ class MessageController extends BaseController {
     }
 
     /**
+     * Pré-visualização da mensagem (sem tracking)
+     */
+    public function preview(int $id)
+    {
+        $model = new MessageModel();
+        $message = $model->find($id);
+
+        if (!$message) {
+            return view('errors/html/error_404');
+        }
+
+        // Retornar HTML puro da mensagem
+        $html = $message['html_content'];
+        
+        // Remover placeholders de personalização para pré-visualização
+        $html = str_replace('{{nome}}', '[NOME]', $html);
+        $html = str_replace('{{email}}', '[EMAIL]', $html);
+        $html = str_replace('{{apelido}}', '[APELIDO]', $html);
+        
+        return $this->response
+            ->setContentType('text/html')
+            ->setBody($html);
+    }
+
+    /**
      * Exibe formulário de edição da mensagem.
      */
     public function edit(int $id): string|RedirectResponse

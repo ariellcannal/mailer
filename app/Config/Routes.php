@@ -41,6 +41,7 @@ $routes->group('messages', function($routes) {
     $routes->get('create', 'MessageController::create');
     $routes->post('store', 'MessageController::store');
     $routes->get('view/(:num)', 'MessageController::view/$1');
+    $routes->get('preview/(:num)', 'MessageController::preview/$1');
     $routes->get('edit/(:num)', 'MessageController::edit/$1');
     $routes->post('update/(:num)', 'MessageController::update/$1');
     $routes->post('save-progress', 'MessageController::saveProgress');
