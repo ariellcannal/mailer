@@ -147,8 +147,18 @@ class MessageController extends BaseController {
             return redirect()->to('/messages')->with('error', 'Mensagem não encontrada');
         }
 
-        if (in_array($message['status'], ['sending', 'sent'], true)) {
+        // Validar se pode editar
+        if (in_array($message['status'], ['sending', 'sent', 'completed'], true)) {
             return redirect()->to('/messages')->with('error', 'Mensagens em envio ou já enviadas não podem ser editadas.');
+        }
+        
+        // Se status = scheduled e data do primeiro envio já passou, não permitir edição
+        if ($message['status'] === 'scheduled' && $message['scheduled_at']) {
+            $scheduledTime = strtotime($message['scheduled_at']);
+            $now = time();
+            if ($scheduledTime <= $now) {
+                return redirect()->to('/messages')->with('error', 'Não é possível editar mensagens agendadas cuja data de envio já passou.');
+            }
         }
 
         $campaignModel = new CampaignModel();
@@ -353,8 +363,18 @@ class MessageController extends BaseController {
             return redirect()->to('/messages')->with('error', 'Mensagem não encontrada');
         }
 
-        if (in_array($message['status'], ['sending', 'sent'], true)) {
+        // Validar se pode editar
+        if (in_array($message['status'], ['sending', 'sent', 'completed'], true)) {
             return redirect()->to('/messages')->with('error', 'Mensagens em envio ou já enviadas não podem ser editadas.');
+        }
+        
+        // Se status = scheduled e data do primeiro envio já passou, não permitir edição
+        if ($message['status'] === 'scheduled' && $message['scheduled_at']) {
+            $scheduledTime = strtotime($message['scheduled_at']);
+            $now = time();
+            if ($scheduledTime <= $now) {
+                return redirect()->to('/messages')->with('error', 'Não é possível editar mensagens agendadas cuja data de envio já passou.');
+            }
         }
 
         $htmlContent = $this->sanitizeHtmlContent($this->request->getPost('html_content'));

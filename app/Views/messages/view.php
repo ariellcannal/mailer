@@ -9,7 +9,21 @@
                 <small class="text-muted">Criada em <?= date('d/m/Y H:i', strtotime($message['created_at'])) ?></small>
             </div>
             <div class="d-flex gap-2">
-                <?php if (!in_array($message['status'], ['sending', 'sent'], true)): ?>
+                <?php 
+                    // Verificar se pode editar
+                    $canEdit = true;
+                    if (in_array($message['status'], ['sending', 'sent', 'completed'], true)) {
+                        $canEdit = false;
+                    }
+                    if ($message['status'] === 'scheduled' && $message['scheduled_at']) {
+                        $scheduledTime = strtotime($message['scheduled_at']);
+                        $now = time();
+                        if ($scheduledTime <= $now) {
+                            $canEdit = false;
+                        }
+                    }
+                ?>
+                <?php if ($canEdit): ?>
                     <a href="<?= base_url('messages/edit/' . $message['id']) ?>" class="btn btn-outline-secondary">
                         <i class="fas fa-edit"></i> Editar
                     </a>
@@ -37,11 +51,46 @@
 
         <div class="row g-4">
             <div class="col-md-4">
-                <div class="border rounded p-3 h-100">
+                <div class="border rounded p-3 mb-3">
                     <h6>Detalhes do Remetente</h6>
                     <p class="mb-1"><strong>Nome:</strong> <?= esc($message['from_name']) ?></p>
                     <p class="mb-1"><strong>Reply-To:</strong> <?= esc($message['reply_to']) ?: 'Não definido' ?></p>
                     <p class="mb-0"><strong>Campanha:</strong> <?= esc($campaignName ?: '-') ?></p>
+                </div>
+                
+                <div class="border rounded p-3">
+                    <h6 class="mb-3"><i class="fas fa-clock"></i> Horários de Envio</h6>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center mb-1">
+                            <span class="badge bg-primary me-2">Principal</span>
+                            <strong><?= esc($message['subject']) ?></strong>
+                        </div>
+                        <small class="text-muted">
+                            <i class="fas fa-calendar"></i> 
+                            <?= $message['scheduled_at'] ? date('d/m/Y H:i', strtotime($message['scheduled_at'])) : 'Não agendado' ?>
+                        </small>
+                    </div>
+                    
+                    <?php if (!empty($resendRules)): ?>
+                        <hr class="my-2">
+                        <h6 class="small text-muted mb-2">Reenvios</h6>
+                        <?php foreach ($resendRules as $rule): ?>
+                            <div class="mb-2">
+                                <div class="d-flex align-items-center mb-1">
+                                    <span class="badge bg-info me-2">Reenvio <?= $rule['resend_number'] ?></span>
+                                    <small><strong><?= esc($rule['subject_override'] ?: $message['subject']) ?></strong></small>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar"></i> 
+                                    <?= date('d/m/Y H:i', strtotime($rule['scheduled_at'])) ?>
+                                    <span class="badge bg-<?= $rule['status'] == 'completed' ? 'success' : 'secondary' ?> ms-1">
+                                        <?= $rule['status'] == 'completed' ? 'Concluído' : 'Pendente' ?>
+                                    </span>
+                                </small>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
             </div>
             <div class="col-md-8">

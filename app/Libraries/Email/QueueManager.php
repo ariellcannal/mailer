@@ -695,7 +695,7 @@ class QueueManager
     }
 
     /**
-     * Recupera contatos que NÃO abriram a mensagem original.
+     * Recupera contatos que NÃO abriram a mensagem em NENHUM dos envios anteriores.
      * Usado para determinar quem deve receber reenvios.
      *
      * @param int $messageId ID da mensagem
@@ -704,17 +704,36 @@ class QueueManager
      */
     protected function getMessageContacts(int $messageId): array
     {
-        $rows = $this->sendModel
+        // Buscar contatos que receberam o envio original com sucesso
+        $originalContacts = $this->sendModel
             ->distinct()
             ->select('contact_id')
             ->where('message_id', $messageId)
             ->where('resend_number', 0)
-            ->where('opened', 0)  // Apenas contatos que NÃO abriram
-            ->where('status', 'sent')  // Apenas envios bem-sucedidos
+            ->where('status', 'sent')
             ->get()
             ->getResultArray();
-
-        return array_column($rows, 'contact_id');
+        
+        $originalContactIds = array_column($originalContacts, 'contact_id');
+        
+        if (empty($originalContactIds)) {
+            return [];
+        }
+        
+        // Buscar contatos que abriram EM QUALQUER envio (original ou reenvios)
+        $openedContacts = $this->sendModel
+            ->distinct()
+            ->select('contact_id')
+            ->where('message_id', $messageId)
+            ->where('opened', 1)
+            ->whereIn('contact_id', $originalContactIds)
+            ->get()
+            ->getResultArray();
+        
+        $openedContactIds = array_column($openedContacts, 'contact_id');
+        
+        // Retornar apenas contatos que NÃO abriram em nenhum envio
+        return array_diff($originalContactIds, $openedContactIds);
     }
 
     /**

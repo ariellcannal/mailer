@@ -44,7 +44,9 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <?php if ($message['status'] === 'sent'): ?>
+                                    <?php if ($message['status'] === 'completed'): ?>
+                                        <span class="badge bg-success">Concluída</span>
+                                    <?php elseif ($message['status'] === 'sent'): ?>
                                         <span class="badge bg-success">Enviada</span>
                                     <?php elseif ($message['status'] === 'sending'): ?>
                                         <span class="badge bg-info">Enviando</span>
@@ -59,7 +61,20 @@
                                 <td><?= date('d/m/Y H:i', strtotime($message['created_at'])) ?></td>
                                 <td>
                                     <?php $canDelete = in_array($message['status'], ['draft', 'scheduled'], true); ?>
-                                    <?php $canEdit = !in_array($message['status'], ['sending', 'sent'], true); ?>
+                                    <?php 
+                                        // Verificar se pode editar
+                                        $canEdit = true;
+                                        if (in_array($message['status'], ['sending', 'sent', 'completed'], true)) {
+                                            $canEdit = false;
+                                        }
+                                        if ($message['status'] === 'scheduled' && $message['scheduled_at']) {
+                                            $scheduledTime = strtotime($message['scheduled_at']);
+                                            $now = time();
+                                            if ($scheduledTime <= $now) {
+                                                $canEdit = false;
+                                            }
+                                        }
+                                    ?>
                                     <a href="<?= base_url('messages/view/' . $message['id']) ?>" class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-eye"></i>
                                     </a>
