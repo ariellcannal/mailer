@@ -169,9 +169,18 @@ class ContactModel extends Model
         }
 
         if (!empty($filters['list_id'])) {
-            $this->join('contact_list_members', 'contact_list_members.contact_id = contacts.id')
-                 ->where('contact_list_members.list_id', $filters['list_id'])
-                 ->groupBy('contacts.id');
+            // Selecionar apenas colunas de contacts para evitar conflito de 'id'
+            $this->select('contacts.*')
+                 ->join('contact_list_members', 'contact_list_members.contact_id = contacts.id');
+            
+            // Suportar filtro por múltiplas listas (array)
+            if (is_array($filters['list_id'])) {
+                $this->whereIn('contact_list_members.list_id', $filters['list_id']);
+            } else {
+                $this->where('contact_list_members.list_id', $filters['list_id']);
+            }
+            
+            $this->groupBy('contacts.id');
         }
     }
 

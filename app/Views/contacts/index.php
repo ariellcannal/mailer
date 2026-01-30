@@ -38,11 +38,15 @@
                 <input type="text" name="name" value="<?= esc($filters['name']) ?>" class="form-control" placeholder="Nome do contato">
             </div>
             <div class="col-md-2">
-                <label class="form-label">Lista</label>
-                <select name="list_id" class="form-control" data-placeholder="Todas as listas">
-                    <option value="">Todas</option>
+                <label class="form-label">Listas</label>
+                <select name="list_id[]" class="form-control" multiple data-placeholder="Todas as listas">
                     <?php foreach ($lists as $list): ?>
-                        <option value="<?= $list['id'] ?>" <?= (string) $filters['list_id'] === (string) $list['id'] ? 'selected' : '' ?>>
+                        <?php 
+                            $isSelected = is_array($filters['list_id'] ?? null) 
+                                ? in_array($list['id'], $filters['list_id']) 
+                                : (string) ($filters['list_id'] ?? '') === (string) $list['id'];
+                        ?>
+                        <option value="<?= $list['id'] ?>" <?= $isSelected ? 'selected' : '' ?>>
                             <?= esc($list['name']) ?>
                         </option>
                     <?php endforeach; ?>
