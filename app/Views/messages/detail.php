@@ -295,29 +295,8 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
-$(document).ready(function() {
-    console.log('Inicializando MessageEdit...');
-    
-    // Inicializar controle de edição
-    <?php if (isset($editPermissions)): ?>
-    const editPermissions = <?= json_encode($editPermissions) ?>;
-    console.log('Edit permissions:', editPermissions);
-    MessageEdit.init(editPermissions);
-    <?php else: ?>
-    // Modo criação: apenas inicializar date pickers
-    console.log('Modo criação');
-    MessageEdit.init({
-        edit_mode: 'full',
-        can_edit: true,
-        show_draft_prompt: false
-    });
-    <?php endif; ?>
-    
-    // Inicializar tooltips
-    if (typeof $('[data-toggle="tooltip"]').tooltip === 'function') {
-        $('[data-toggle="tooltip"]').tooltip();
-    }
-});
-</script>
+<?php if (isset($editPermissions)): ?>
+<script type="application/json" id="edit-permissions-data"><?= json_encode($editPermissions) ?></script>
+<?php endif; ?>
+<script src="<?= base_url('assets/js/messages-detail.js') ?>" defer></script>
 <?= $this->endSection() ?>

@@ -118,23 +118,6 @@
     </div>
 </div>
 
-<script>
-// Auto-refresh a cada 5 segundos se houver importações pendentes ou processando
-<?php
-$hasPendingOrProcessing = false;
-foreach ($imports as $import) {
-    if (in_array($import['status'], ['pending', 'processing'])) {
-        $hasPendingOrProcessing = true;
-        break;
-    }
-}
-?>
-
-<?php if ($hasPendingOrProcessing): ?>
-setTimeout(function() {
-    location.reload();
-}, 5000);
-<?php endif; ?>
-</script>
+<script src="<?= base_url('assets/js/contacts-imports.js') ?>" defer></script>
 
 <?= $this->endSection() ?>

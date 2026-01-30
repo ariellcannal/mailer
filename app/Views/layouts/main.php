@@ -137,6 +137,7 @@
 	<!-- Select2 4.1.0-rc.0 JS + i18n pt-BR -->
 	<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/pt-BR.js"></script>
+	<script src="<?= base_url('assets/js/select2-init.js') ?>"></script>
 
 	<!-- Popper.js 2.11.8 (Required by Tempus Dominus) -->
 	<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
@@ -159,7 +160,6 @@
 	<!-- CUSTOM JAVASCRIPT - Application Specific -->
 	<!-- ============================================ -->
 
-	<script src="<?= base_url('assets/js/select2-init.js') ?>"></script>
 	<script src="<?= base_url('assets/js/layout.js') ?>" defer></script>
 	<script src="<?= base_url('assets/js/message-edit.js') ?>"></script>
 	<script src="<?= base_url('assets/js/rich-editor.js') ?>" defer></script>
