@@ -96,9 +96,10 @@ class ContactModel extends Model
      */
     public function getContacts(array $filters = [], int $perPage = 20): array
     {
-        $this->select('contacts.*');
-
         $this->applyFilters($filters);
+        
+        // Select DEPOIS dos filtros para garantir que sobrescreve qualquer select anterior
+        $this->select('contacts.*');
 
         return $this->paginate($perPage);
     }
@@ -111,8 +112,8 @@ class ContactModel extends Model
      */
     public function getAllContactIds(array $filters = []): array
     {
-        $this->select('contacts.id');
         $this->applyFilters($filters);
+        $this->select('contacts.id');
 
         return $this->findColumn('id') ?? [];
     }
@@ -169,11 +170,8 @@ class ContactModel extends Model
         }
 
         if (!empty($filters['list_id'])) {
-            // Fazer JOIN primeiro
+            // JOIN com contact_list_members
             $this->join('contact_list_members', 'contact_list_members.contact_id = contacts.id', 'inner');
-            
-            // Depois selecionar apenas colunas de contacts para evitar conflito de 'id'
-            $this->select('contacts.*', false);  // false = não reseta select anterior
             
             // Suportar filtro por múltiplas listas (array)
             if (is_array($filters['list_id'])) {
