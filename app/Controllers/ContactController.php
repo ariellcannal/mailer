@@ -129,24 +129,24 @@ class ContactController extends BaseController {
         ]);
     }
     
-    public function importProcess() {
-        // Otimizações de memória e CPU
-        set_time_limit(0);
-        ini_set('memory_limit', '512M');
-        gc_enable();
+    public function imports() {
+        $importModel = new \App\Models\ContactImportModel();
+        $imports = $importModel->getImports(20);
         
-        $model = new ContactModel();
+        return view('contacts/imports', [
+            'activeMenu' => 'contacts',
+            'pageTitle' => 'Importações de Contatos',
+            'imports' => $imports,
+            'pager' => $importModel->pager,
+        ]);
+    }
+    
+    public function importProcess() {
         $file = $this->request->getFile('file');
         $listIds = (array) $this->request->getPost('lists');
         $emailColumn = $this->request->getPost('email_column');
         $nameColumn = $this->request->getPost('name_column');
         $tempFile = $this->request->getPost('temp_file');
-        
-        // Desabilitar query log para economizar memória
-        $db = \Config\Database::connect();
-        if (property_exists($db, 'saveQueries')) {
-            $db->saveQueries = false;
-        }
 
         try {
             $tempPath = $this->persistImportFile($file, $tempFile);
@@ -158,6 +158,7 @@ class ContactController extends BaseController {
 
             $headers = array_map('trim', $rows[0]);
 
+            // Se ainda não mapeou colunas, mostrar tela de mapeamento
             if ($emailColumn === null && count($headers) > 1) {
                 return view('contacts/import_mapping', [
                     'activeMenu' => 'contacts',
@@ -170,76 +171,26 @@ class ContactController extends BaseController {
             }
 
             $emailIndex = $emailColumn !== null ? (int) $emailColumn : 0;
-            $nameIndex = $nameColumn !== null ? (int) $nameColumn : null;
 
             if (!isset($headers[$emailIndex])) {
                 return redirect()->back()->with('contacts_error', 'Selecione a coluna de e-mail.');
             }
 
-            $contacts = [];
-            $skippedReasons = [];
+            // Adicionar à fila de importação
+            $importModel = new \App\Models\ContactImportModel();
+            $importId = $importModel->insert([
+                'filename' => $file ? $file->getClientName() : basename($tempPath),
+                'filepath' => $tempPath,
+                'status' => 'pending',
+                'total_rows' => count($rows) - 1, // Excluir header
+                'email_column' => $emailColumn,
+                'name_column' => $nameColumn,
+                'list_ids' => !empty($listIds) ? json_encode($listIds) : null,
+            ]);
 
-            // Processar linhas em lotes para economizar memória
-            foreach ($rows as $index => $row) {
-                if ($index === 0) {
-                    continue;
-                }
-
-                $email = trim((string) ($row[$emailIndex] ?? ''));
-
-                if ($email === '') {
-                    $skippedReasons[] = 'Linha ' . ($index + 1) . ': email vazio';
-                    unset($row);
-                    continue;
-                }
-
-                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                    $skippedReasons[] = 'Linha ' . ($index + 1) . ': email inválido (' . $email . ')';
-                    unset($row);
-                    continue;
-                }
-
-                $name = $nameIndex !== null ? trim((string) ($row[$nameIndex] ?? '')) : null;
-                $formattedName = $this->formatNameUcFirst($name);
-
-                $contacts[] = [
-                    'email' => $email,
-                    'name' => $formattedName,
-                ];
-                
-                unset($row);
-            }
-            
-            // Liberar memória do array de linhas
-            unset($rows);
-            gc_collect_cycles();
-
-            $result = $model->importContactsBatch($contacts, $listIds);
-
-            $skippedTotal = $result['skipped'] + count($skippedReasons);
-            $skippedMessages = array_merge($skippedReasons, $result['skipped_details']);
-
-            if ($tempPath && is_file($tempPath)) {
-                @unlink($tempPath);
-            }
-
-            $details = '';
-
-            if (!empty($skippedMessages)) {
-                $details = ' Motivos: ' . implode(' | ', $skippedMessages);
-            }
-
-            if (!empty($result['errors'])) {
-                $errorTexts = array_map(
-                    static fn (array $error): string => ($error['email'] ?? 'N/D') . ': ' . ($error['error'] ?? 'Erro desconhecido'),
-                    $result['errors']
-                );
-                $details .= ($details !== '' ? ' | ' : ' Motivos: ') . implode(' | ', $errorTexts);
-            }
-
-            return redirect()->to('/contacts')->with(
+            return redirect()->to('/contacts/imports')->with(
                 'contacts_success',
-                "Importados: {$result['imported']}, Ignorados: {$skippedTotal}" . $details
+                'Importação adicionada à fila. Acompanhe o progresso na tela de importações.'
             );
         } catch (\Exception $e) {
             return redirect()->back()->with('contacts_error', 'Erro ao importar: ' . $e->getMessage());

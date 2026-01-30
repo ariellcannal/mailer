@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\MigrationManager;
 use CodeIgniter\Controller;
 use CodeIgniter\HTTP\CLIRequest;
 use App\Models\UserModel;
@@ -81,6 +82,11 @@ abstract class BaseController extends Controller
     {
         // Do Not Edit This Line
         parent::initController($request, $response, $logger);
+        
+        // Verificar e executar migrations pendentes (apenas em requisições HTTP)
+        if (!($this->request instanceof CLIRequest)) {
+            $this->checkDatabaseMigrations();
+        }
 
         $this->enforceAuthentication();
     }
@@ -172,5 +178,28 @@ abstract class BaseController extends Controller
 
         redirect()->to($redirectUrl)->withCookies()->send();
         exit;
+    }
+    
+    /**
+     * Verifica e executa migrations pendentes
+     * 
+     * @return void
+     */
+    protected function checkDatabaseMigrations(): void
+    {
+        try {
+            $migrationManager = new MigrationManager();
+            $result = $migrationManager->checkAndRunMigrations();
+            
+            if ($result['updated']) {
+                // Armazenar informação na sessão para exibir alerta
+                session()->setFlashdata('db_updated', [
+                    'from_version' => $result['from_version'],
+                    'to_version' => $result['to_version'],
+                ]);
+            }
+        } catch (\Exception $e) {
+            log_message('error', 'Migration error: ' . $e->getMessage());
+        }
     }
 }

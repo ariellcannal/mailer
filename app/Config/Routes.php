@@ -64,6 +64,7 @@ $routes->group('contacts', function($routes) {
     $routes->post('delete/(:num)', 'ContactController::delete/$1');
     $routes->get('import', 'ContactController::import');
     $routes->post('import-process', 'ContactController::importProcess');
+    $routes->get('imports', 'ContactController::imports');
     $routes->post('bulk-assign', 'ContactController::bulkAssignLists');
 });
 

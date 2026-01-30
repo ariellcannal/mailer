@@ -102,6 +102,15 @@
 
 		<!-- Page Content -->
 		<div class="page-content">
+			<?php if (session()->getFlashdata('db_updated')): ?>
+				<?php $dbUpdate = session()->getFlashdata('db_updated'); ?>
+				<div class="alert alert-info alert-dismissible fade show" role="alert">
+					<i class="fas fa-database me-2"></i>
+					<strong>Banco de Dados Atualizado!</strong>
+					A estrutura do banco de dados foi atualizada para a versão <strong><?= $dbUpdate['to_version'] ?></strong>.
+					<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+				</div>
+			<?php endif; ?>
             <?= $this->renderSection('content') ?>
         </div>
 	</div>
