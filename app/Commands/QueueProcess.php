@@ -20,11 +20,16 @@ class QueueProcess extends BaseCommand
     public function run(array $params)
     {
         // 1. Configurações de Limite
-        set_time_limit(60);          // Limite de 1 minuto
+        set_time_limit(60); // Limite de 1 minuto
         ini_set('memory_limit', '128M'); // Limite de memória seguro para CLI
         
-        $this->lockFile = WRITEPATH . 'queue_process.lock';
         
+        error_reporting(E_ALL);
+        ini_set('display_errors','On');
+        
+
+        $this->lockFile = WRITEPATH . 'queue_process.lock';
+
         // 2. Mecanismo de Lock com validação de PID
         if ($this->isLocked()) {
             CLI::write("O processo já está em execução. Saindo...", 'yellow');
@@ -32,11 +37,11 @@ class QueueProcess extends BaseCommand
         }
 
         $this->createLock();
-
         try {
+            
             $batchSize = (int) ($params[0] ?? 100);
             CLI::write("Iniciando processamento da fila (Lote: $batchSize)...", 'yellow');
-
+            
             // Otimização de Memória: Desativa log de queries no banco
             $db = \Config\Database::connect();
             if (property_exists($db, 'saveQueries')) {
