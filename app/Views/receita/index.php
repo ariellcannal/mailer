@@ -1,8 +1,6 @@
 <?= $this->extend('layouts/main') ?>
 
 <?= $this->section('styles') ?>
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 <style>
     #import-console { background: #1e1e1e; color: #00ff00; font-family: 'Courier New', monospace; height: 400px; overflow-y: auto; padding: 15px; border-radius: 5px; font-size: 0.9rem; }
     .status-badge { width: 15px; height: 15px; display: inline-block; border-radius: 50%; margin-right: 5px; }

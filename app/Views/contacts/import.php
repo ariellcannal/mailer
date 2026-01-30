@@ -1,9 +1,5 @@
 <?= $this->extend('layouts/main') ?>
 
-<?= $this->section('styles') ?>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
-<?= $this->endSection() ?>
-
 <?= $this->section('content') ?>
 <div class="card">
     <div class="card-body">
@@ -29,7 +25,7 @@
             <?php if (!empty($lists)): ?>
             <div class="mb-3">
                 <label class="form-label">Adicionar às listas</label>
-                <select name="lists[]" class="form-select select2" multiple data-placeholder="Selecione as listas desejadas">
+                <select name="lists[]" class="form-select" multiple data-placeholder="Selecione as listas desejadas">
                     <?php foreach ($lists as $list): ?>
                         <option value="<?= $list['id'] ?>"><?= esc($list['name']) ?></option>
                     <?php endforeach; ?>
@@ -48,6 +44,5 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="<?= base_url('assets/js/contacts-form.js') ?>" defer></script>
 <?= $this->endSection() ?>

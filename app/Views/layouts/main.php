@@ -69,16 +69,14 @@
 			</a></li>
 		</ul>
 		<hr>
-                <div class="dropdown">
+		<div class="dropdown">
                         <?php
                         $avatarPath = $userAvatar ?? session('user_avatar');
-                        $avatarSrc = ($avatarPath && str_starts_with((string) $avatarPath, 'http'))
-                            ? $avatarPath
-                            : base_url($avatarPath ?: 'assets/images/icon_neg.png');
+                        $avatarSrc = ($avatarPath && str_starts_with((string) $avatarPath, 'http')) ? $avatarPath : base_url($avatarPath ?: 'assets/images/icon_neg.png');
                         $displayName = $userName ?? session('user_name') ?? 'Mailer';
                         ?>
                         <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser" data-bs-toggle="dropdown" aria-expanded="false"> <img src="<?= esc($avatarSrc) ?>" alt="" width="32" height="32" class="rounded-circle me-2"> <strong><?= esc($displayName) ?></strong>
-                        </a>
+			</a>
 			<ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser">
 				<li><a class="dropdown-item" href="<?= base_url('profile') ?>"><i class="fas fa-user me-2"></i> Perfil</a></li>
 				<li><hr class="dropdown-divider"></li>
@@ -105,11 +103,9 @@
 			<?php if (session()->getFlashdata('db_updated')): ?>
 				<?php $dbUpdate = session()->getFlashdata('db_updated'); ?>
 				<div class="alert alert-info alert-dismissible fade show" role="alert">
-					<i class="fas fa-database me-2"></i>
-					<strong>Banco de Dados Atualizado!</strong>
-					A estrutura do banco de dados foi atualizada para a versão <strong><?= $dbUpdate['to_version'] ?></strong>.
-					<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-				</div>
+				<i class="fas fa-database me-2"></i> <strong>Banco de Dados Atualizado!</strong> A estrutura do banco de dados foi atualizada para a versão <strong><?= $dbUpdate['to_version'] ?></strong>.
+				<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+			</div>
 			<?php endif; ?>
             <?= $this->renderSection('content') ?>
         </div>
@@ -121,29 +117,29 @@
 	<!-- Bootstrap 5 JS -->
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Alertify JS -->
-<script src="https://cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/alertify.min.js"></script>
+	<!-- Alertify JS -->
+	<script src="https://cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/alertify.min.js"></script>
 
-<!-- Select2 JS -->
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/pt-BR.js"></script>
-<script src="<?= base_url('assets/js/select2-init.js') ?>"></script>
+	<!-- Select2 JS -->
+	<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/pt-BR.js"></script>
+	<script src="<?= base_url('assets/js/select2-init.js') ?>"></script>
 
-		<!-- Popper.js (requerido pelo Tempus Dominus) -->
-		<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+	<!-- Popper.js (requerido pelo Tempus Dominus) -->
+	<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
 
-		<!-- Tempus Dominus V6 JS -->
-		<script src="https://cdn.jsdelivr.net/npm/@eonasdan/tempus-dominus@6.9.4/dist/js/tempus-dominus.min.js" crossorigin="anonymous"></script>
+	<!-- Tempus Dominus V6 JS -->
+	<script src="https://cdn.jsdelivr.net/npm/@eonasdan/tempus-dominus@6.10.4/dist/js/tempus-dominus.min.js" crossorigin="anonymous"></script>
 
-		<!-- Locale pt-BR -->
-		<script src="https://cdn.jsdelivr.net/npm/@eonasdan/tempus-dominus@6.9.4/dist/locales/pt-BR.js" crossorigin="anonymous"></script>
+	<!-- Locale pt-BR -->
+	<script src="https://cdn.jsdelivr.net/npm/@eonasdan/tempus-dominus@6.10.4/dist/locales/pt-PT.js" crossorigin="anonymous"></script>
 
-		<!-- Message Edit JS -->
-		<script src="<?= base_url('assets/js/message-edit.js') ?>"></script>
+	<!-- Message Edit JS -->
+	<script src="<?= base_url('assets/js/message-edit.js') ?>"></script>
 
-		<!-- Chart.js -->
-		<script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
-		<script src="<?= base_url('assets/js/layout.js') ?>" defer></script>
+	<!-- Chart.js -->
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+	<script src="<?= base_url('assets/js/layout.js') ?>" defer></script>
     
     <?= $this->renderSection('scripts') ?>
 </body>

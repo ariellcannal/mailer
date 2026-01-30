@@ -1,9 +1,5 @@
 <?= $this->extend('layouts/main') ?>
 
-<?= $this->section('styles') ?>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
-<?= $this->endSection() ?>
-
 <?= $this->section('content') ?>
 <?php $isEdit = !empty($contact); ?>
 <div class="card">
@@ -52,6 +48,5 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="<?= base_url('assets/js/contacts-form.js') ?>" defer></script>
 <?= $this->endSection() ?>
