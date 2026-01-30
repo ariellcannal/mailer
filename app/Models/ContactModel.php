@@ -169,9 +169,11 @@ class ContactModel extends Model
         }
 
         if (!empty($filters['list_id'])) {
-            // Selecionar apenas colunas de contacts para evitar conflito de 'id'
-            $this->select('contacts.*')
-                 ->join('contact_list_members', 'contact_list_members.contact_id = contacts.id');
+            // Fazer JOIN primeiro
+            $this->join('contact_list_members', 'contact_list_members.contact_id = contacts.id', 'inner');
+            
+            // Depois selecionar apenas colunas de contacts para evitar conflito de 'id'
+            $this->select('contacts.*', false);  // false = não reseta select anterior
             
             // Suportar filtro por múltiplas listas (array)
             if (is_array($filters['list_id'])) {
