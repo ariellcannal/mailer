@@ -39,7 +39,7 @@
             </div>
             <div class="col-md-2">
                 <label class="form-label">Lista</label>
-                <select name="list_id" class="form-select select2" data-placeholder="Todas as listas">
+                <select name="list_id" class="form-control" data-placeholder="Todas as listas">
                     <option value="">Todas</option>
                     <?php foreach ($lists as $list): ?>
                         <option value="<?= $list['id'] ?>" <?= (string) $filters['list_id'] === (string) $list['id'] ? 'selected' : '' ?>>
@@ -77,7 +77,7 @@
             <div class="row g-2 align-items-end">
                 <div class="col-md-8">
                     <label class="form-label">Adicionar selecionados às listas</label>
-                    <select name="lists[]" class="form-select select2" multiple data-placeholder="Selecione as listas">
+                    <select name="lists[]" class="form-control" multiple data-placeholder="Selecione as listas">
                         <?php foreach ($lists as $list): ?>
                             <option value="<?= $list['id'] ?>"><?= esc($list['name']) ?></option>
                         <?php endforeach; ?>

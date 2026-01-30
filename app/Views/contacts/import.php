@@ -25,7 +25,7 @@
             <?php if (!empty($lists)): ?>
             <div class="mb-3">
                 <label class="form-label">Adicionar às listas</label>
-                <select name="lists[]" class="form-select select2" multiple data-placeholder="Selecione as listas desejadas">
+                <select name="lists[]" class="form-control" multiple data-placeholder="Selecione as listas desejadas">
                     <?php foreach ($lists as $list): ?>
                         <option value="<?= $list['id'] ?>"><?= esc($list['name']) ?></option>
                     <?php endforeach; ?>

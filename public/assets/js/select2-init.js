@@ -39,17 +39,17 @@
             });
         }
 
-        // 2. Selects com classe .select2 - Padrão
-        $('.select2').each(function() {
+        // 2. Selects Padrão
+        $('select').not('#cnaes_select').each(function() {
             const $select = $(this);
-            
+			console.log('Inicializando select:', $select.attr('id') || $select.attr('name'));
+
             // Pular se já foi inicializado
             if ($select.hasClass('select2-hidden-accessible')) {
                 return;
             }
 
-            console.log('Inicializando select:', $select.attr('id') || $select.attr('name'));
-
+            
             const config = {
                 theme: 'bootstrap-5',
                 language: 'pt-BR',
@@ -65,20 +65,6 @@
 
             $select.select2(config);
         });
-
-        // 3. Contact List Select (messages/detail.php) - Especial
-        const contactListSelect = $('#contactListSelect');
-        if (contactListSelect.length) {
-            console.log('Inicializando Contact List select...');
-            contactListSelect.select2({
-                theme: 'bootstrap-5',
-                language: 'pt-BR',
-                width: '100%',
-                placeholder: 'Selecione as listas',
-                closeOnSelect: false,
-                allowClear: true
-            });
-        }
 
         console.log('Select2 inicializado com sucesso!');
     });
