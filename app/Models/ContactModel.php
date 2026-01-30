@@ -96,7 +96,7 @@ class ContactModel extends Model
      */
     public function getContacts(array $filters = [], int $perPage = 20): array
     {
-        $this->select('*');
+        $this->select('contacts.*');
 
         $this->applyFilters($filters);
 
@@ -111,7 +111,7 @@ class ContactModel extends Model
      */
     public function getAllContactIds(array $filters = []): array
     {
-        $this->select('id');
+        $this->select('contacts.id');
         $this->applyFilters($filters);
 
         return $this->findColumn('id') ?? [];
