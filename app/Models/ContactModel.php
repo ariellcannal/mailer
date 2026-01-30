@@ -327,6 +327,128 @@ class ContactModel extends Model
     }
 
     /**
+     * Importa contatos em lote com otimizações de memória e CPU
+     * 
+     * @param array $contacts Array de contatos [{email, name}, ...]
+     * @param array $listIds IDs das listas para vincular
+     * @return array Resultado da importação
+     */
+    public function importContactsBatch(array $contacts, array $listIds = []): array
+    {
+        $imported = 0;
+        $skipped = 0;
+        $skippedDetails = [];
+        $errors = [];
+        $listIds = array_map('intval', array_unique(array_filter($listIds)));
+        
+        $listMemberModel = new ContactListMemberModel();
+        $listModel = new ContactListModel();
+        
+        // Buscar todos os emails existentes de uma vez
+        $emails = array_column($contacts, 'email');
+        $existingContacts = [];
+        
+        if (!empty($emails)) {
+            $existing = $this->whereIn('email', $emails)->findAll();
+            foreach ($existing as $contact) {
+                $existingContacts[$contact['email']] = $contact;
+            }
+        }
+        
+        $batchInsert = [];
+        $batchSize = 500;
+        $db = \Config\Database::connect();
+        
+        foreach ($contacts as $index => $contact) {
+            try {
+                $email = $contact['email'];
+                
+                // Verifica se email já existe
+                if (isset($existingContacts[$email])) {
+                    $existing = $existingContacts[$email];
+                    
+                    if (!empty($contact['name']) && $contact['name'] !== ($existing['name'] ?? '')) {
+                        $this->update((int) $existing['id'], [
+                            'name' => $contact['name'],
+                            'nickname' => $this->generateNickname($contact['name'], $email),
+                        ]);
+                    }
+                    
+                    if (!empty($listIds)) {
+                        $this->syncContactLists((int) $existing['id'], $listIds, $listMemberModel, $listModel);
+                    }
+                    
+                    $skipped++;
+                    $skippedDetails[] = 'Email já existente: ' . $email;
+                    unset($contact);
+                    continue;
+                }
+                
+                // Adicionar ao lote de inserção
+                $batchInsert[] = [
+                    'email' => $email,
+                    'name' => $contact['name'] ?? null,
+                    'nickname' => $this->generateNickname($contact['name'] ?? null, $email),
+                    'quality_score' => 3,
+                    'is_active' => 1,
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ];
+                
+                unset($contact);
+                
+                // Inserir lote quando atingir tamanho máximo
+                if (count($batchInsert) >= $batchSize) {
+                    $db->table($this->table)->insertBatch($batchInsert);
+                    $imported += count($batchInsert);
+                    
+                    // Vincular às listas se necessário
+                    if (!empty($listIds)) {
+                        $insertedEmails = array_column($batchInsert, 'email');
+                        $insertedContacts = $this->whereIn('email', $insertedEmails)->findAll();
+                        foreach ($insertedContacts as $insertedContact) {
+                            $this->syncContactLists((int) $insertedContact['id'], $listIds, $listMemberModel, $listModel);
+                        }
+                    }
+                    
+                    unset($batchInsert);
+                    $batchInsert = [];
+                    gc_collect_cycles();
+                }
+            } catch (\Exception $e) {
+                $errors[] = [
+                    'email' => $contact['email'] ?? 'N/D',
+                    'error' => $e->getMessage(),
+                ];
+            }
+        }
+        
+        // Inserir lote restante
+        if (!empty($batchInsert)) {
+            $db->table($this->table)->insertBatch($batchInsert);
+            $imported += count($batchInsert);
+            
+            if (!empty($listIds)) {
+                $insertedEmails = array_column($batchInsert, 'email');
+                $insertedContacts = $this->whereIn('email', $insertedEmails)->findAll();
+                foreach ($insertedContacts as $insertedContact) {
+                    $this->syncContactLists((int) $insertedContact['id'], $listIds, $listMemberModel, $listModel);
+                }
+            }
+            
+            unset($batchInsert);
+            gc_collect_cycles();
+        }
+        
+        return [
+            'imported' => $imported,
+            'skipped' => $skipped,
+            'skipped_details' => $skippedDetails,
+            'errors' => $errors,
+        ];
+    }
+    
+    /**
      * Gera o apelido do contato com base no primeiro nome ou no usuário do e-mail.
      *
      * @param string|null $name  Nome completo informado.

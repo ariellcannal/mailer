@@ -130,12 +130,23 @@ class ContactController extends BaseController {
     }
     
     public function importProcess() {
+        // Otimizações de memória e CPU
+        set_time_limit(0);
+        ini_set('memory_limit', '512M');
+        gc_enable();
+        
         $model = new ContactModel();
         $file = $this->request->getFile('file');
         $listIds = (array) $this->request->getPost('lists');
         $emailColumn = $this->request->getPost('email_column');
         $nameColumn = $this->request->getPost('name_column');
         $tempFile = $this->request->getPost('temp_file');
+        
+        // Desabilitar query log para economizar memória
+        $db = \Config\Database::connect();
+        if (property_exists($db, 'saveQueries')) {
+            $db->saveQueries = false;
+        }
 
         try {
             $tempPath = $this->persistImportFile($file, $tempFile);
@@ -166,9 +177,9 @@ class ContactController extends BaseController {
             }
 
             $contacts = [];
-
             $skippedReasons = [];
 
+            // Processar linhas em lotes para economizar memória
             foreach ($rows as $index => $row) {
                 if ($index === 0) {
                     continue;
@@ -178,25 +189,32 @@ class ContactController extends BaseController {
 
                 if ($email === '') {
                     $skippedReasons[] = 'Linha ' . ($index + 1) . ': email vazio';
+                    unset($row);
                     continue;
                 }
 
                 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                     $skippedReasons[] = 'Linha ' . ($index + 1) . ': email inválido (' . $email . ')';
+                    unset($row);
                     continue;
                 }
 
                 $name = $nameIndex !== null ? trim((string) ($row[$nameIndex] ?? '')) : null;
-
                 $formattedName = $this->formatNameUcFirst($name);
 
                 $contacts[] = [
                     'email' => $email,
                     'name' => $formattedName,
                 ];
+                
+                unset($row);
             }
+            
+            // Liberar memória do array de linhas
+            unset($rows);
+            gc_collect_cycles();
 
-            $result = $model->importContacts($contacts, $listIds);
+            $result = $model->importContactsBatch($contacts, $listIds);
 
             $skippedTotal = $result['skipped'] + count($skippedReasons);
             $skippedMessages = array_merge($skippedReasons, $result['skipped_details']);
