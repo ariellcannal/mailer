@@ -9,6 +9,9 @@
                 <a href="<?= base_url('contact-lists') ?>" class="btn btn-outline-secondary">
                     <i class="fas fa-list-ul"></i> Listas
                 </a>
+                <a href="<?= base_url('contacts/imports') ?>" class="btn btn-outline-info">
+                    <i class="fas fa-history"></i> Importações
+                </a>
                 <a href="<?= base_url('contacts/import') ?>" class="btn btn-outline-primary">
                     <i class="fas fa-file-upload"></i> Importar
                 </a>
@@ -26,13 +29,24 @@
         <?php endif; ?>
 
         <form method="GET" action="<?= base_url('contacts') ?>" class="row g-2 mb-4 align-items-end">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <label class="form-label">Filtrar por e-mail</label>
                 <input type="text" name="email" value="<?= esc($filters['email']) ?>" class="form-control" placeholder="email@dominio.com">
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <label class="form-label">Filtrar por nome</label>
                 <input type="text" name="name" value="<?= esc($filters['name']) ?>" class="form-control" placeholder="Nome do contato">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Lista</label>
+                <select name="list_id" class="form-select select2" data-placeholder="Todas as listas">
+                    <option value="">Todas</option>
+                    <?php foreach ($lists as $list): ?>
+                        <option value="<?= $list['id'] ?>" <?= (string) $filters['list_id'] === (string) $list['id'] ? 'selected' : '' ?>>
+                            <?= esc($list['name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
             </div>
             <div class="col-md-2">
                 <label class="form-label">Qualidade</label>

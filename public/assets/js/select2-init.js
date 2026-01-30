@@ -44,13 +44,8 @@
      * Inicializa todos os selects da página
      */
     function initAllSelects() {
-        // Selects com classe .select2
+        // Apenas selects com classe .select2
         $('.select2').each(function() {
-            initSelect2(this);
-        });
-
-        // Todos os outros selects (exceto os que já têm Select2)
-        $('select').not('.select2').not('[data-no-select2]').each(function() {
             initSelect2(this);
         });
     }

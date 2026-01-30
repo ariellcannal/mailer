@@ -15,6 +15,7 @@ class ContactController extends BaseController {
             'email' => $this->request->getGet('email'),
             'name' => $this->request->getGet('name'),
             'quality_score' => $this->request->getGet('quality_score'),
+            'list_id' => $this->request->getGet('list_id'),
         ];
         
         $contacts = $model->getContacts($filters, 20);

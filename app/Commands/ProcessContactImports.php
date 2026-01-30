@@ -73,6 +73,11 @@ class ProcessContactImports extends BaseCommand
                 $skippedReasons = [];
                 $processedRows = 0;
                 $totalRows = count($rows) - 1;
+                
+                // Acumuladores de resultados
+                $totalImported = 0;
+                $totalSkipped = 0;
+                $totalErrors = [];
 
                 // Processar linhas
                 foreach ($rows as $index => $row) {
@@ -104,14 +109,19 @@ class ProcessContactImports extends BaseCommand
                     if (count($contacts) >= 500) {
                         $result = $contactModel->importContactsBatch($contacts, $listIds);
                         
+                        // Acumular resultados
+                        $totalImported += $result['imported'];
+                        $totalSkipped += $result['skipped'];
+                        $totalErrors = array_merge($totalErrors, $result['errors']);
+                        
                         // Atualizar progresso
                         $importModel->updateProgress(
                             $import['id'],
                             $processedRows,
                             $totalRows,
-                            $result['imported'],
-                            $result['skipped'],
-                            count($result['errors'])
+                            $totalImported,
+                            $totalSkipped,
+                            count($totalErrors)
                         );
 
                         CLI::write("Progresso: {$processedRows}/{$totalRows} linhas processadas", 'yellow');
@@ -125,15 +135,21 @@ class ProcessContactImports extends BaseCommand
                 // Processar lote restante
                 if (!empty($contacts)) {
                     $result = $contactModel->importContactsBatch($contacts, $listIds);
+                    
+                    // Acumular resultados do último lote
+                    $totalImported += $result['imported'];
+                    $totalSkipped += $result['skipped'];
+                    $totalErrors = array_merge($totalErrors, $result['errors']);
+                    
                     unset($contacts);
                     gc_collect_cycles();
                 }
 
-                // Resultado final
+                // Resultado final acumulado
                 $finalResult = [
-                    'imported' => $result['imported'] ?? 0,
-                    'skipped' => $result['skipped'] ?? 0,
-                    'errors' => $result['errors'] ?? [],
+                    'imported' => $totalImported,
+                    'skipped' => $totalSkipped,
+                    'errors' => $totalErrors,
                 ];
 
                 // Marcar como concluído

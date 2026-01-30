@@ -167,6 +167,12 @@ class ContactModel extends Model
         if (isset($filters['bounced'])) {
             $this->where('bounced', $filters['bounced']);
         }
+
+        if (!empty($filters['list_id'])) {
+            $this->join('contact_list_members', 'contact_list_members.contact_id = contacts.id')
+                 ->where('contact_list_members.list_id', $filters['list_id'])
+                 ->groupBy('contacts.id');
+        }
     }
 
     /**
