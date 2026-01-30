@@ -188,6 +188,11 @@ abstract class BaseController extends Controller
     protected function checkDatabaseMigrations(): void
     {
         try {
+            // Garantir que sessão está iniciada
+            if (session_status() === PHP_SESSION_NONE) {
+                session();
+            }
+            
             $migrationManager = new MigrationManager();
             $result = $migrationManager->checkAndRunMigrations();
             
@@ -197,9 +202,12 @@ abstract class BaseController extends Controller
                     'from_version' => $result['from_version'],
                     'to_version' => $result['to_version'],
                 ]);
+                
+                log_message('info', "Database migrated from version {$result['from_version']} to {$result['to_version']}");
             }
         } catch (\Exception $e) {
             log_message('error', 'Migration error: ' . $e->getMessage());
+            log_message('error', 'Migration trace: ' . $e->getTraceAsString());
         }
     }
 }

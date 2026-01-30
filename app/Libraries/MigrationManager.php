@@ -30,6 +30,8 @@ class MigrationManager
         $currentVersion = $this->getCurrentVersion();
         $latestVersion = $this->getLatestVersion();
         
+        log_message('debug', "MigrationManager: Current version = {$currentVersion}, Latest version = {$latestVersion}");
+        
         if ($currentVersion >= $latestVersion) {
             return [
                 'updated' => false,
@@ -40,11 +42,11 @@ class MigrationManager
         
         // Executar migrations pendentes
         for ($version = $currentVersion + 1; $version <= $latestVersion; $version++) {
+            log_message('info', "MigrationManager: Running migration {$version}");
             $this->runMigration($version);
+            $this->setVersion($version);
+            log_message('info', "MigrationManager: Migration {$version} completed");
         }
-        
-        // Atualizar versão no banco
-        $this->setVersion($latestVersion);
         
         return [
             'updated' => true,
@@ -60,20 +62,24 @@ class MigrationManager
      */
     protected function getCurrentVersion(): int
     {
-        // Verifica se tabela settings existe
-        if (!$this->db->tableExists('settings')) {
-            // Criar tabela settings
-            $this->createSettingsTable();
+        // Verifica se tabela system_settings existe
+        if (!$this->db->tableExists('system_settings')) {
+            // Se não existir, assumir versão 1
+            return 1;
+        }
+        
+        $result = $this->db->table('system_settings')
+            ->where('setting_key', 'db_version')
+            ->get()
+            ->getRowArray();
+        
+        if (!$result) {
+            // Se não existe registro, criar com versão 1
             $this->setVersion(1);
             return 1;
         }
         
-        $result = $this->db->table('settings')
-            ->where('name', 'db_version')
-            ->get()
-            ->getRowArray();
-        
-        return $result ? (int) $result['value'] : 1;
+        return (int) $result['setting_value'];
     }
     
     /**
@@ -124,44 +130,7 @@ class MigrationManager
         $migration->up();
     }
     
-    /**
-     * Cria a tabela settings
-     * 
-     * @return void
-     */
-    protected function createSettingsTable(): void
-    {
-        $forge = \Config\Database::forge();
-        
-        $forge->addField([
-            'id' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'unsigned' => true,
-                'auto_increment' => true,
-            ],
-            'name' => [
-                'type' => 'VARCHAR',
-                'constraint' => 255,
-            ],
-            'value' => [
-                'type' => 'TEXT',
-                'null' => true,
-            ],
-            'created_at' => [
-                'type' => 'DATETIME',
-                'null' => true,
-            ],
-            'updated_at' => [
-                'type' => 'DATETIME',
-                'null' => true,
-            ],
-        ]);
-        
-        $forge->addKey('id', true);
-        $forge->addUniqueKey('name');
-        $forge->createTable('settings', true);
-    }
+
     
     /**
      * Define a versão do banco de dados
@@ -171,24 +140,21 @@ class MigrationManager
      */
     protected function setVersion(int $version): void
     {
-        $existing = $this->db->table('settings')
-            ->where('name', 'db_version')
+        $existing = $this->db->table('system_settings')
+            ->where('setting_key', 'db_version')
             ->get()
             ->getRowArray();
         
         if ($existing) {
-            $this->db->table('settings')
-                ->where('name', 'db_version')
+            $this->db->table('system_settings')
+                ->where('setting_key', 'db_version')
                 ->update([
-                    'value' => $version,
-                    'updated_at' => date('Y-m-d H:i:s'),
+                    'setting_value' => (string) $version,
                 ]);
         } else {
-            $this->db->table('settings')->insert([
-                'name' => 'db_version',
-                'value' => $version,
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s'),
+            $this->db->table('system_settings')->insert([
+                'setting_key' => 'db_version',
+                'setting_value' => (string) $version,
             ]);
         }
     }
