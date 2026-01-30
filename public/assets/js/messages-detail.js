@@ -118,6 +118,7 @@ const ResendManager = {
         
         new tempusDominus.TempusDominus(input, {
             display: {
+				sideBySide: true,
                 components: {
                     calendar: true,
                     date: true,
