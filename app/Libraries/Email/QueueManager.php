@@ -228,10 +228,58 @@ class QueueManager
         return Time::now($this->timezone)->toDateTimeString();
     }
     
+    /**
+     * Adiciona mensagens à fila de envio
+     * 
+     * @param int $messageId ID da mensagem
+     * @param array $contactIds IDs dos contatos
+     * @param int $resendNumber Número do reenvio (0 = envio original)
+     * @return array Resultado da operação
+     */
     public function queueMessage(int $messageId, array $contactIds, int $resendNumber = 0): array
     {
-        $batch = [];
+        // Verificar duplicação: buscar envios existentes
+        $existing = $this->sendModel
+            ->select('contact_id, resend_number')
+            ->where('message_id', $messageId)
+            ->findAll();
+        
+        // Criar mapa de envios existentes
+        $existingMap = [];
+        foreach ($existing as $send) {
+            $key = $send['contact_id'] . '_' . $send['resend_number'];
+            $existingMap[$key] = true;
+        }
+        
+        // Filtrar contatos que já possuem envio
+        $newContactIds = [];
+        $skipped = 0;
+        
         foreach ($contactIds as $contactId) {
+            $key = $contactId . '_' . $resendNumber;
+            if (!isset($existingMap[$key])) {
+                $newContactIds[] = $contactId;
+            } else {
+                $skipped++;
+            }
+        }
+        
+        // Verificar limite de 4 envios por contato (1 original + 3 reenvios)
+        if ($resendNumber > 3) {
+            log_message('warning', "Tentativa de criar reenvio #{$resendNumber} para mensagem {$messageId} (máximo: 3)");
+            return ['success' => false, 'error' => 'Máximo de 3 reenvios permitidos', 'queued' => 0, 'skipped' => count($contactIds)];
+        }
+        
+        if (empty($newContactIds)) {
+            log_message('info', "Nenhum novo envio para adicionar (todos já existem). Skipped: {$skipped}");
+            return ['success' => true, 'queued' => 0, 'skipped' => $skipped];
+        }
+        
+        // Inserir em lote para performance
+        $batch = [];
+        $queued = 0;
+        
+        foreach ($newContactIds as $contactId) {
             $batch[] = [
                 'message_id' => $messageId,
                 'contact_id' => $contactId,
@@ -239,14 +287,23 @@ class QueueManager
                 'tracking_hash' => hash('sha256', $messageId.$contactId.$resendNumber.time().rand()),
                 'status' => 'pending',
             ];
+            
             // Inserção em lote para performance
             if (count($batch) >= 100) {
                 $this->sendModel->insertBatch($batch);
+                $queued += count($batch);
                 $batch = [];
             }
         }
-        if (!empty($batch)) $this->sendModel->insertBatch($batch);
-        return ['success' => true, 'queued' => count($contactIds)];
+        
+        if (!empty($batch)) {
+            $this->sendModel->insertBatch($batch);
+            $queued += count($batch);
+        }
+        
+        log_message('info', "Fila atualizada: {$queued} novos envios, {$skipped} duplicados ignorados");
+        
+        return ['success' => true, 'queued' => $queued, 'skipped' => $skipped];
     }
     
     protected function prepareEmailContent(string $htmlContent, array $contact, string $trackingHash): string

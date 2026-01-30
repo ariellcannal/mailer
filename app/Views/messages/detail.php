@@ -220,62 +220,31 @@
                 
                 <!-- Bloco: Reenvios -->
                 <div class="card mb-4">
-                    <div class="card-header bg-secondary text-white">
+                    <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
                         <h6 class="mb-0"><i class="fas fa-redo"></i> Reenvios</h6>
+                        <button type="button" class="btn btn-sm btn-light" id="btnAddResend">
+                            <i class="fas fa-plus"></i> Adicionar Reenvio
+                        </button>
                     </div>
                     <div class="card-body">
                         <p class="text-muted mb-3">Configure até 3 reenvios automáticos para contatos que não abriram a mensagem.</p>
-
-                <?php
-                    $resendDefaults = [
-                        1 => ['scheduled_at' => null, 'subject' => $message['subject'] ?? ''],
-                        2 => ['scheduled_at' => null, 'subject' => $message['subject'] ?? ''],
-                        3 => ['scheduled_at' => null, 'subject' => $message['subject'] ?? ''],
-                    ];
-
-                    if (!empty($resendRules ?? [])) {
-                        foreach ($resendRules as $rule) {
-                            $number = (int) ($rule['resend_number'] ?? 0);
-                            if ($number >= 1 && $number <= 3) {
-                                $resendDefaults[$number] = [
-                                    'scheduled_at' => $rule['scheduled_at'] ?? null,
-                                    'subject' => $rule['subject_override'] ?? ($rule['subject'] ?? ($message['subject'] ?? '')),
-                                ];
-                            }
-                        }
-                    }
-                ?>
-                        <div id="resends-container">
-                    <?php foreach ($resendDefaults as $index => $resend): ?>
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <h6>Reenvio <?= (int) $index ?></h6>
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <label class="form-label">Agendar em</label>
-                                        <input
-                                            type="text"
-                                            id="resend_scheduled_<?= (int) $index ?>"
-                                            class="form-control"
-                                            name="resends[<?= (int) ($index - 1) ?>][scheduled_at]"
-                                            placeholder="dd/mm/aaaa hh:mm"
-                                            value="<?= esc($resend['scheduled_at'] ? date('d/m/Y H:i', strtotime($resend['scheduled_at'])) : '') ?>">
-                                        <input type="hidden" name="resends[<?= (int) ($index - 1) ?>][number]" value="<?= (int) $index ?>">
-                                    </div>
-                                    <div class="col-md-8">
-                                        <label class="form-label">Novo assunto</label>
-                                        <input
-                                            type="text"
-                                            class="form-control"
-                                            name="resends[<?= (int) ($index - 1) ?>][subject]"
-                                            placeholder="Assunto da mensagem"
-                                            value="<?= esc($resend['subject'] ?? '') ?>">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                        </div>
+                        
+                        <table class="table table-bordered" id="resendsTable">
+                            <thead>
+                                <tr>
+                                    <th width="15%">Reenvio</th>
+                                    <th width="25%">Data/Hora</th>
+                                    <th width="50%">Assunto</th>
+                                    <th width="10%" class="text-center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Preenchido via JavaScript -->
+                            </tbody>
+                        </table>
+                        
+                        <!-- Hidden inputs para enviar dados -->
+                        <div id="resendHiddenInputs"></div>
                     </div>
                 </div>
 
@@ -292,11 +261,65 @@
     </div>
 </div>
 
+<!-- Modal: Adicionar/Editar Reenvio -->
+<div class="modal fade" id="resendModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resendModalLabel">Adicionar Reenvio</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="resendForm">
+                    <input type="hidden" id="resendIndex">
+                    
+                    <div class="mb-3">
+                        <label for="resendNumber" class="form-label">Número do Reenvio</label>
+                        <select class="form-select" id="resendNumber" required>
+                            <option value="">Selecione...</option>
+                            <option value="1">Reenvio 1</option>
+                            <option value="2">Reenvio 2</option>
+                            <option value="3">Reenvio 3</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="resendScheduledAt" class="form-label">Data/Hora do Reenvio</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="resendScheduledAt"
+                            placeholder="dd/mm/aaaa hh:mm"
+                            required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="resendSubject" class="form-label">Assunto</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="resendSubject"
+                            placeholder="Assunto da mensagem"
+                            required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnSaveResend">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
 <?php if (isset($editPermissions)): ?>
 <script type="application/json" id="edit-permissions-data"><?= json_encode($editPermissions) ?></script>
+<?php endif; ?>
+<?php if (isset($resendRules) && !empty($resendRules)): ?>
+<script type="application/json" id="resend-rules-data"><?= json_encode($resendRules) ?></script>
 <?php endif; ?>
 <script src="<?= base_url('assets/js/messages-detail.js') ?>" defer></script>
 <?= $this->endSection() ?>

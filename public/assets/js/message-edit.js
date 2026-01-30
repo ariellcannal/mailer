@@ -221,8 +221,14 @@ const MessageEdit = {
      */
     attachFormValidation: function() {
         const self = this;
+        let isSubmitting = false;
         
         $('form[action*="/messages/update"], form[action*="/messages/store"]').on('submit', function(e) {
+            // Prevenir clique duplo
+            if (isSubmitting) {
+                e.preventDefault();
+                return false;
+            }
             // Validar datas antes de enviar
             let valid = true;
             
@@ -255,6 +261,18 @@ const MessageEdit = {
                 e.preventDefault();
                 return false;
             }
+            
+            // Marcar como submetendo e desabilitar botão
+            isSubmitting = true;
+            const $submitBtn = $(this).find('button[type="submit"]');
+            const originalText = $submitBtn.html();
+            $submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processando...');
+            
+            // Reabilitar após 30 segundos (fallback)
+            setTimeout(function() {
+                isSubmitting = false;
+                $submitBtn.prop('disabled', false).html(originalText);
+            }, 30000);
         });
     },
 
