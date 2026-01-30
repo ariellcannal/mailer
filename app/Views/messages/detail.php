@@ -49,7 +49,7 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Campanha *</label>
-                        <select class="form-select" name="campaign_id" required>
+                        <select class="form-select select2" name="campaign_id" required>
                             <option value="">Selecione...</option>
                             <?php $campaignDefault = old('campaign_id', $message['campaign_id'] ?? ($selectedCampaignId ?? '')); ?>
                             <?php foreach ($campaigns as $campaign): ?>
@@ -62,7 +62,7 @@
                     
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Remetente *</label>
-                        <select class="form-select" name="sender_id" required>
+                        <select class="form-select select2" name="sender_id" required>
                             <option value="">Selecione...</option>
                             <?php foreach ($senders as $sender): ?>
                                 <option value="<?= $sender['id'] ?>" <?= (string) old('sender_id', $message['sender_id'] ?? '') === (string) $sender['id'] ? 'selected' : '' ?>>

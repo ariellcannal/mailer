@@ -1,76 +1,85 @@
 /**
- * Inicialização global do Select2
- * Aplica Select2 em todos os <select> da aplicação
+ * Select2 Initialization
+ * Aplica Select2 em todos os selects da aplicação
  */
 (function() {
     'use strict';
 
-    // Configuração padrão do Select2
-    const defaultConfig = {
-        theme: 'bootstrap-5',
-        language: 'pt-BR',
-        width: '100%',
-        placeholder: 'Selecione uma opção',
-        allowClear: true
-    };
+    // Aguardar DOM e bibliotecas estarem prontas
+    $(document).ready(function() {
+        console.log('Inicializando Select2...');
 
-    /**
-     * Inicializa Select2 em um elemento
-     */
-    function initSelect2(element) {
-        const $element = $(element);
-        
-        // Não inicializar se já foi inicializado
-        if ($element.data('select2')) {
+        // Verificar se Select2 está disponível
+        if (typeof $.fn.select2 === 'undefined') {
+            console.error('Select2 não está disponível!');
             return;
         }
 
-        // Configuração personalizada do elemento
-        const customConfig = {
-            placeholder: $element.data('placeholder') || $element.attr('data-placeholder') || defaultConfig.placeholder,
-            allowClear: !$element.prop('required'),
-            multiple: $element.prop('multiple'),
-            disabled: $element.prop('disabled')
-        };
-
-        // Merge das configurações
-        const config = Object.assign({}, defaultConfig, customConfig);
-
-        // Inicializar Select2
-        $element.select2(config);
-    }
-
-    /**
-     * Inicializa todos os selects da página
-     */
-    function initAllSelects() {
-        // Apenas selects com classe .select2
-        $('.select2').each(function() {
-            initSelect2(this);
-        });
-    }
-
-    // Inicializar quando o DOM estiver pronto
-    $(document).ready(function() {
-        initAllSelects();
-    });
-
-    // Reinicializar quando conteúdo dinâmico for adicionado
-    $(document).on('DOMNodeInserted', function(e) {
-        const $target = $(e.target);
-        
-        // Se o elemento inserido é um select
-        if ($target.is('select')) {
-            initSelect2($target[0]);
+        // 1. CNAE Select (Receita Federal) - Com AJAX
+        const cnaesSelect = $('#cnaes_select');
+        if (cnaesSelect.length) {
+            console.log('Inicializando CNAE select com AJAX...');
+            cnaesSelect.select2({
+                theme: 'bootstrap-5',
+                language: 'pt-BR',
+                placeholder: 'Pesquise por código ou descrição do CNAE',
+                allowClear: true,
+                ajax: {
+                    url: function() {
+                        const baseUrl = $('base').attr('href') || window.location.origin + '/';
+                        return baseUrl + 'receita/buscarCnaes';
+                    },
+                    dataType: 'json',
+                    delay: 250,
+                    processResults: function (data) {
+                        return { results: data };
+                    },
+                    cache: true
+                }
+            });
         }
-        
-        // Se o elemento inserido contém selects
-        $target.find('select').each(function() {
-            initSelect2(this);
-        });
-    });
 
-    // Expor função global para inicialização manual
-    window.initSelect2 = initSelect2;
-    window.initAllSelects = initAllSelects;
+        // 2. Selects com classe .select2 - Padrão
+        $('.select2').each(function() {
+            const $select = $(this);
+            
+            // Pular se já foi inicializado
+            if ($select.hasClass('select2-hidden-accessible')) {
+                return;
+            }
+
+            console.log('Inicializando select:', $select.attr('id') || $select.attr('name'));
+
+            const config = {
+                theme: 'bootstrap-5',
+                language: 'pt-BR',
+                width: '100%',
+                placeholder: $select.data('placeholder') || 'Selecione...',
+                allowClear: !$select.prop('required')
+            };
+
+            // Se for multiple, adicionar configurações específicas
+            if ($select.prop('multiple')) {
+                config.closeOnSelect = false;
+            }
+
+            $select.select2(config);
+        });
+
+        // 3. Contact List Select (messages/detail.php) - Especial
+        const contactListSelect = $('#contactListSelect');
+        if (contactListSelect.length) {
+            console.log('Inicializando Contact List select...');
+            contactListSelect.select2({
+                theme: 'bootstrap-5',
+                language: 'pt-BR',
+                width: '100%',
+                placeholder: 'Selecione as listas',
+                closeOnSelect: false,
+                allowClear: true
+            });
+        }
+
+        console.log('Select2 inicializado com sucesso!');
+    });
 })();
