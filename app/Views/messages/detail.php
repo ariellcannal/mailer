@@ -1,8 +1,6 @@
 <?= $this->extend('layouts/main') ?>
 
-<?= $this->section('styles') ?>
-<link rel="stylesheet" href="<?= base_url('assets/css/message-wizard.css') ?>">
-<?= $this->endSection() ?>
+
 
 <?= $this->section('content') ?>
 

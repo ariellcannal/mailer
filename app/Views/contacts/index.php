@@ -157,7 +157,3 @@
 </div>
 <?= $this->endSection() ?>
 
-<?= $this->section('scripts') ?>
-<script src="<?= base_url('assets/js/contacts-form.js') ?>" defer></script>
-<script src="<?= base_url('assets/js/contacts-index.js') ?>" defer></script>
-<?= $this->endSection() ?>

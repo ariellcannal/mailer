@@ -60,6 +60,3 @@
 </div>
 <?= $this->endSection() ?>
 
-<?= $this->section('scripts') ?>
-<script src="<?= base_url('assets/js/template-form.js') ?>" defer></script>
-<?= $this->endSection() ?>

@@ -60,6 +60,3 @@
 </div>
 <?= $this->endSection() ?>
 
-<?= $this->section('scripts') ?>
-<script src="<?= base_url('assets/js/settings-limits.js') ?>" defer></script>
-<?= $this->endSection() ?>

@@ -150,6 +150,3 @@ if (!empty($dnsInstructions['dkim']) && is_array($dnsInstructions['dkim'])) {
 
 <?= $this->endSection() ?>
 
-<?= $this->section('scripts') ?>
-<script src="<?= base_url('assets/js/sender-view.js') ?>" defer></script>
-<?= $this->endSection() ?>

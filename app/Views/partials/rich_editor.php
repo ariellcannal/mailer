@@ -13,10 +13,4 @@ $htmlContent = $htmlContent ?? old('html_content');
 </div>
 <?= $this->section('scripts') ?>
 <div id="richEditorConfig" data-licence="<?= getenv('cke.licence') ?>" data-height="<?= (int) $height ?>" data-template-search-url="<?= base_url('templates/search') ?>" data-file-list-url="<?= base_url('files/list') ?>" data-file-upload-url="<?= base_url('files/upload') ?>"></div>
-<link rel="stylesheet" href="<?= base_url('assets/js/ckeditor5/ckeditor5.css') ?>" />
-<link rel="stylesheet" href="<?= base_url('assets/css/ckeditor5.css') ?>" />
-<script src="<?= base_url('assets/js/ckeditor5/ckeditor5.umd.js') ?>"></script>
-<script src="<?= base_url('assets/js/ckeditor5/translations/pt-br.umd.js') ?>"></script>
-<script src="<?= base_url('assets/js/rich-editor.js') ?>" defer></script>
-<script src="<?= base_url('assets/js/messages-form.js') ?>" defer></script>
 <?= $this->endSection() ?>
