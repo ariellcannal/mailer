@@ -181,6 +181,31 @@ class QueueManager
     }
 
     /**
+     * Recupera contatos que NÃO abriram a mensagem original.
+     * Usado para determinar quem deve receber reenvios.
+     *
+     * @param int $messageId
+     *            ID da mensagem
+     *            
+     * @return array IDs dos contatos que não abriram
+     */
+    protected function getMessageContacts(int $messageId): array
+    {
+        $rows = $this->sendModel->distinct()
+            ->select('contact_id')
+            ->where('message_id', $messageId)
+            ->where('resend_number', 0)
+            ->where('opened', 0)
+            -> // Apenas contatos que NÃO abriram
+        where('status', 'sent')
+            -> // Apenas envios bem-sucedidos
+        get()
+            ->getResultArray();
+
+        return array_column($rows, 'contact_id');
+    }
+
+    /**
      * Busca envios pendentes usando Cursor (Unbuffered Row) para memória
      */
     protected function pendingSendsGenerator(int $batchSize, string $now): \Generator
@@ -207,45 +232,48 @@ class QueueManager
             ->groupEnd()
             ->orderBy('message_sends.id', 'ASC')
             ->limit($batchSize);
-        //echo $builder->getCompiledSelect();
+        // echo $builder->getCompiledSelect();
         $query = $builder->get();
         while ($row = $query->getUnbufferedRow('array')) {
             yield $row;
         }
     }
-    
+
     protected function finalizeMessageStatuses(array $messageIds): void
     {
         if (empty($messageIds)) {
             return;
         }
-        
+
         $uniqueIds = array_unique(array_map('intval', $messageIds));
         $db = \Config\Database::connect();
         $now = $this->now();
-        
+
         foreach ($uniqueIds as $messageId) {
             $pendingSends = $this->sendModel->builder()
-            ->where('message_id', $messageId)
-            ->whereIn('status', ['pending', 'sending'])
-            ->countAllResults();
-            
+                ->where('message_id', $messageId)
+                ->whereIn('status', [
+                'pending',
+                'sending'
+            ])
+                ->countAllResults();
+
             if ($pendingSends > 0) {
                 continue;
             }
-            
+
             $pendingRules = $db->table('resend_rules')
-            ->where('message_id', $messageId)
-            ->where('status', 'pending')
-            ->countAllResults();
-            
+                ->where('message_id', $messageId)
+                ->where('status', 'pending')
+                ->countAllResults();
+
             if ($pendingRules > 0) {
                 continue;
             }
-            
+
             $this->messageModel->update($messageId, [
                 'status' => 'sent',
-                'sent_at' => $now,
+                'sent_at' => $now
             ]);
         }
     }
