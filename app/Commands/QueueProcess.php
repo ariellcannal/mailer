@@ -20,14 +20,10 @@ class QueueProcess extends BaseCommand
     public function run(array $params)
     {
         // 1. Configurações de Limite
-        set_time_limit(60); // Limite de 1 minuto
+        set_time_limit(90); // Limite de 1 minuto
         ini_set('memory_limit', '128M'); // Limite de memória seguro para CLI
         
         
-        error_reporting(E_ALL);
-        ini_set('display_errors','On');
-        
-
         $this->lockFile = WRITEPATH . 'queue_process.lock';
 
         // 2. Mecanismo de Lock com validação de PID
