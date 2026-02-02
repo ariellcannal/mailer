@@ -71,12 +71,25 @@ class ReceitaController extends Controller
             $cnaes = $this->request->getPost('cnaes') ?? [];
             $ufs = $this->request->getPost('ufs') ?? [];
             
-            $taskId = $this->taskModel->insert([
+            // Garantir que arrays vazios sejam null para evitar erro SQL
+            $cnaesJson = !empty($cnaes) ? json_encode($cnaes) : null;
+            $ufsJson = !empty($ufs) ? json_encode($ufs) : null;
+            
+            $data = [
                 'name' => $name ?: 'Importação ' . date('d/m/Y H:i'),
-                'cnaes' => json_encode($cnaes),
-                'ufs' => json_encode($ufs),
-                'status' => 'agendada'
-            ]);
+                'status' => 'agendada',
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+            
+            // Adicionar apenas se não for null
+            if ($cnaesJson !== null) {
+                $data['cnaes'] = $cnaesJson;
+            }
+            if ($ufsJson !== null) {
+                $data['ufs'] = $ufsJson;
+            }
+            
+            $taskId = $this->taskModel->insert($data);
             
             if ($taskId) {
                 return $this->response->setJSON([
