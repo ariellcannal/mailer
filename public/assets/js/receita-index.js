@@ -1,126 +1,113 @@
 /**
- * Receita Federal Import Page
- * Gerencia importação de dados da Receita Federal com streaming
+ * Gerenciamento de agendamento de importações da Receita Federal
  */
 (function() {
     'use strict';
-
-    let abortController = null;
-
+    
     // Buscar base URL do backend
     const baseUrl = document.querySelector('base')?.href || window.location.origin + '/';
-
+    
     $(document).ready(function() {
-        // Inicializa Select2 com AJAX para busca de CNAEs
+        initSelect2();
+        initFormSubmit();
+    });
+    
+    /**
+     * Inicializa Select2 para CNAEs e UFs
+     */
+    function initSelect2() {
+        // Select2 para CNAEs com AJAX
         $('#cnaes_select').select2({
             theme: 'bootstrap-5',
-            placeholder: 'Pesquise por código ou descrição do CNAE',
             ajax: {
                 url: baseUrl + 'receita/buscarCnaes',
                 dataType: 'json',
                 delay: 250,
-                processResults: function (data) {
-                    return { results: data };
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data
+                    };
                 },
                 cache: true
+            },
+            placeholder: 'Digite para buscar CNAEs',
+            minimumInputLength: 2,
+            allowClear: true,
+            language: {
+                inputTooShort: function() {
+                    return 'Digite pelo menos 2 caracteres';
+                },
+                searching: function() {
+                    return 'Buscando...';
+                },
+                noResults: function() {
+                    return 'Nenhum resultado encontrado';
+                }
             }
         });
-
+        
+        // Select2 para UFs
+        $('#ufs_select').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Selecione os estados',
+            allowClear: true,
+            language: {
+                noResults: function() {
+                    return 'Nenhum resultado encontrado';
+                }
+            }
+        });
+    }
+    
+    /**
+     * Inicializa submit do formulário
+     */
+    function initFormSubmit() {
         $('#form-import').on('submit', function(e) {
             e.preventDefault();
-            startImport();
-        });
-
-        $('#btn-stop').on('click', function() {
-            stopImport();
-        });
-    });
-
-    async function startImport() {
-        const cnaes = $('#cnaes_select').val() || [];
-        const restart = $('#restart_process').is(':checked');
-
-        if (cnaes.length === 0) {
-            if (!confirm("Atenção: Nenhum CNAE selecionado. Importar TODOS os dados?")) return;
-        }
-
-        const btnStart = $('#btn-start');
-        const btnStop = $('#btn-stop');
-        const consoleLog = $('#import-console');
-        const statusText = $('#process-status');
-        
-        btnStart.prop('disabled', true).addClass('d-none');
-        btnStop.removeClass('d-none');
-        statusText.html('<span class="status-badge bg-success"></span> Processando...');
-        consoleLog.html('> Conectando ao servidor...\n');
-
-        abortController = new AbortController();
-        
-        try {
-            const url = new URL(baseUrl + 'receita/importar');
-            url.searchParams.append('restart', restart);
-            cnaes.forEach(c => url.searchParams.append('cnaes[]', c));
             
-            const response = await fetch(url, { signal: abortController.signal });
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
+            const $btn = $('#btn-schedule');
+            const originalText = $btn.html();
             
-            let partialData = ''; 
-            let lastProgressLine = null;
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                
-                partialData += decoder.decode(value, { stream: true });
-                let lines = partialData.split('\n');
-                partialData = lines.pop(); 
-
-                for (let line of lines) {
-                    line = line.trim();
-                    if (!line || line === "LOG:") continue; // Pula logs vazios que geram linhas brancas
-
-                    if (line.startsWith("BAR:")) {
-                        const content = line.replace("BAR:", "").trim();
-                        if (!lastProgressLine) {
-                            lastProgressLine = $('<div class="progress-line"></div>').appendTo(consoleLog);
-                        }
-                        lastProgressLine.html(content);
+            // Desabilitar botão
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Agendando...');
+            
+            // Coletar dados
+            const formData = {
+                task_name: $('#task_name').val(),
+                cnaes: $('#cnaes_select').val() || [],
+                ufs: $('#ufs_select').val() || []
+            };
+            
+            // Enviar via AJAX
+            $.ajax({
+                url: baseUrl + 'receita/schedule',
+                method: 'POST',
+                data: formData,
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        alertify.success('Tarefa agendada com sucesso!');
+                        
+                        // Redirecionar para página de tarefas após 1 segundo
+                        setTimeout(function() {
+                            window.location.href = baseUrl + 'receita/tasks';
+                        }, 1000);
+                    } else {
+                        alertify.error(response.message || 'Erro ao agendar tarefa');
+                        $btn.prop('disabled', false).html(originalText);
                     }
-                    else if (line.startsWith("LOG:")) {
-                        const content = line.replace("LOG:", "").trim();
-                        if (content) consoleLog.append('<div>' + content + '</div>');
-                    }
+                },
+                error: function() {
+                    alertify.error('Erro ao agendar tarefa');
+                    $btn.prop('disabled', false).html(originalText);
                 }
-                consoleLog.scrollTop(consoleLog[0].scrollHeight);
-            }
-
-            statusText.text('Concluído');
-        } catch (error) {
-            if (error.name === 'AbortError') {
-                consoleLog.append('<div class="text-warning">> Interrompido pelo usuário.</div>');
-            } else {
-                consoleLog.append('<div class="text-danger">> Erro: ' + error.message + '</div>');
-            }
-        } finally {
-            btnStart.prop('disabled', false).removeClass('d-none');
-            btnStop.addClass('d-none');
-            statusText.text('Inativo');
-        }
+            });
+        });
     }
-
-    function stopImport() {
-        if (confirm('Deseja realmente interromper o processo atual?')) {
-            if (abortController) abortController.abort();
-            
-            // Chama rota para matar processos PHP no servidor
-            $.get(baseUrl + 'receita/parar');
-        }
-    }
-
-    // Expor funções globalmente se necessário
-    window.ReceitaImport = {
-        startImport,
-        stopImport
-    };
 })();

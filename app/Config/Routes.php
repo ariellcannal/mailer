@@ -95,10 +95,14 @@ $routes->group('templates', function($routes) {
 
 // Receita Federal
 $routes->group('receita', function($routes) {
-    $routes->get('/', 'ReceitaController::index');          // Página principal com Select2 e Console
-    $routes->get('importar', 'ReceitaController::importar'); // Endpoint do processamento (Stream)
-    $routes->get('buscarCnaes', 'ReceitaController::buscarCnaes'); // Busca AJAX para o Select2
-    $routes->get('parar', 'ReceitaController::parar');       // Taskkill do PHP
+    $routes->get('/', 'ReceitaController::index');                    // Página principal de configuração
+    $routes->get('tasks', 'ReceitaController::tasks');                 // Listagem de tarefas
+    $routes->get('tasks-data', 'ReceitaController::tasksData');        // Dados das tarefas (JSON)
+    $routes->post('schedule', 'ReceitaController::schedule');          // Agendar nova tarefa
+    $routes->post('duplicate-task/(:num)', 'ReceitaController::duplicateTask/$1'); // Duplicar tarefa
+    $routes->post('delete-task/(:num)', 'ReceitaController::deleteTask/$1');       // Excluir tarefa
+    $routes->get('buscarCnaes', 'ReceitaController::buscarCnaes');     // Busca AJAX para o Select2
+    $routes->get('process-cron', 'ReceitaController::processCron');    // Endpoint CRON
 });
 
 // Gerenciador de arquivos
