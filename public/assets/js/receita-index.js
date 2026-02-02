@@ -99,12 +99,22 @@
                             window.location.href = baseUrl + 'receita/tasks';
                         }, 1000);
                     } else {
-                        alertify.error(response.message || 'Erro ao agendar tarefa');
+                        // Mostrar erro detalhado para debug
+                        let errorMsg = response.message || 'Erro ao agendar tarefa';
+                        if (response.error_detail) {
+                            errorMsg += '\n\nDetalhes: ' + response.error_detail;
+                            if (response.file) {
+                                errorMsg += '\nArquivo: ' + response.file + ':' + response.line;
+                            }
+                        }
+                        alertify.error(errorMsg);
+                        console.error('Erro completo:', response);
                         $btn.prop('disabled', false).html(originalText);
                     }
                 },
-                error: function() {
-                    alertify.error('Erro ao agendar tarefa');
+                error: function(xhr, status, error) {
+                    alertify.error('Erro ao agendar tarefa: ' + error);
+                    console.error('XHR error:', xhr.responseText);
                     $btn.prop('disabled', false).html(originalText);
                 }
             });

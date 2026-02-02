@@ -106,9 +106,15 @@ class ReceitaController extends Controller
             
         } catch (\Exception $e) {
             log_message('error', 'Erro ao agendar tarefa: ' . $e->getMessage());
+            log_message('error', 'Stack trace: ' . $e->getTraceAsString());
+            
+            // Retornar mensagem de erro detalhada para debug
             return $this->response->setJSON([
                 'success' => false,
-                'message' => 'Erro ao agendar tarefa: ' . $e->getMessage()
+                'message' => 'Erro ao agendar tarefa',
+                'error_detail' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => basename($e->getFile())
             ]);
         }
     }
