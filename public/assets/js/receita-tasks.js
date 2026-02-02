@@ -4,6 +4,9 @@
 (function() {
     'use strict';
     
+    // Buscar base URL do backend
+    const baseUrl = document.querySelector('base')?.href || window.location.origin + '/';
+    
     let autoRefreshInterval = null;
     
     $(document).ready(function() {

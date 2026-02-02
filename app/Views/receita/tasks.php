@@ -1,9 +1,5 @@
 <?= $this->extend('layouts/main') ?>
 
-<?= $this->section('styles') ?>
-<link rel="stylesheet" href="<?= base_url('assets/css/receita-tasks.css') ?>">
-<?= $this->endSection() ?>
-
 <?= $this->section('content') ?>
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
