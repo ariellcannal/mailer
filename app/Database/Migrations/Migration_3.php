@@ -1,20 +1,27 @@
 <?php
+
 namespace App\Database\Migrations;
 
-use CodeIgniter\Database\Migration;
+use CodeIgniter\Database\BaseConnection;
 
 /**
- * Cria tabela para gerenciar tarefas de importação da Receita Federal
- * com controle assíncrono via CRON
+ * Migration 3: Criar tabela receita_import_tasks para processamento assíncrono
  */
-class CreateReceitaImportTasks extends Migration
+class Migration_3
 {
-    /**
-     * Cria a tabela receita_import_tasks
-     */
+    protected BaseConnection $db;
+    
+    public function __construct(BaseConnection $db)
+    {
+        $this->db = $db;
+    }
+    
     public function up(): void
     {
-        $this->forge->addField([
+        $forge = \Config\Database::forge();
+        
+        // Criar tabela receita_import_tasks
+        $forge->addField([
             'id' => [
                 'type' => 'INT',
                 'constraint' => 11,
@@ -97,21 +104,19 @@ class CreateReceitaImportTasks extends Migration
             ],
         ]);
 
-        $this->forge->addKey('id', true);
-        $this->forge->addKey('status');
-        $this->forge->addKey('created_at');
+        $forge->addKey('id', true);
+        $forge->addKey('status');
+        $forge->addKey('created_at');
         
-        $this->forge->createTable('receita_import_tasks');
+        $forge->createTable('receita_import_tasks');
         
-        log_message('info', 'Tabela receita_import_tasks criada com sucesso');
+        log_message('info', 'Migration 3: Tabela receita_import_tasks criada com sucesso');
     }
 
-    /**
-     * Remove a tabela receita_import_tasks
-     */
     public function down(): void
     {
-        $this->forge->dropTable('receita_import_tasks', true);
-        log_message('info', 'Tabela receita_import_tasks removida');
+        $forge = \Config\Database::forge();
+        $forge->dropTable('receita_import_tasks', true);
+        log_message('info', 'Migration 3: Tabela receita_import_tasks removida');
     }
 }
