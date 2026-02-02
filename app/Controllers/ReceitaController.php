@@ -187,27 +187,7 @@ class ReceitaController extends Controller
         }
     }
     
-    /**
-     * Endpoint para CRON processar próxima tarefa
-     * Deve ser chamado a cada minuto via crontab
-     */
-    public function processCron()
-    {
-        try {
-            $processor = new ReceitaAsyncProcessor();
-            $result = $processor->processNextTask();
-            
-            return $this->response->setJSON($result);
-            
-        } catch (\Exception $e) {
-            log_message('error', 'Erro no CRON: ' . $e->getMessage());
-            return $this->response->setJSON([
-                'success' => false,
-                'message' => $e->getMessage()
-            ]);
-        }
-    }
-    
+
     /**
      * Busca AJAX para o Select2 de CNAEs
      */

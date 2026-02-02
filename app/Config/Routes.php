@@ -102,7 +102,6 @@ $routes->group('receita', function($routes) {
     $routes->post('duplicate-task/(:num)', 'ReceitaController::duplicateTask/$1'); // Duplicar tarefa
     $routes->post('delete-task/(:num)', 'ReceitaController::deleteTask/$1');       // Excluir tarefa
     $routes->get('buscarCnaes', 'ReceitaController::buscarCnaes');     // Busca AJAX para o Select2
-    $routes->get('process-cron', 'ReceitaController::processCron');    // Endpoint CRON
 });
 
 // Gerenciador de arquivos

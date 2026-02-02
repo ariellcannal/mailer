@@ -2,7 +2,7 @@
 
 ## Visão Geral
 
-O sistema de importação da Receita Federal agora funciona de forma **assíncrona** através de tarefas processadas via CRON. Isso permite:
+O sistema de importação da Receita Federal funciona de forma **assíncrona** através de tarefas processadas via **Spark Command** executado pelo CRON. Isso permite:
 
 - ✅ Processamento em background sem bloquear a interface
 - ✅ Controle de concorrência (apenas uma tarefa por vez)
@@ -13,8 +13,8 @@ O sistema de importação da Receita Federal agora funciona de forma **assíncro
 ## Como Funciona
 
 1. **Usuário agenda uma tarefa** através da interface web
-2. **CRON executa a cada minuto** e verifica se há tarefas agendadas
-3. **Processador pega a próxima tarefa** na fila (ordem de criação)
+2. **CRON executa a cada minuto** o comando `php spark receita:process`
+3. **Command verifica** se há tarefas agendadas e se não há processo em execução
 4. **Processa por até 55 segundos** e salva o progresso
 5. **Repete até concluir** todas as tarefas agendadas
 
@@ -29,36 +29,59 @@ crontab -e
 ### 2. Adicionar linha para executar a cada minuto
 
 ```bash
-* * * * * /usr/bin/php /caminho/completo/para/public/index.php receita process-cron >> /var/log/receita-cron.log 2>&1
+* * * * * cd /caminho/completo/do/projeto && php spark receita:process >> /dev/null 2>&1
+```
+
+### 3. Com logs (recomendado para debug)
+
+```bash
+* * * * * cd /caminho/completo/do/projeto && php spark receita:process >> /var/log/receita-import.log 2>&1
+```
+
+### 4. Exemplo completo
+
+```bash
+* * * * * cd /var/www/mailer && /usr/bin/php8.1 spark receita:process >> /var/log/receita-import.log 2>&1
 ```
 
 **Substitua:**
-- `/usr/bin/php` pelo caminho do seu PHP (use `which php` para descobrir)
-- `/caminho/completo/para/public/index.php` pelo caminho real do seu projeto
-
-### 3. Exemplo completo
-
-```bash
-* * * * * /usr/bin/php8.1 /var/www/mailer/public/index.php receita process-cron >> /var/log/receita-cron.log 2>&1
-```
+- `/var/www/mailer` pelo caminho real do seu projeto
+- `/usr/bin/php8.1` pelo caminho do seu PHP (use `which php` para descobrir)
 
 ## Verificar se está Funcionando
 
-### 1. Verificar logs
+### 1. Testar comando manualmente
 
 ```bash
-tail -f /var/log/receita-cron.log
+cd /caminho/do/projeto
+php spark receita:process
 ```
 
-### 2. Verificar lockfile
+Você verá output colorido indicando o progresso:
+```
+[2025-01-30 15:30:00] Iniciando processamento de importações da Receita...
+Processando tarefa #1: Contabilidades SP
+Processamento parcial da tarefa #1
+Progresso: 3/10 arquivos
+Linhas processadas: 15000
+[2025-01-30 15:30:55] Processamento finalizado.
+```
+
+### 2. Verificar logs
 
 ```bash
-ls -la /var/www/mailer/receita.lock
+tail -f /var/log/receita-import.log
+```
+
+### 3. Verificar lockfile
+
+```bash
+ls -la /caminho/do/projeto/receita.lock
 ```
 
 Se o arquivo existir, significa que há um processo em execução.
 
-### 3. Verificar tarefas no banco
+### 4. Verificar tarefas no banco
 
 ```sql
 SELECT id, name, status, processed_files, total_files, processed_lines, total_lines 
@@ -86,7 +109,8 @@ writable/receita/
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    CRON (a cada minuto)                      │
+│            CRON (a cada minuto)                              │
+│            php spark receita:process                         │
 └────────────────────────┬────────────────────────────────────┘
                          │
                          ▼
@@ -149,6 +173,21 @@ writable/receita/
 | **Batch size** | 500 registros | Inserções em lote para performance |
 | **Intervalo CRON** | 1 minuto | Frequência de verificação de tarefas |
 
+## Comandos Spark Disponíveis
+
+### receita:process
+
+Processa a próxima tarefa agendada (usado pelo CRON).
+
+```bash
+php spark receita:process
+```
+
+**Output:**
+- Verde: Sucesso
+- Amarelo: Avisos (sem tarefas, já em execução)
+- Vermelho: Erros
+
 ## Troubleshooting
 
 ### Problema: Tarefa fica "em_andamento" indefinidamente
@@ -169,8 +208,22 @@ UPDATE receita_import_tasks SET status = 'agendada' WHERE id = X;
 **Verificar:**
 1. CRON está rodando? `service cron status`
 2. Caminho do PHP está correto? `which php`
-3. Permissões do arquivo? `chmod +x public/index.php`
+3. Caminho do projeto está correto?
 4. Logs de erro? `tail -f /var/log/syslog | grep CRON`
+5. Testar manualmente: `cd /caminho && php spark receita:process`
+
+### Problema: Comando não encontrado
+
+**Erro:** `Command "receita:process" not found`
+
+**Solução:**
+```bash
+# Verificar se o arquivo existe
+ls -la app/Commands/ProcessReceitaImports.php
+
+# Limpar cache do framework
+php spark cache:clear
+```
 
 ### Problema: Importação muito lenta
 
@@ -196,7 +249,7 @@ A página atualiza automaticamente a cada 10 segundos mostrando:
 
 ```bash
 # Logs do CRON
-tail -f /var/log/receita-cron.log
+tail -f /var/log/receita-import.log
 
 # Logs da aplicação
 tail -f writable/logs/log-*.log | grep Receita
@@ -220,7 +273,13 @@ tail -f writable/logs/log-*.log | grep Receita
 
 ```bash
 # Testar processamento manualmente
-php public/index.php receita process-cron
+php spark receita:process
+
+# Listar todos os comandos disponíveis
+php spark list
+
+# Ver help do comando
+php spark help receita:process
 
 # Ver tarefas agendadas
 mysql -u user -p -e "SELECT * FROM receita_import_tasks WHERE status='agendada'"
@@ -239,6 +298,7 @@ mysql -u user -p -e "DELETE FROM receita_import_tasks WHERE status='concluida' A
 - ✅ Transações no banco de dados
 - ✅ Logs detalhados de erros
 - ✅ Limite de tempo para evitar loops infinitos
+- ✅ Comando CLI isolado do contexto HTTP
 
 ## Performance
 
@@ -249,8 +309,9 @@ Com as otimizações implementadas:
 - **Índices no banco**: Otimizam queries de verificação
 - **Filtros aplicados**: Reduzem volume processado
 - **Progresso salvo**: A cada batch para continuidade
+- **Queries desabilitadas**: saveQueries = false para economia de memória
 
 ---
 
 **Última atualização:** 30/01/2025
-**Versão:** 2.0 (Processamento Assíncrono)
+**Versão:** 3.0 (Spark Command + CRON)
