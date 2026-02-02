@@ -211,6 +211,7 @@
                                                 'scheduled' => 'info',
                                                 'sending' => 'warning',
                                                 'sent' => 'success',
+                                                'completed' => 'success',
                                                 'cancelled' => 'danger'
                                             ];
                                             $statusLabels = [
@@ -218,11 +219,15 @@
                                                 'scheduled' => 'Agendada',
                                                 'sending' => 'Enviando',
                                                 'sent' => 'Enviada',
+                                                'completed' => 'Concluída',
                                                 'cancelled' => 'Cancelada'
                                             ];
+                                            $status = $message['status'] ?? 'draft';
+                                            $statusColor = $statusColors[$status] ?? 'secondary';
+                                            $statusLabel = $statusLabels[$status] ?? 'Desconhecido';
                                             ?>
-                                            <span class="badge bg-<?= $statusColors[$message['status']] ?>">
-                                                <?= $statusLabels[$message['status']] ?>
+                                            <span class="badge bg-<?= $statusColor ?>">
+                                                <?= $statusLabel ?>
                                             </span>
                                         </td>
                                         <td><?= number_format($message['total_sent'], 0, ',', '.') ?></td>
