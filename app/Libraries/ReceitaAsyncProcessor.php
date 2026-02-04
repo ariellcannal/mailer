@@ -388,13 +388,17 @@ class ReceitaAsyncProcessor
             
             $result = $this->processFile($zipName, $progress, $cnaes, $ufs, $situacoes);
             
-            $filesProcessed++;
             $linesProcessed += $result['lines_processed'];
             $linesImported += $result['lines_imported'];
             
-            // Adicionar bytes do arquivo processado
-            if (file_exists($path)) {
-                $bytesProcessed += filesize($path);
+            // Se completou o arquivo, incrementar contadores
+            if ($result['completed']) {
+                $filesProcessed++;
+                
+                // Adicionar bytes do arquivo completamente processado
+                if (file_exists($path)) {
+                    $bytesProcessed += filesize($path);
+                }
             }
             
             // Atualizar progresso no banco
