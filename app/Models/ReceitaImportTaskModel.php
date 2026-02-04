@@ -61,15 +61,26 @@ class ReceitaImportTaskModel extends Model
     protected $afterDelete = [];
 
     /**
-     * Busca próxima tarefa agendada para processar
+     * Busca próxima tarefa agendada ou em andamento para processar
+     * Prioriza tarefas em_andamento (que foram interrompidas) antes das agendadas
      * 
      * @return array|null
      */
     public function getNextScheduledTask(): ?array
     {
-        return $this->where('status', 'agendada')
-            ->orderBy('created_at', 'ASC')
+        // Primeiro tenta buscar tarefa em_andamento (interrompida)
+        $task = $this->where('status', 'em_andamento')
+            ->orderBy('started_at', 'ASC')
             ->first();
+        
+        // Se não houver em_andamento, busca próxima agendada
+        if (!$task) {
+            $task = $this->where('status', 'agendada')
+                ->orderBy('created_at', 'ASC')
+                ->first();
+        }
+        
+        return $task;
     }
 
     /**
