@@ -89,7 +89,7 @@
                                         </div>
                                     </div>
                                     <small class="text-muted">
-                                        <?= number_format($task['imported_lines']) ?> registros importados
+                                        <?= number_format($task['processed_lines'] ?? 0) ?> / <?= number_format($task['total_lines'] ?? 0) ?> linhas (<?= number_format($task['imported_lines'] ?? 0) ?> importadas)
                                     </small>
                                 </td>
                                 <td>
