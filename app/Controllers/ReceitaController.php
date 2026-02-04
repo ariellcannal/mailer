@@ -10,7 +10,7 @@ use App\Libraries\ReceitaAsyncProcessor;
  * Controller para gerenciar importações da Receita Federal
  * com processamento assíncrono via CRON
  */
-class ReceitaController extends Controller
+class ReceitaController extends BaseController
 {
     private $taskModel;
     

@@ -137,7 +137,7 @@ class MigrationManager
             throw new \RuntimeException("Migration class not found: {$className}");
         }
         
-        $migration = new $className($this->db);
+        $migration = new $className();
         $migration->up();
     }
     

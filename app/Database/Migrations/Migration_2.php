@@ -2,19 +2,13 @@
 
 namespace App\Database\Migrations;
 
-use CodeIgniter\Database\BaseConnection;
+use CodeIgniter\Database\Migration;
 
 /**
  * Migration 2: Criar tabela contact_imports para importação assíncrona
  */
-class Migration_2
+class Migration_2 extends Migration
 {
-    protected BaseConnection $db;
-    
-    public function __construct(BaseConnection $db)
-    {
-        $this->db = $db;
-    }
     
     public function up(): void
     {
