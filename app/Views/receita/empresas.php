@@ -1,4 +1,4 @@
-<?= $this->extend('layout/main') ?>
+<?= $this->extend('layouts/main') ?>
 
 <?= $this->section('styles') ?>
 <link rel="stylesheet" href="<?= base_url('assets/css/receita-empresas.css') ?>">
