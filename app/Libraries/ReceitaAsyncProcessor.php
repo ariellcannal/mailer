@@ -45,6 +45,29 @@ class ReceitaAsyncProcessor
         $this->taskModel = new ReceitaImportTaskModel();
     }
     
+    public function isLocked(): bool
+    {
+        if (! file_exists($this->lockFile))
+            return false;
+            
+            $pid = (int) file_get_contents($this->lockFile);
+            
+            // Verifica se o PID ainda existe no sistema (Linux/Unix)
+            if (function_exists('posix_getpgid')) {
+                if (posix_getpgid($pid) === false) {
+                    CLI::write("Detectado lock órfão (PID $pid inexistente). Reiniciando...", 'cyan');
+                    return false;
+                }
+            } elseif (PHP_OS_FAMILY === 'Windows') {
+                // Verificação alternativa para Windows
+                $output = shell_exec("tasklist /FI \"PID eq $pid\" /NH");
+                if (strpos($output, (string) $pid) === false)
+                    return false;
+            }
+            
+            return true;
+    }
+    
     /**
      * Processa próxima tarefa agendada
      * 
@@ -246,7 +269,7 @@ class ReceitaAsyncProcessor
      * @param array $progress
      * @return array
      */
-    private function processTask(array $progress): array
+    public function processTask(array $progress): array
     {
         set_time_limit(90);
         ini_set('memory_limit', '128M');
