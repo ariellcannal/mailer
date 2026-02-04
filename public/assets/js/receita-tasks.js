@@ -117,15 +117,17 @@
                         ${task.status === 'erro' && task.error_message ? `<br><small class="text-danger" title="${escapeHtml(task.error_message)}"><i class="fas fa-exclamation-circle"></i> Ver erro</small>` : ''}
                     </td>
                     <td>
-                        <div class="progress mb-1" style="height: 20px;">
-                            <div class="progress-bar ${task.status === 'concluida' ? 'bg-success' : ''}" 
-                                 role="progressbar" 
-                                 style="width: ${progress}%"
-                                 aria-valuenow="${progress}" 
-                                 aria-valuemin="0" 
-                                 aria-valuemax="100">
-                                ${progress}%
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <div class="progress flex-grow-1" style="height: 20px;">
+                                <div class="progress-bar ${task.status === 'concluida' ? 'bg-success' : ''}" 
+                                     role="progressbar" 
+                                     style="width: ${progress}%"
+                                     aria-valuenow="${progress}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                </div>
                             </div>
+                            <small class="text-muted text-nowrap">${progress}%</small>
                         </div>
                         <small class="text-muted">
                             ${formatNumber(task.imported_lines || 0)} registros importados
