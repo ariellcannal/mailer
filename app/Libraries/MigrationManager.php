@@ -30,6 +30,9 @@ class MigrationManager
         $currentVersion = $this->getCurrentVersion();
         $latestVersion = $this->getLatestVersion();
         
+        // Debug verbose
+        error_log("[MigrationManager] Current version: {$currentVersion}");
+        error_log("[MigrationManager] Latest version: {$latestVersion}");
         log_message('debug', "MigrationManager: Current version = {$currentVersion}, Latest version = {$latestVersion}");
         
         if ($currentVersion >= $latestVersion) {
@@ -42,10 +45,18 @@ class MigrationManager
         
         // Executar migrations pendentes
         for ($version = $currentVersion + 1; $version <= $latestVersion; $version++) {
+            error_log("[MigrationManager] Running migration {$version}");
             log_message('info', "MigrationManager: Running migration {$version}");
-            $this->runMigration($version);
-            $this->setVersion($version);
-            log_message('info', "MigrationManager: Migration {$version} completed");
+            try {
+                $this->runMigration($version);
+                $this->setVersion($version);
+                error_log("[MigrationManager] Migration {$version} completed successfully");
+                log_message('info', "MigrationManager: Migration {$version} completed");
+            } catch (\Exception $e) {
+                error_log("[MigrationManager] Migration {$version} failed: " . $e->getMessage());
+                log_message('error', "MigrationManager: Migration {$version} failed: " . $e->getMessage());
+                throw $e;
+            }
         }
         
         return [
