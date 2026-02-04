@@ -16,16 +16,42 @@ class Migration_6 extends Migration
 {
     public function up()
     {
+        log_message('info', '========================================');
+        log_message('info', 'Migration 6: INICIANDO');
+        log_message('info', '========================================');
+        
         $db = \Config\Database::connect();
         $forge = \Config\Database::forge();
+        
+        // Verificar se as tabelas existem
+        $tabelasExistem = [
+            'receita_estabelecimentos' => $db->tableExists('receita_estabelecimentos'),
+            'receita_empresas' => $db->tableExists('receita_empresas'),
+            'receita_socios' => $db->tableExists('receita_socios'),
+        ];
+        
+        log_message('info', 'Migration 6: Verificando tabelas...');
+        foreach ($tabelasExistem as $tabela => $existe) {
+            log_message('info', "  - {$tabela}: " . ($existe ? 'EXISTE' : 'NÃO EXISTE'));
+        }
+        
+        if (!$tabelasExistem['receita_estabelecimentos']) {
+            log_message('warning', 'Migration 6: Tabela receita_estabelecimentos não existe! Abortando.');
+            return;
+        }
         
         // ========================================
         // ÍNDICES PARA ESTABELECIMENTOS
         // ========================================
         
         // Índice para busca por nome fantasia (FULLTEXT para busca rápida)
+        log_message('info', 'Migration 6: Verificando idx_nome_fantasia...');
         if (!$this->indexExists('receita_estabelecimentos', 'idx_nome_fantasia')) {
+            log_message('info', 'Migration 6: Criando idx_nome_fantasia...');
             $db->query('CREATE INDEX idx_nome_fantasia ON receita_estabelecimentos(nome_fantasia(100))');
+            log_message('info', 'Migration 6: idx_nome_fantasia criado!');
+        } else {
+            log_message('info', 'Migration 6: idx_nome_fantasia já existe, pulando.');
         }
         
         // Índice para busca por CNPJ completo (base + ordem + dv)
@@ -124,7 +150,9 @@ class Migration_6 extends Migration
             ');
         }
         
-        log_message('info', 'Migration 6: Foreign keys e índices criados com sucesso');
+        log_message('info', '========================================');
+        log_message('info', 'Migration 6: CONCLUÍDA COM SUCESSO');
+        log_message('info', '========================================');
     }
     
     public function down()

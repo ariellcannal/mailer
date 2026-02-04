@@ -75,8 +75,8 @@ class MigrationManager
     {
         // Verifica se tabela system_settings existe
         if (!$this->db->tableExists('system_settings')) {
-            // Se não existir, assumir versão 1
-            return 1;
+            // Se não existir, assumir versão 0 (nenhuma migration executada ainda)
+            return 0;
         }
         
         $result = $this->db->table('system_settings')
@@ -85,9 +85,8 @@ class MigrationManager
             ->getRowArray();
         
         if (!$result) {
-            // Se não existe registro, criar com versão 1
-            $this->setVersion(1);
-            return 1;
+            // Se não existe registro, assumir versão 0
+            return 0;
         }
         
         return (int) $result['setting_value'];
@@ -151,6 +150,12 @@ class MigrationManager
      */
     protected function setVersion(int $version): void
     {
+        // Verificar se a tabela existe antes de tentar inserir/atualizar
+        if (!$this->db->tableExists('system_settings')) {
+            // Tabela ainda não foi criada, aguardar Migration_1
+            return;
+        }
+        
         $existing = $this->db->table('system_settings')
             ->where('setting_key', 'db_version')
             ->get()
