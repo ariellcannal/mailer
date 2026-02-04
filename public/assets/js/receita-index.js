@@ -62,6 +62,18 @@
                 }
             }
         });
+        
+        // Select2 para Situações Fiscais
+        $('#situacoes_select').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Selecione as situações fiscais',
+            allowClear: true,
+            language: {
+                noResults: function() {
+                    return 'Nenhum resultado encontrado';
+                }
+            }
+        });
     }
     
     /**
@@ -81,7 +93,8 @@
             const formData = {
                 task_name: $('#task_name').val(),
                 cnaes: $('#cnaes_select').val() || [],
-                ufs: $('#ufs_select').val() || []
+                ufs: $('#ufs_select').val() || [],
+                situacoes: $('#situacoes_select').val() || ['02', '03'] // Padrão: ATIVA e SUSPENSA
             };
             
             // Enviar via AJAX

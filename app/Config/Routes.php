@@ -102,6 +102,9 @@ $routes->group('receita', function($routes) {
     $routes->post('duplicate-task/(:num)', 'ReceitaController::duplicateTask/$1'); // Duplicar tarefa
     $routes->post('delete-task/(:num)', 'ReceitaController::deleteTask/$1');       // Excluir tarefa
     $routes->get('buscarCnaes', 'ReceitaController::buscarCnaes');     // Busca AJAX para o Select2
+    $routes->get('empresas', 'ReceitaController::empresas');           // Página de consulta de empresas
+    $routes->get('buscarEmpresas', 'ReceitaController::buscarEmpresas'); // Buscar empresas com filtros
+    $routes->get('empresa/(:segment)/(:segment)/(:segment)', 'ReceitaController::empresa/$1/$2/$3'); // Detalhes da empresa
 });
 
 // Gerenciador de arquivos

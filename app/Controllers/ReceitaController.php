@@ -70,10 +70,12 @@ class ReceitaController extends Controller
             $name = $this->request->getPost('task_name');
             $cnaes = $this->request->getPost('cnaes') ?? [];
             $ufs = $this->request->getPost('ufs') ?? [];
+            $situacoes = $this->request->getPost('situacoes') ?? ['02', '03']; // Padrão: ATIVA e SUSPENSA
             
             // Garantir que arrays vazios sejam null para evitar erro SQL
             $cnaesJson = !empty($cnaes) ? json_encode($cnaes) : null;
             $ufsJson = !empty($ufs) ? json_encode($ufs) : null;
+            $situacoesStr = !empty($situacoes) ? implode(',', $situacoes) : '02,03';
             
             $data = [
                 'name' => $name ?: 'Importação ' . date('d/m/Y H:i'),
@@ -88,6 +90,8 @@ class ReceitaController extends Controller
             if ($ufsJson !== null) {
                 $data['ufs'] = $ufsJson;
             }
+            // Situações fiscais sempre incluir (tem padrão)
+            $data['situacoes_fiscais'] = $situacoesStr;
             
             $taskId = $this->taskModel->insert($data);
             
@@ -202,5 +206,138 @@ class ReceitaController extends Controller
         $results = $builder->limit(20)->get()->getResultArray();
         
         return $this->response->setJSON($results);
+    }
+    
+    /**
+     * Página de consulta de empresas importadas
+     */
+    public function empresas()
+    {
+        return view('receita/empresas', [
+            'pageTitle' => 'Consultar Empresas',
+            'activeMenu' => 'receita'
+        ]);
+    }
+    
+    /**
+     * Buscar empresas com filtros e paginação
+     */
+    public function buscarEmpresas()
+    {
+        try {
+            $db = \Config\Database::connect();
+            $builder = $db->table('receita_estabelecimentos');
+            
+            // Filtros
+            $nome = $this->request->getGet('nome');
+            $cnpjBasico = $this->request->getGet('cnpj_basico');
+            $cnaes = $this->request->getGet('cnae') ?? [];
+            $uf = $this->request->getGet('uf');
+            
+            // Aplicar filtros
+            if (!empty($nome)) {
+                $builder->groupStart();
+                $builder->like('nome_fantasia', $nome);
+                $builder->orLike('razao_social', $nome);
+                $builder->groupEnd();
+            }
+            
+            if (!empty($cnpjBasico)) {
+                $builder->where('cnpj_basico', $cnpjBasico);
+            }
+            
+            if (!empty($cnaes)) {
+                $builder->groupStart();
+                foreach ($cnaes as $cnae) {
+                    $builder->orWhere('cnae_fiscal_principal', $cnae);
+                    $builder->orLike('cnae_fiscal_secundaria', $cnae);
+                }
+                $builder->groupEnd();
+            }
+            
+            if (!empty($uf)) {
+                $builder->where('uf', $uf);
+            }
+            
+            // Paginação
+            $perPage = 20;
+            $page = (int) ($this->request->getGet('page') ?? 1);
+            $offset = ($page - 1) * $perPage;
+            
+            // Total de registros
+            $total = $builder->countAllResults(false);
+            
+            // Buscar dados
+            $empresas = $builder
+                ->select('cnpj_basico, cnpj_ordem, cnpj_dv, nome_fantasia, razao_social, ddd_telefone_1, telefone_1, ddd_telefone_2, telefone_2, ddd_fax, fax, correio_eletronico')
+                ->limit($perPage, $offset)
+                ->get()
+                ->getResultArray();
+            
+            return $this->response->setJSON([
+                'success' => true,
+                'data' => $empresas,
+                'pagination' => [
+                    'current_page' => $page,
+                    'per_page' => $perPage,
+                    'total' => $total,
+                    'total_pages' => ceil($total / $perPage)
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Erro ao buscar empresas: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Erro ao buscar empresas: ' . $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * Detalhes da empresa com sócios
+     */
+    public function empresa($cnpjBasico, $cnpjOrdem, $cnpjDv)
+    {
+        try {
+            $db = \Config\Database::connect();
+            
+            // Buscar estabelecimento
+            $estabelecimento = $db->table('receita_estabelecimentos')
+                ->where('cnpj_basico', $cnpjBasico)
+                ->where('cnpj_ordem', $cnpjOrdem)
+                ->where('cnpj_dv', $cnpjDv)
+                ->get()
+                ->getRowArray();
+            
+            if (!$estabelecimento) {
+                throw new \Exception('Empresa não encontrada');
+            }
+            
+            // Buscar empresa (dados da matriz)
+            $empresa = $db->table('receita_empresas')
+                ->where('cnpj_basico', $cnpjBasico)
+                ->get()
+                ->getRowArray();
+            
+            // Buscar sócios
+            $socios = $db->table('receita_socios')
+                ->where('cnpj_basico', $cnpjBasico)
+                ->get()
+                ->getResultArray();
+            
+            return view('receita/empresa_detalhes', [
+                'pageTitle' => 'Detalhes da Empresa',
+                'activeMenu' => 'receita',
+                'estabelecimento' => $estabelecimento,
+                'empresa' => $empresa,
+                'socios' => $socios
+            ]);
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Erro ao buscar detalhes da empresa: ' . $e->getMessage());
+            return redirect()->to(base_url('receita/empresas'))
+                ->with('error', 'Empresa não encontrada');
+        }
     }
 }

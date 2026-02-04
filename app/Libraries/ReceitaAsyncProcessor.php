@@ -341,6 +341,9 @@ class ReceitaAsyncProcessor
         
         $cnaes = json_decode($this->currentTask['cnaes'] ?? '[]', true);
         $ufs = json_decode($this->currentTask['ufs'] ?? '[]', true);
+        $situacoes = !empty($this->currentTask['situacoes_fiscais']) 
+            ? explode(',', $this->currentTask['situacoes_fiscais']) 
+            : ['02', '03']; // Padrão: ATIVA e SUSPENSA
         
         $fila = $this->getFilaArquivos();
         $ordemFila = array_flip($fila);
@@ -383,7 +386,7 @@ class ReceitaAsyncProcessor
                 continue;
             }
             
-            $result = $this->processFile($zipName, $progress, $cnaes, $ufs);
+            $result = $this->processFile($zipName, $progress, $cnaes, $ufs, $situacoes);
             
             $filesProcessed++;
             $linesProcessed += $result['lines_processed'];
@@ -435,7 +438,7 @@ class ReceitaAsyncProcessor
      * @param array $ufs
      * @return array
      */
-    private function processFile(string $zipName, array $progress, array $cnaes, array $ufs): array
+    private function processFile(string $zipName, array $progress, array $cnaes, array $ufs, array $situacoes = ['02', '03']): array
     {
         $path = $this->basePath . $zipName;
         $rawName = strtolower(preg_replace('/[0-9]|\.zip/', '', $zipName));
@@ -474,9 +477,9 @@ class ReceitaAsyncProcessor
                 $data = str_getcsv($line, ';', '"');
                 unset($line);
                 
-                // Filtro por CNAE e UF para estabelecimentos
+                // Filtro por CNAE, UF e Situação Fiscal para estabelecimentos
                 if ($rawName == 'estabelecimentos') {
-                    // Filtro por CNAE
+                    // Filtro por CNAE (coluna 11 = cnae_fiscal_principal)
                     if (!empty($cnaes) && !in_array($data[11] ?? '', $cnaes)) {
                         unset($data);
                         continue;
@@ -484,6 +487,13 @@ class ReceitaAsyncProcessor
                     
                     // Filtro por UF (coluna 0 = UF)
                     if (!empty($ufs) && !in_array($data[0] ?? '', $ufs)) {
+                        unset($data);
+                        continue;
+                    }
+                    
+                    // Filtro por Situação Fiscal (coluna 5 = situacao_cadastral)
+                    // Valores: 01=NULA, 02=ATIVA, 03=SUSPENSA, 04=INAPTA, 08=BAIXADA
+                    if (!empty($situacoes) && !in_array($data[5] ?? '', $situacoes)) {
                         unset($data);
                         continue;
                     }

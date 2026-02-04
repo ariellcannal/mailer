@@ -80,6 +80,9 @@
                             <a href="<?= base_url('receita/tasks') ?>" class="btn btn-outline-secondary">
                                 <i class="fas fa-list me-2"></i>Ver Tarefas
                             </a>
+                            <a href="<?= base_url('receita/empresas') ?>" class="btn btn-outline-info">
+                                <i class="fas fa-building me-2"></i>Consultar Empresas Importadas
+                            </a>
                         </div>
                     </form>
                 </div>
