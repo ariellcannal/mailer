@@ -26,10 +26,10 @@ class Database extends Config
      */
     public array $default = [
         'DSN'          => '',
-        'hostname'     => 'localhost',
-        'username'     => '',
-        'password'     => '',
-        'database'     => '',
+        'hostname'     => 'gateway02.us-east-1.prod.aws.tidbcloud.com',
+        'username'     => '4RUny5xeXrBdXff.root',
+        'password'     => '9kL35gWc0Q1XH3rvqwhk',
+        'database'     => 'CbeEug4rDnHmZ5VRqvVXG2',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
         'pConnect'     => false,
@@ -37,11 +37,14 @@ class Database extends Config
         'charset'      => 'utf8mb4',
         'DBCollat'     => 'utf8mb4_general_ci',
         'swapPre'      => '',
-        'encrypt'      => false,
+        'encrypt'      => [
+            'ssl_verify' => true,
+            'ssl_ca' => '',
+        ],
         'compress'     => false,
         'strictOn'     => false,
         'failover'     => [],
-        'port'         => 3306,
+        'port'         => 4000,
         'numberNative' => false,
         'foundRows'    => false,
         'dateFormat'   => [
@@ -197,7 +200,7 @@ class Database extends Config
         // Ensure that we always set the database group to 'tests' if
         // we are currently running an automated test suite, so that
         // we don't overwrite live data on accident.
-        if (ENVIRONMENT === 'testing') {
+        if (defined('ENVIRONMENT') && ENVIRONMENT === 'testing') {
             $this->defaultGroup = 'tests';
         }
     }

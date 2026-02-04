@@ -345,6 +345,25 @@ class ReceitaAsyncProcessor
             ? explode(',', $this->currentTask['situacoes_fiscais']) 
             : ['02', '03']; // Padrão: ATIVA e SUSPENSA
         
+        // Criar lista de contatos se fornecida
+        $contactListId = null;
+        $includeContabilidade = true;
+        if (!empty($this->currentTask['contact_list_name'])) {
+            $contactListId = $this->createContactList(
+                $this->currentTask['contact_list_name'],
+                $this->currentTask['id']
+            );
+            $includeContabilidade = !empty($this->currentTask['include_contabilidade']);
+            
+            // Salvar ID da lista na tarefa
+            if ($contactListId) {
+                $this->taskModel->update($this->currentTask['id'], [
+                    'contact_list_id' => $contactListId
+                ]);
+                log_message('info', "Lista de contatos #{$contactListId} criada para tarefa #{$this->currentTask['id']}");
+            }
+        }
+        
         $fila = $this->getFilaArquivos();
         $ordemFila = array_flip($fila);
         
@@ -394,7 +413,7 @@ class ReceitaAsyncProcessor
                 continue;
             }
             
-            $result = $this->processFile($zipName, $progress, $cnaes, $ufs, $situacoes);
+            $result = $this->processFile($zipName, $progress, $cnaes, $ufs, $situacoes, $contactListId, $includeContabilidade);
             
             $linesProcessed += $result['lines_processed'];
             $linesImported += $result['lines_imported'];
@@ -446,7 +465,7 @@ class ReceitaAsyncProcessor
      * @param array $ufs
      * @return array
      */
-    private function processFile(string $zipName, array $progress, array $cnaes, array $ufs, array $situacoes = ['02', '03']): array
+    private function processFile(string $zipName, array $progress, array $cnaes, array $ufs, array $situacoes = ['02', '03'], ?int $contactListId = null, bool $includeContabilidade = true): array
     {
         $path = $this->basePath . $zipName;
         $rawName = strtolower(preg_replace('/[0-9]|\.zip/', '', $zipName));
@@ -540,6 +559,11 @@ class ReceitaAsyncProcessor
                     $this->db->table($tableName)->ignore(true)->insertBatch($batchData);
                     $linesImported += count($batchData);
                     
+                    // Criar/atualizar contatos se lista foi fornecida
+                    if ($contactListId && $rawName == 'estabelecimentos') {
+                        $this->processContactsFromBatch($batchData, $contactListId, $includeContabilidade);
+                    }
+                    
                     unset($batchData);
                     $batchData = [];
                     
@@ -554,6 +578,11 @@ class ReceitaAsyncProcessor
             if (!empty($batchData)) {
                 $this->db->table($tableName)->ignore(true)->insertBatch($batchData);
                 $linesImported += count($batchData);
+                
+                // Criar/atualizar contatos se lista foi fornecida
+                if ($contactListId && $rawName == 'estabelecimentos') {
+                    $this->processContactsFromBatch($batchData, $contactListId, $includeContabilidade);
+                }
             }
             
             $this->db->transCommit();
@@ -631,5 +660,101 @@ class ReceitaAsyncProcessor
         }
         
         return $fila;
+    }
+    
+    /**
+     * Cria uma lista de contatos
+     * 
+     * @param string $name Nome da lista
+     * @param int $taskId ID da tarefa
+     * @return int|null ID da lista criada
+     */
+    private function createContactList(string $name, int $taskId): ?int
+    {
+        $listModel = new \App\Models\ContactListModel();
+        
+        $data = [
+            'name' => $name,
+            'description' => "Lista criada automaticamente pela importação da Receita Federal (Tarefa #{$taskId})",
+            'total_contacts' => 0
+        ];
+        
+        $listId = $listModel->insert($data);
+        
+        return $listId ? (int) $listId : null;
+    }
+    
+    /**
+     * Processa contatos de um batch de estabelecimentos
+     * 
+     * @param array $batchData Dados do batch
+     * @param int $contactListId ID da lista de contatos
+     * @param bool $includeContabilidade Se deve incluir contatos de contabilidade
+     */
+    private function processContactsFromBatch(array $batchData, int $contactListId, bool $includeContabilidade): void
+    {
+        $contactModel = new \App\Models\ContactModel();
+        $memberModel = new \App\Models\ContactListMemberModel();
+        
+        foreach ($batchData as $row) {
+            // Verificar se tem email
+            $email = trim($row['correio_eletronico'] ?? '');
+            if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                continue;
+            }
+            
+            // Verificar se é contabilidade
+            $isContabilidade = !empty($row['is_contabilidade']);
+            if ($isContabilidade && !$includeContabilidade) {
+                continue; // Pular contatos de contabilidade se não deve incluir
+            }
+            
+            // Criar/atualizar contato
+            $contactData = [
+                'email' => $email,
+                'name' => trim($row['nome_fantasia'] ?? ''),
+                'is_active' => 1
+            ];
+            
+            // Verificar se contato já existe
+            $existingContact = $contactModel->where('email', $email)->first();
+            
+            if ($existingContact) {
+                $contactId = $existingContact['id'];
+                // Atualizar nome se estiver vazio
+                if (empty($existingContact['name']) && !empty($contactData['name'])) {
+                    $contactModel->update($contactId, ['name' => $contactData['name']]);
+                }
+            } else {
+                // Criar novo contato
+                try {
+                    $contactId = $contactModel->insert($contactData, false); // false = não validar (email pode duplicar)
+                    if (!$contactId) {
+                        continue; // Falhou ao criar, pular
+                    }
+                } catch (\Exception $e) {
+                    log_message('error', 'Erro ao criar contato: ' . $e->getMessage());
+                    continue;
+                }
+            }
+            
+            // Adicionar à lista (se ainda não estiver)
+            $existingMember = $memberModel
+                ->where('contact_id', $contactId)
+                ->where('list_id', $contactListId)
+                ->first();
+            
+            if (!$existingMember) {
+                $memberModel->insert([
+                    'contact_id' => $contactId,
+                    'list_id' => $contactListId,
+                    'added_at' => date('Y-m-d H:i:s')
+                ]);
+            }
+        }
+        
+        // Atualizar contador da lista
+        $listModel = new \App\Models\ContactListModel();
+        $listModel->refreshCounters([$contactListId]);
     }
 }

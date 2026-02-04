@@ -2,12 +2,9 @@
 
 <?= $this->section('content') ?>
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4><i class="fas fa-tasks me-2"></i>Tarefas de Importação</h4>
-        <a href="<?= base_url('receita') ?>" class="btn btn-primary">
-            <i class="fas fa-plus me-2"></i>Nova Importação
-        </a>
-    </div>
+    <?= $this->include('receita/_toolbar') ?>
+    
+    <h4 class="mb-4"><i class="fas fa-tasks me-2"></i>Tarefas de Importação</h4>
     
     <div class="card shadow-sm">
         <div class="card-body">

@@ -6,8 +6,9 @@
 
 <?= $this->section('content') ?>
 <div class="container-fluid">
+    <?= $this->include('receita/_toolbar') ?>
     <div class="row">
-        <div class="col-md-4">
+        <div class="col-12">
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-white">
                     <h6 class="mb-0"><i class="fas fa-filter me-2"></i>Configuração de Importação</h6>
@@ -61,6 +62,20 @@
                         </div>
                         
                         <div class="mb-3">
+                            <label class="form-label">Criar Lista de Contatos (opcional)</label>
+                            <input type="text" class="form-control" id="contact_list_name" name="contact_list_name" placeholder="Ex: Empresas Ativas Janeiro 2025">
+                            <small class="text-muted">Se preenchido, uma lista de contatos será criada com os estabelecimentos importados.</small>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="include_contabilidade" name="include_contabilidade" checked>
+                            <label class="form-check-label" for="include_contabilidade">
+                                Adicionar Contatos de Contabilidade à Nova Lista
+                            </label>
+                            <small class="form-text text-muted d-block">Se desmarcado, contatos identificados como contabilidade não serão adicionados à lista.</small>
+                        </div>
+                        
+                        <div class="mb-3">
                             <label class="form-label">Filtrar por Situação Fiscal</label>
                             <select id="situacoes_select" name="situacoes[]" class="form-control" multiple>
                                 <option value="01">01 – NULA</option>
@@ -85,36 +100,6 @@
                             </a>
                         </div>
                     </form>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-8">
-            <div class="card shadow-sm">
-                <div class="card-header bg-white">
-                    <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Sobre o Processamento Assíncrono</h6>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info">
-                        <h6><i class="fas fa-lightbulb me-2"></i>Como funciona?</h6>
-                        <ul class="mb-0">
-                            <li>As importações são processadas automaticamente via CRON</li>
-                            <li>Apenas uma tarefa é processada por vez, em ordem de criação</li>
-                            <li>O progresso é salvo automaticamente a cada 55 segundos</li>
-                            <li>Você pode acompanhar o andamento na página "Ver Tarefas"</li>
-                            <li>Filtros por CNAE e UF reduzem o tempo de processamento</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="alert alert-warning">
-                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Importante</h6>
-                        <ul class="mb-0">
-                            <li>Certifique-se de que o CRON está configurado para executar a cada minuto</li>
-                            <li>Tarefas agendadas serão processadas automaticamente</li>
-                            <li>Você pode excluir tarefas "Agendadas" antes do processamento</li>
-                            <li>Tarefas "Em Andamento" ou "Concluídas" não podem ser excluídas</li>
-                        </ul>
-                    </div>
                 </div>
             </div>
         </div>

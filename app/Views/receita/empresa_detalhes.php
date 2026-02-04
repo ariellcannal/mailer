@@ -2,12 +2,9 @@
 
 <?= $this->section('content') ?>
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4><i class="fas fa-building me-2"></i>Detalhes da Empresa</h4>
-        <a href="<?= base_url('receita/empresas') ?>" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left me-2"></i>Voltar
-        </a>
-    </div>
+    <?= $this->include('receita/_toolbar') ?>
+    
+    <h4 class="mb-4"><i class="fas fa-building me-2"></i>Detalhes da Empresa</h4>
     
     <?php 
     $cnpj = sprintf('%s/%s-%s', $estabelecimento['cnpj_basico'], $estabelecimento['cnpj_ordem'], $estabelecimento['cnpj_dv']);

@@ -71,6 +71,8 @@ class ReceitaController extends BaseController
             $cnaes = $this->request->getPost('cnaes') ?? [];
             $ufs = $this->request->getPost('ufs') ?? [];
             $situacoes = $this->request->getPost('situacoes') ?? ['02', '03']; // Padrão: ATIVA e SUSPENSA
+            $contactListName = $this->request->getPost('contact_list_name');
+            $includeContabilidade = $this->request->getPost('include_contabilidade') == 1;
             
             // Garantir que arrays vazios sejam null para evitar erro SQL
             $cnaesJson = !empty($cnaes) ? json_encode($cnaes) : null;
@@ -92,6 +94,12 @@ class ReceitaController extends BaseController
             }
             // Situações fiscais sempre incluir (tem padrão)
             $data['situacoes_fiscais'] = $situacoesStr;
+            
+            // Lista de contatos (se fornecida)
+            if (!empty($contactListName)) {
+                $data['contact_list_name'] = $contactListName;
+                $data['include_contabilidade'] = $includeContabilidade ? 1 : 0;
+            }
             
             $taskId = $this->taskModel->insert($data);
             
