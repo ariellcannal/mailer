@@ -56,8 +56,8 @@ class Migration_5
             if (!$this->indexExists('estabelecimentos', 'idx_cnae_fiscal_principal')) {
                 $this->db->query('CREATE INDEX idx_cnae_fiscal_principal ON estabelecimentos(cnae_fiscal_principal)');
             }
-            if (!$this->indexExists('estabelecimentos', 'idx_cnae_fiscal_secundaria')) {
-                $this->db->query('CREATE INDEX idx_cnae_fiscal_secundaria ON estabelecimentos(cnae_fiscal_secundaria(100))');
+            if (!$this->indexExists('estabelecimentos', 'idx_cnae_fiscal_secundario')) {
+                $this->db->query('CREATE INDEX idx_cnae_fiscal_secundario ON estabelecimentos(cnae_fiscal_secundario(100))');
             }
             
             // Índice para busca por UF
@@ -127,7 +127,7 @@ class Migration_5
         // Remover índices
         if ($this->db->tableExists('estabelecimentos')) {
             $indexes = ['idx_nome_fantasia', 'idx_razao_social', 'idx_cnpj_completo', 'idx_cnpj_basico', 
-                        'idx_cnae_fiscal_principal', 'idx_cnae_fiscal_secundaria', 'idx_uf', 
+                        'idx_cnae_fiscal_principal', 'idx_cnae_fiscal_secundario', 'idx_uf', 
                         'idx_situacao_cadastral', 'idx_busca_combinada'];
             
             foreach ($indexes as $index) {

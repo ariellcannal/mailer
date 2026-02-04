@@ -71,7 +71,7 @@ class Migration_6 extends Migration
         
         // Índice para busca por CNAE secundária (FULLTEXT para busca em lista)
         if (!$this->indexExists('receita_estabelecimentos', 'idx_cnae_secundaria')) {
-            $db->query('CREATE FULLTEXT INDEX idx_cnae_secundaria ON receita_estabelecimentos(cnae_fiscal_secundaria)');
+            $db->query('CREATE FULLTEXT INDEX idx_cnae_secundaria ON receita_estabelecimentos(cnae_fiscal_secundario)');
         }
         
         // Índice para busca por UF

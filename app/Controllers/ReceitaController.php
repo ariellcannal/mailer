@@ -250,7 +250,7 @@ class ReceitaController extends BaseController
                 $builder->groupStart();
                 foreach ($cnaes as $cnae) {
                     $builder->orWhere('cnae_fiscal_principal', $cnae);
-                    $builder->orLike('cnae_fiscal_secundaria', $cnae);
+                    $builder->orLike('cnae_fiscal_secundario', $cnae);
                 }
                 $builder->groupEnd();
             }
