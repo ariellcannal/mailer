@@ -354,12 +354,20 @@ class ReceitaAsyncProcessor
         $linesImported = 0;
         $bytesProcessed = 0;
         
-        // Calcular total de bytes
+        // Calcular total de bytes (tamanho descompactado dos CSVs)
         $totalBytes = 0;
         foreach ($fila as $zipName) {
             $path = $this->basePath . $zipName;
             if (file_exists($path)) {
-                $totalBytes += filesize($path);
+                $zip = new \ZipArchive();
+                if ($zip->open($path) === TRUE) {
+                    // Obter tamanho descompactado do primeiro arquivo (CSV)
+                    $stat = $zip->statIndex(0);
+                    if ($stat !== false) {
+                        $totalBytes += $stat['size']; // Tamanho descompactado
+                    }
+                    $zip->close();
+                }
             }
         }
         
@@ -390,15 +398,11 @@ class ReceitaAsyncProcessor
             
             $linesProcessed += $result['lines_processed'];
             $linesImported += $result['lines_imported'];
+            $bytesProcessed += $result['bytes_processed']; // Acumular bytes das linhas processadas
             
-            // Se completou o arquivo, incrementar contadores
+            // Se completou o arquivo, incrementar contador de arquivos
             if ($result['completed']) {
                 $filesProcessed++;
-                
-                // Adicionar bytes do arquivo completamente processado
-                if (file_exists($path)) {
-                    $bytesProcessed += filesize($path);
-                }
             }
             
             // Atualizar progresso no banco
@@ -450,6 +454,7 @@ class ReceitaAsyncProcessor
         
         $linesProcessed = 0;
         $linesImported = 0;
+        $bytesProcessed = 0;
         $completed = false;
         
         $zip = new ZipArchive;
@@ -472,6 +477,7 @@ class ReceitaAsyncProcessor
                 
                 $lineCount++;
                 $linesProcessed++;
+                $bytesProcessed += strlen($line); // Contar bytes da linha processada
                 
                 if ($lineCount <= $skipTo) {
                     unset($line);
@@ -563,7 +569,8 @@ class ReceitaAsyncProcessor
         return [
             'completed' => $completed,
             'lines_processed' => $linesProcessed,
-            'lines_imported' => $linesImported
+            'lines_imported' => $linesImported,
+            'bytes_processed' => $bytesProcessed
         ];
     }
     
