@@ -197,7 +197,7 @@ class ReceitaImportTaskModel extends Model
             'name' => ($task['name'] ?? 'Importação') . ' - Cópia ' . date('d/m/Y H:i'),
             'cnaes' => $task['cnaes'],
             'ufs' => $task['ufs'],
-            'situacoes_fiscais' => $task['situacoes_fiscais'] ?? '02,03',
+            'situacoes_fiscais' => $task['situacoes_fiscais'] ?? '2,3',
             'status' => 'agendada',
         ];
         

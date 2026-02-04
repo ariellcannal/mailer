@@ -46,3 +46,16 @@
 ### Fase 3: Toolbar - Concluída
 - [x] Criar componente de toolbar
 - [x] Aplicar em todas as views da Receita (index, tasks, empresas, empresa_detalhes)
+
+
+## Nova Tarefa: Corrigir Situação Cadastral (2 dígitos → 1 dígito)
+
+### Problema
+A situação cadastral nos arquivos da Receita Federal tem apenas 1 dígito, mas a aplicação está assumindo 2 dígitos.
+
+### Tarefas
+- [x] Identificar onde situacao_cadastral é processada na importação
+- [x] Corrigir leitura do campo no ReceitaAsyncProcessor (comentário atualizado)
+- [x] Corrigir validação no formulário de importação (valores 01,02,03,04,08 → 1,2,3,4,8)
+- [x] Corrigir valor padrão no Model (02,03 → 2,3)
+- [ ] Testar importação com situação de 1 dígito

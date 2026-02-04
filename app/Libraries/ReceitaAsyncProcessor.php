@@ -521,7 +521,7 @@ class ReceitaAsyncProcessor
                     }
                     
                     // Filtro por Situação Fiscal (coluna 5 = situacao_cadastral)
-                    // Valores: 01=NULA, 02=ATIVA, 03=SUSPENSA, 04=INAPTA, 08=BAIXADA
+                    // Valores: 1=NULA, 2=ATIVA, 3=SUSPENSA, 4=INAPTA, 8=BAIXADA
                     if (!empty($situacoes) && !in_array($data[5] ?? '', $situacoes)) {
                         unset($data);
                         continue;

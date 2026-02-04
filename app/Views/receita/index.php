@@ -78,11 +78,11 @@
                         <div class="mb-3">
                             <label class="form-label">Filtrar por Situação Fiscal</label>
                             <select id="situacoes_select" name="situacoes[]" class="form-control" multiple>
-                                <option value="01">01 – NULA</option>
-                                <option value="02" selected>02 – ATIVA</option>
-                                <option value="03" selected>03 – SUSPENSA</option>
-                                <option value="04">04 – INAPTA</option>
-                                <option value="08">08 – BAIXADA</option>
+                                <option value="1">1 – NULA</option>
+                                <option value="2" selected>2 – ATIVA</option>
+                                <option value="3" selected>3 – SUSPENSA</option>
+                                <option value="4">4 – INAPTA</option>
+                                <option value="8">8 – BAIXADA</option>
                             </select>
                             <small class="text-muted">Padrão: ATIVA, SUSPENSA. Selecione as situações desejadas.</small>
                         </div>
