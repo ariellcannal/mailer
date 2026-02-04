@@ -81,8 +81,9 @@
         tbody.empty();
         
         tasks.forEach(function(task) {
-            const progress = task.total_lines > 0 
-                ? Math.round((task.processed_lines / task.total_lines) * 100 * 100) / 100 
+            // Progresso baseado em arquivos processados
+            const progress = task.total_files > 0 
+                ? Math.round((task.processed_files / task.total_files) * 100 * 100) / 100 
                 : 0;
             
             const statusClass = {
@@ -124,8 +125,7 @@
                             </div>
                         </div>
                         <small class="text-muted">
-                            ${formatNumber(task.processed_lines)} / ${formatNumber(task.total_lines)} linhas
-                            (${formatNumber(task.imported_lines)} importadas)
+                            ${formatNumber(task.imported_lines)} registros importados
                         </small>
                     </td>
                     <td>

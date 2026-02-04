@@ -35,9 +35,10 @@
                         <?php else: ?>
                             <?php foreach ($tasks as $task): ?>
                             <?php
+                                // Progresso baseado em arquivos processados
                                 $progress = 0;
-                                if ($task['total_lines'] > 0) {
-                                    $progress = round(($task['processed_lines'] / $task['total_lines']) * 100, 2);
+                                if ($task['total_files'] > 0) {
+                                    $progress = round(($task['processed_files'] / $task['total_files']) * 100, 2);
                                 }
                                 
                                 $statusClass = [
@@ -86,8 +87,7 @@
                                         </div>
                                     </div>
                                     <small class="text-muted">
-                                        <?= number_format($task['processed_lines']) ?> / <?= number_format($task['total_lines']) ?> linhas
-                                        (<?= number_format($task['imported_lines']) ?> importadas)
+                                        <?= number_format($task['imported_lines']) ?> registros importados
                                     </small>
                                 </td>
                                 <td>
