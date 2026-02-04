@@ -85,7 +85,11 @@ abstract class BaseController extends Controller
         
         // Verificar e executar migrations pendentes (apenas em requisições HTTP)
         if (!($this->request instanceof CLIRequest)) {
+            error_log('[BaseController] Iniciando verificação de migrations...');
             $this->checkDatabaseMigrations();
+            error_log('[BaseController] Verificação de migrations concluída');
+        } else {
+            error_log('[BaseController] Requisição CLI detectada, pulando migrations');
         }
 
         $this->enforceAuthentication();
@@ -187,14 +191,18 @@ abstract class BaseController extends Controller
      */
     protected function checkDatabaseMigrations(): void
     {
+        error_log('[BaseController::checkDatabaseMigrations] Método chamado');
         try {
             // Garantir que sessão está iniciada
             if (session_status() === PHP_SESSION_NONE) {
                 session();
             }
             
+            error_log('[BaseController::checkDatabaseMigrations] Criando MigrationManager...');
             $migrationManager = new MigrationManager();
+            error_log('[BaseController::checkDatabaseMigrations] Executando checkAndRunMigrations...');
             $result = $migrationManager->checkAndRunMigrations();
+            error_log('[BaseController::checkDatabaseMigrations] Resultado: ' . json_encode($result));
             
             if ($result['updated']) {
                 // Armazenar informação na sessão para exibir alerta
