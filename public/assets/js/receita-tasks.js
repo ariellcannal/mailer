@@ -81,10 +81,13 @@
         tbody.empty();
         
         tasks.forEach(function(task) {
-            // Progresso baseado em bytes processados
-            const progress = task.total_bytes > 0 
-                ? Math.round((task.processed_bytes / task.total_bytes) * 100 * 100) / 100 
-                : 0;
+            // Progresso baseado em bytes processados (fallback para arquivos)
+            let progress = 0;
+            if (task.total_bytes && task.total_bytes > 0) {
+                progress = Math.round((task.processed_bytes / task.total_bytes) * 100 * 100) / 100;
+            } else if (task.total_files && task.total_files > 0) {
+                progress = Math.round((task.processed_files / task.total_files) * 100 * 100) / 100;
+            }
             
             const statusClass = {
                 'agendada': 'secondary',

@@ -60,6 +60,18 @@
                             <small class="text-muted">Se vazio, importará todos os estados.</small>
                         </div>
                         
+                        <div class="mb-3">
+                            <label class="form-label">Filtrar por Situação Fiscal</label>
+                            <select id="situacoes_select" name="situacoes[]" class="form-control" multiple>
+                                <option value="01">01 – NULA</option>
+                                <option value="02" selected>02 – ATIVA</option>
+                                <option value="03" selected>03 – SUSPENSA</option>
+                                <option value="04">04 – INAPTA</option>
+                                <option value="08">08 – BAIXADA</option>
+                            </select>
+                            <small class="text-muted">Padrão: ATIVA, SUSPENSA. Selecione as situações desejadas.</small>
+                        </div>
+                        
                         <hr>
                         <div class="d-grid gap-2">
                             <button type="submit" id="btn-schedule" class="btn btn-primary">
