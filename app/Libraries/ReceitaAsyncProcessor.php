@@ -349,10 +349,21 @@ class ReceitaAsyncProcessor
         $filesProcessed = 0;
         $linesProcessed = 0;
         $linesImported = 0;
+        $bytesProcessed = 0;
         
-        // Atualizar total de arquivos
+        // Calcular total de bytes
+        $totalBytes = 0;
+        foreach ($fila as $zipName) {
+            $path = $this->basePath . $zipName;
+            if (file_exists($path)) {
+                $totalBytes += filesize($path);
+            }
+        }
+        
+        // Atualizar total de arquivos e bytes
         $this->taskModel->updateProgress((int) $this->currentTask['id'], [
-            'total_files' => count($fila)
+            'total_files' => count($fila),
+            'total_bytes' => $totalBytes
         ]);
         
         foreach ($fila as $zipName) {
@@ -378,12 +389,18 @@ class ReceitaAsyncProcessor
             $linesProcessed += $result['lines_processed'];
             $linesImported += $result['lines_imported'];
             
+            // Adicionar bytes do arquivo processado
+            if (file_exists($path)) {
+                $bytesProcessed += filesize($path);
+            }
+            
             // Atualizar progresso no banco
             $this->taskModel->updateProgress((int) $this->currentTask['id'], [
                 'processed_files' => $filesProcessed,
                 'current_file' => $zipName,
                 'processed_lines' => $linesProcessed,
-                'imported_lines' => $linesImported
+                'imported_lines' => $linesImported,
+                'processed_bytes' => $bytesProcessed
             ]);
             
             // Se não completou o arquivo, sair

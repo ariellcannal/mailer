@@ -81,9 +81,9 @@
         tbody.empty();
         
         tasks.forEach(function(task) {
-            // Progresso baseado em arquivos processados
-            const progress = task.total_files > 0 
-                ? Math.round((task.processed_files / task.total_files) * 100 * 100) / 100 
+            // Progresso baseado em bytes processados
+            const progress = task.total_bytes > 0 
+                ? Math.round((task.processed_bytes / task.total_bytes) * 100 * 100) / 100 
                 : 0;
             
             const statusClass = {

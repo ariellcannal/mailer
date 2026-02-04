@@ -35,10 +35,10 @@
                         <?php else: ?>
                             <?php foreach ($tasks as $task): ?>
                             <?php
-                                // Progresso baseado em arquivos processados
+                                // Progresso baseado em bytes processados
                                 $progress = 0;
-                                if ($task['total_files'] > 0) {
-                                    $progress = round(($task['processed_files'] / $task['total_files']) * 100, 2);
+                                if ($task['total_bytes'] > 0) {
+                                    $progress = round(($task['processed_bytes'] / $task['total_bytes']) * 100, 2);
                                 }
                                 
                                 $statusClass = [
