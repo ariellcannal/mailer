@@ -488,9 +488,12 @@ class ReceitaAsyncProcessor
                 $row = [];
                 foreach ($fields as $idx => $fName) {
                     if (isset($data[$idx])) {
-                        $row[$fName] = ($data[$idx] !== null) 
-                            ? mb_convert_encoding($data[$idx], 'UTF-8', 'ISO-8859-1') 
-                            : null;
+                        $value = $data[$idx];
+                        // Converter encoding apenas se for string
+                        if ($value !== null && is_string($value)) {
+                            $value = mb_convert_encoding($value, 'UTF-8', 'ISO-8859-1');
+                        }
+                        $row[$fName] = $value;
                     }
                 }
                 $batchData[] = $row;
