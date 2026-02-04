@@ -25,6 +25,8 @@ class ReceitaImportTaskModel extends Model
         'status',
         'total_files',
         'processed_files',
+        'total_bytes',
+        'processed_bytes',
         'current_file',
         'total_lines',
         'processed_lines',
@@ -161,6 +163,14 @@ class ReceitaImportTaskModel extends Model
         
         if (isset($progress['total_files'])) {
             $data['total_files'] = $progress['total_files'];
+        }
+        
+        if (isset($progress['total_bytes'])) {
+            $data['total_bytes'] = $progress['total_bytes'];
+        }
+        
+        if (isset($progress['processed_bytes'])) {
+            $data['processed_bytes'] = $progress['processed_bytes'];
         }
         
         return empty($data) ? true : $this->update($taskId, $data);
