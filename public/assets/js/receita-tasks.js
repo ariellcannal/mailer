@@ -128,7 +128,7 @@
                             </div>
                         </div>
                         <small class="text-muted">
-                            ${formatNumber(task.processed_lines || 0)} / ${formatNumber(task.total_lines || 0)} linhas (${formatNumber(task.imported_lines || 0)} importadas)
+                            ${formatNumber(task.imported_lines || 0)} registros importados
                         </small>
                     </td>
                     <td>
