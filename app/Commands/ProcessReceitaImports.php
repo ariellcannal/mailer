@@ -36,12 +36,6 @@ class ProcessReceitaImports extends BaseCommand
         try {
             $processor = new ReceitaAsyncProcessor();
             
-            // Verificar se já existe processo em execução
-            if ($processor->isLocked()) {
-                CLI::write('Outro processo já está em execução. Aguardando...', 'yellow');
-                return;
-            }
-            
             // Buscar próxima tarefa agendada
             $taskModel = new ReceitaImportTaskModel();
             $task = $taskModel->getNextScheduledTask();
@@ -54,7 +48,12 @@ class ProcessReceitaImports extends BaseCommand
             CLI::write("Processando tarefa #{$task['id']}: {$task['name']}", 'cyan');
             
             // Processar tarefa com limite de tempo (55 segundos)
-            $result = $processor->processTask($task['id'], 55);
+            $result = $processor->processTaskById((int) $task['id'], 55);
+            
+            if (!$result['success']) {
+                CLI::error('Erro: ' . $result['message']);
+                return;
+            }
             
             if ($result['completed']) {
                 CLI::write("Tarefa #{$task['id']} concluída com sucesso!", 'green');

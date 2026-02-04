@@ -45,34 +45,98 @@ class ReceitaAsyncProcessor
         $this->taskModel = new ReceitaImportTaskModel();
     }
     
-    public function isLocked(): bool
-    {
-        if (! file_exists($this->lockFile))
-            return false;
-            
-            $pid = (int) file_get_contents($this->lockFile);
-            
-            // Verifica se o PID ainda existe no sistema (Linux/Unix)
-            if (function_exists('posix_getpgid')) {
-                if (posix_getpgid($pid) === false) {
-                    CLI::write("Detectado lock órfão (PID $pid inexistente). Reiniciando...", 'cyan');
-                    return false;
-                }
-            } elseif (PHP_OS_FAMILY === 'Windows') {
-                // Verificação alternativa para Windows
-                $output = shell_exec("tasklist /FI \"PID eq $pid\" /NH");
-                if (strpos($output, (string) $pid) === false)
-                    return false;
-            }
-            
-            return true;
-    }
-    
     /**
      * Processa próxima tarefa agendada
      * 
      * @return array Resultado do processamento
      */
+    /**
+     * Processa uma tarefa específica por ID (usado pelo Command)
+     * 
+     * @param int $taskId ID da tarefa
+     * @param int $timeLimit Tempo máximo de execução em segundos
+     * @return array
+     */
+    public function processTaskById(int $taskId, int $timeLimit = 55): array
+    {
+        // Verificar lockfile
+        if (!$this->acquireLock()) {
+            return [
+                'success' => false,
+                'message' => 'Outro processo está em execução'
+            ];
+        }
+        
+        try {
+            // Buscar tarefa específica
+            $this->currentTask = $this->taskModel->find($taskId);
+            
+            if (!$this->currentTask) {
+                $this->releaseLock();
+                return [
+                    'success' => false,
+                    'message' => 'Tarefa não encontrada'
+                ];
+            }
+            
+            if ($this->currentTask['status'] !== 'agendada' && $this->currentTask['status'] !== 'em_andamento') {
+                $this->releaseLock();
+                return [
+                    'success' => false,
+                    'message' => 'Tarefa não está disponível para processamento'
+                ];
+            }
+            
+            log_message('info', "Iniciando processamento da tarefa #{$this->currentTask['id']}");
+            
+            // Marcar como em andamento
+            $this->taskModel->markAsInProgress($taskId);
+            
+            // Carregar progresso
+            $this->processFile = $this->basePath . 'process_' . $this->currentTask['id'];
+            $progress = $this->loadProgress();
+            
+            // Processar
+            $result = $this->processTask($progress);
+            
+            // Verificar se concluiu
+            if ($result['completed']) {
+                $this->taskModel->markAsCompleted($taskId);
+                $this->deleteProgressFile();
+                log_message('info', "Tarefa #{$this->currentTask['id']} concluída");
+            }
+            
+            $this->releaseLock();
+            
+            return [
+                'success' => true,
+                'task_id' => $this->currentTask['id'],
+                'completed' => $result['completed'],
+                'total_files' => $result['stats']['total_files'] ?? 0,
+                'processed_files' => $result['stats']['processed_files'] ?? 0,
+                'processed_lines' => $result['stats']['processed_lines'] ?? 0,
+                'imported_lines' => $result['stats']['imported_lines'] ?? 0
+            ];
+            
+        } catch (\Exception $e) {
+            log_message('error', "Erro no processamento: " . $e->getMessage());
+            
+            if ($this->currentTask) {
+                $this->taskModel->markAsError(
+                    $taskId,
+                    $e->getMessage()
+                );
+            }
+            
+            $this->releaseLock();
+            
+            return [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+    
     public function processNextTask(): array
     {
         // Verificar lockfile
@@ -269,7 +333,7 @@ class ReceitaAsyncProcessor
      * @param array $progress
      * @return array
      */
-    public function processTask(array $progress): array
+    private function processTask(array $progress): array
     {
         set_time_limit(90);
         ini_set('memory_limit', '128M');
@@ -337,9 +401,10 @@ class ReceitaAsyncProcessor
         return [
             'completed' => $completed,
             'stats' => [
-                'files_processed' => $filesProcessed,
-                'lines_processed' => $linesProcessed,
-                'lines_imported' => $linesImported
+                'total_files' => count($fila),
+                'processed_files' => $filesProcessed,
+                'processed_lines' => $linesProcessed,
+                'imported_lines' => $linesImported
             ]
         ];
     }
