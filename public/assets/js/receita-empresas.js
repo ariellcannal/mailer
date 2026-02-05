@@ -13,6 +13,8 @@
     $(document).ready(function() {
         initSelect2();
         initFormSubmit();
+        initContactListsSelect();
+        initAddToListButton();
     });
     
     /**
@@ -105,6 +107,18 @@
                 if (response.success) {
                     renderEmpresas(response.data);
                     renderPaginacao(response.pagination);
+                    
+                    // Mostrar card de adição à lista se houver filtros ativos
+                    const hasFilters = currentFilters.nome || currentFilters.cnpj_basico || 
+                                     (currentFilters.cnae && currentFilters.cnae.length > 0) || 
+                                     currentFilters.uf;
+                    
+                    if (hasFilters && response.pagination && response.pagination.total > 0) {
+                        $('#total-empresas-encontradas').text(response.pagination.total);
+                        $('#card-add-to-list').slideDown();
+                    } else {
+                        $('#card-add-to-list').slideUp();
+                    }
                 } else {
                     alertify.error(response.message || 'Erro ao buscar empresas');
                 }
@@ -232,6 +246,99 @@
             e.preventDefault();
             const page = parseInt($(this).data('page'));
             buscarEmpresas(page);
+        });
+    }
+    
+    /**
+     * Inicializa Select2 para listas de contatos
+     */
+    function initContactListsSelect() {
+        $('#select-contact-lists').select2({
+            theme: 'bootstrap-5',
+            tags: true,
+            createTag: function(params) {
+                const term = $.trim(params.term);
+                if (term === '') {
+                    return null;
+                }
+                return {
+                    id: 'new:' + term,
+                    text: term + ' (criar nova lista)',
+                    newTag: true
+                };
+            },
+            ajax: {
+                url: baseUrl + 'receita/buscarListasContatos',
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data
+                    };
+                },
+                cache: true
+            },
+            placeholder: 'Selecione ou crie uma lista',
+            allowClear: true,
+            language: {
+                searching: function() {
+                    return 'Buscando listas...';
+                },
+                noResults: function() {
+                    return 'Digite para criar uma nova lista';
+                }
+            }
+        });
+    }
+    
+    /**
+     * Inicializa botão de adicionar à lista
+     */
+    function initAddToListButton() {
+        $('#btn-add-to-list').on('click', function() {
+            const selectedLists = $('#select-contact-lists').val();
+            
+            if (!selectedLists || selectedLists.length === 0) {
+                alertify.warning('Selecione pelo menos uma lista de contatos');
+                return;
+            }
+            
+            const $btn = $(this);
+            const originalHtml = $btn.html();
+            
+            // Desabilitar botão
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Adicionando...');
+            
+            // Enviar requisição
+            $.ajax({
+                url: baseUrl + 'receita/adicionarEmpresasALista',
+                method: 'POST',
+                data: {
+                    lists: selectedLists,
+                    filters: currentFilters
+                },
+                dataType: 'json',
+                success: function(response) {
+                    $btn.prop('disabled', false).html(originalHtml);
+                    
+                    if (response.success) {
+                        alertify.success(response.message || 'Empresas adicionadas com sucesso!');
+                        $('#select-contact-lists').val(null).trigger('change');
+                    } else {
+                        alertify.error(response.message || 'Erro ao adicionar empresas à lista');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $btn.prop('disabled', false).html(originalHtml);
+                    alertify.error('Erro ao adicionar empresas: ' + error);
+                    console.error('XHR error:', xhr.responseText);
+                }
+            });
         });
     }
 })();

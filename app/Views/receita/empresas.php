@@ -74,6 +74,29 @@
         </div>
     </div>
     
+    <!-- Card de Adição à Lista (aparece quando filtros estão ativos) -->
+    <div id="card-add-to-list" class="card shadow-sm mb-4" style="display: none;">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-auto">
+                    <p class="mb-0">
+                        <strong id="total-empresas-encontradas">0</strong> empresas encontradas.
+                        <span class="text-muted">Adicionar à lista de contatos:</span>
+                    </p>
+                </div>
+                <div class="col">
+                    <select id="select-contact-lists" name="contact_lists[]" class="form-control" multiple>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button type="button" id="btn-add-to-list" class="btn btn-success">
+                        <i class="fas fa-plus me-2"></i>Adicionar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Tabela de Resultados -->
     <div class="card shadow-sm">
         <div class="card-body">

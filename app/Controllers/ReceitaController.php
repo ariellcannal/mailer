@@ -26,7 +26,7 @@ class ReceitaController extends BaseController
     {
         return view('receita/index', [
             'pageTitle' => 'Importação Receita Federal',
-            'activeMenu' => 'receita'
+            'activeMenu' => 'receita-index'
         ]);
     }
     
@@ -41,7 +41,7 @@ class ReceitaController extends BaseController
         
         return view('receita/tasks', [
             'pageTitle' => 'Tarefas de Importação',
-            'activeMenu' => 'receita',
+            'activeMenu' => 'receita-tasks',
             'tasks' => $tasks
         ]);
     }
@@ -333,7 +333,7 @@ class ReceitaController extends BaseController
             
             return view('receita/empresa_detalhes', [
                 'pageTitle' => 'Detalhes da Empresa',
-                'activeMenu' => 'receita',
+                'activeMenu' => 'receita-empresas',
                 'estabelecimento' => $estabelecimento,
                 'empresa' => $empresa,
                 'socios' => $socios
@@ -343,6 +343,178 @@ class ReceitaController extends BaseController
             log_message('error', 'Erro ao buscar detalhes da empresa: ' . $e->getMessage());
             return redirect()->to(base_url('receita/empresas'))
                 ->with('error', 'Empresa não encontrada');
+        }
+    }
+    
+    /**
+     * Buscar listas de contatos (AJAX)
+     */
+    public function buscarListasContatos()
+    {
+        try {
+            $term = $this->request->getGet('q');
+            $db = \Config\Database::connect();
+            $builder = $db->table('contact_lists');
+            
+            if (!empty($term)) {
+                $builder->like('name', $term);
+            }
+            
+            $listas = $builder
+                ->select('id, name as text')
+                ->orderBy('name', 'ASC')
+                ->limit(20)
+                ->get()
+                ->getResultArray();
+            
+            return $this->response->setJSON($listas);
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Erro ao buscar listas: ' . $e->getMessage());
+            return $this->response->setJSON([]);
+        }
+    }
+    
+    /**
+     * Adicionar empresas filtradas à lista de contatos
+     */
+    public function adicionarEmpresasALista()
+    {
+        try {
+            $lists = $this->request->getPost('lists');
+            $filters = $this->request->getPost('filters');
+            
+            if (empty($lists)) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Nenhuma lista selecionada'
+                ]);
+            }
+            
+            $db = \Config\Database::connect();
+            $contactModel = new \App\Models\ContactModel();
+            $contactListModel = new \App\Models\ContactListModel();
+            $contactListMemberModel = new \App\Models\ContactListMemberModel();
+            
+            // Buscar empresas com filtros (sem paginação)
+            $builder = $db->table('receita_estabelecimentos');
+            
+            // Aplicar mesmos filtros da busca
+            if (!empty($filters['nome'])) {
+                $builder->like('nome_fantasia', $filters['nome']);
+            }
+            if (!empty($filters['cnpj_basico'])) {
+                $builder->where('cnpj_basico', $filters['cnpj_basico']);
+            }
+            if (!empty($filters['cnae'])) {
+                $builder->groupStart();
+                foreach ($filters['cnae'] as $cnae) {
+                    $builder->orWhere('cnae_fiscal_principal', $cnae);
+                    $builder->orLike('cnae_fiscal_secundario', $cnae);
+                }
+                $builder->groupEnd();
+            }
+            if (!empty($filters['uf'])) {
+                $builder->where('uf', $filters['uf']);
+            }
+            
+            // Buscar apenas empresas com email válido
+            $builder->where('correio_eletronico IS NOT NULL');
+            $builder->where('correio_eletronico !=', '');
+            
+            $empresas = $builder->get()->getResultArray();
+            
+            if (empty($empresas)) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Nenhuma empresa encontrada com os filtros selecionados'
+                ]);
+            }
+            
+            $totalAdicionados = 0;
+            $listasProcessadas = [];
+            
+            // Processar cada lista
+            foreach ($lists as $listId) {
+                // Se começa com 'new:', é uma nova lista
+                if (strpos($listId, 'new:') === 0) {
+                    $listName = substr($listId, 4);
+                    $newListId = $contactListModel->insert([
+                        'name' => $listName,
+                        'description' => 'Lista criada automaticamente via importação da Receita Federal',
+                        'contact_count' => 0
+                    ]);
+                    $listId = $newListId;
+                    $listasProcessadas[] = $listName;
+                } else {
+                    $lista = $contactListModel->find($listId);
+                    if ($lista) {
+                        $listasProcessadas[] = $lista['name'];
+                    }
+                }
+                
+                // Adicionar empresas à lista
+                foreach ($empresas as $empresa) {
+                    $email = $empresa['correio_eletronico'];
+                    $nome = $empresa['nome_fantasia'] ?: '';
+                    
+                    // Criar ou atualizar contato
+                    $contato = $contactModel->where('email', $email)->first();
+                    
+                    if ($contato) {
+                        // Atualizar nome se estiver vazio
+                        if (empty($contato['name']) && !empty($nome)) {
+                            $contactModel->update($contato['id'], ['name' => $nome]);
+                        }
+                        $contactId = $contato['id'];
+                    } else {
+                        // Criar novo contato
+                        $contactId = $contactModel->insert([
+                            'name' => $nome,
+                            'email' => $email
+                        ]);
+                    }
+                    
+                    // Verificar se já está na lista
+                    $exists = $contactListMemberModel
+                        ->where('contact_list_id', $listId)
+                        ->where('contact_id', $contactId)
+                        ->first();
+                    
+                    if (!$exists) {
+                        $contactListMemberModel->insert([
+                            'contact_list_id' => $listId,
+                            'contact_id' => $contactId
+                        ]);
+                        $totalAdicionados++;
+                    }
+                }
+                
+                // Atualizar contador da lista
+                $count = $contactListMemberModel
+                    ->where('contact_list_id', $listId)
+                    ->countAllResults();
+                $contactListModel->update($listId, ['contact_count' => $count]);
+            }
+            
+            $message = sprintf(
+                '%d contato(s) adicionado(s) à lista(s): %s',
+                $totalAdicionados,
+                implode(', ', $listasProcessadas)
+            );
+            
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => $message,
+                'total_adicionados' => $totalAdicionados
+            ]);
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Erro ao adicionar empresas à lista: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Erro ao adicionar empresas: ' . $e->getMessage()
+            ]);
         }
     }
 }

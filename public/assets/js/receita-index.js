@@ -94,9 +94,7 @@
                 task_name: $('#task_name').val(),
                 cnaes: $('#cnaes_select').val() || [],
                 ufs: $('#ufs_select').val() || [],
-                situacoes: $('#situacoes_select').val() || ['02', '03'], // Padrão: ATIVA e SUSPENSA
-                contact_list_name: $('#contact_list_name').val(),
-                include_contabilidade: $('#include_contabilidade').is(':checked') ? 1 : 0
+                situacoes: $('#situacoes_select').val() || ['2', '3'] // Padrão: ATIVA e SUSPENSA
             };
             
             // Enviar via AJAX

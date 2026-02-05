@@ -71,3 +71,22 @@ Desde o commit 1eb2628, qualquer requisição resulta em erro "Unable to connect
 - [x] Identificar alterações problemáticas no commit 1eb2628 (Database.php com credenciais hardcoded)
 - [x] Reverter alterações no Database.php para valores padrão
 - [ ] Testar conexão após correção
+
+
+## Nova Tarefa: Mover Funcionalidade de Listas para View de Empresas
+
+### Objetivo
+Remover campos de lista do formulário de importação e transferir para /receita/empresas com interface mais intuitiva.
+
+### Tarefas
+- [x] Remover campos "Criar Lista de Contatos" e checkbox de contabilidade do formulário
+- [x] Reorganizar formulário: 5 campos por linha (4 campos + botão Agendar)
+- [x] Remover botões extras do formulário
+- [x] Implementar card na view empresas que aparece quando filtros estão ativos
+- [x] Adicionar texto "XX empresas encontradas. Adicionar à lista de contatos"
+- [x] Implementar Select2 multi para selecionar/criar listas (com tagging)
+- [x] Criar endpoint buscarListasContatos
+- [x] Criar endpoint adicionarEmpresasALista
+- [x] Ajustar toolbar: "NOVA IMPORTAÇÃO" → "Nova Importação"
+- [x] Alinhar toolbar à direita
+- [x] Controlar estado "active" na toolbar
