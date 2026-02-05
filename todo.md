@@ -59,3 +59,15 @@ A situação cadastral nos arquivos da Receita Federal tem apenas 1 dígito, mas
 - [x] Corrigir validação no formulário de importação (valores 01,02,03,04,08 → 1,2,3,4,8)
 - [x] Corrigir valor padrão no Model (02,03 → 2,3)
 - [ ] Testar importação com situação de 1 dígito
+
+
+## 🚨 Erro Crítico: Conexão com Banco de Dados
+
+### Problema
+Desde o commit 1eb2628, qualquer requisição resulta em erro "Unable to connect to the database".
+
+### Tarefas
+- [x] Verificar configuração do banco de dados
+- [x] Identificar alterações problemáticas no commit 1eb2628 (Database.php com credenciais hardcoded)
+- [x] Reverter alterações no Database.php para valores padrão
+- [ ] Testar conexão após correção
