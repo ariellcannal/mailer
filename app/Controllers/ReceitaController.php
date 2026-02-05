@@ -162,6 +162,46 @@ class ReceitaController extends BaseController
     }
     
     /**
+     * Pausa uma tarefa (somente se em andamento)
+     */
+    public function pauseTask($taskId)
+    {
+        try {
+            $task = $this->taskModel->find((int) $taskId);
+            
+            if (!$task) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Tarefa não encontrada'
+                ]);
+            }
+            
+            if ($task['status'] !== 'em_andamento') {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Apenas tarefas em andamento podem ser pausadas'
+                ]);
+            }
+            
+            $this->taskModel->update((int) $taskId, [
+                'status' => 'agendada'
+            ]);
+            
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Tarefa pausada com sucesso'
+            ]);
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Erro ao pausar tarefa: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Erro ao pausar tarefa'
+            ]);
+        }
+    }
+    
+    /**
      * Exclui uma tarefa (somente se agendada)
      */
     public function deleteTask($taskId)

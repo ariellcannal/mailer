@@ -18,6 +18,12 @@
      * Inicializa event handlers
      */
     function initEventHandlers() {
+        // Pausar tarefa
+        $(document).on('click', '.btn-pause', function() {
+            const taskId = $(this).data('task-id');
+            pauseTask(taskId);
+        });
+        
         // Duplicar tarefa
         $(document).on('click', '.btn-duplicate', function() {
             const taskId = $(this).data('task-id');
@@ -69,7 +75,7 @@
         if (tasks.length === 0) {
             tbody.html(`
                 <tr>
-                    <td colspan="7" class="text-center text-muted py-4">
+                    <td colspan="8" class="text-center text-muted py-4">
                         <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
                         Nenhuma tarefa encontrada
                     </td>
@@ -118,7 +124,7 @@
                     </td>
                     <td>
                         <div class="d-flex align-items-center gap-2 mb-1">
-                            <div class="progress flex-grow-1" style="height: 20px;">
+                            <div class="progress" style="height: 20px; width: 200px;">
                                 <div class="progress-bar ${task.status === 'concluida' ? 'bg-success' : ''}" 
                                      role="progressbar" 
                                      style="width: ${progress}%"
@@ -139,10 +145,21 @@
                         </span>
                     </td>
                     <td>
+                        ${buildFiltrosHtml(task)}
+                    </td>
+                    <td>
                         ${task.created_at ? formatDateTime(task.created_at) : ''}
                     </td>
                     <td class="text-center">
                         <div class="btn-group btn-group-sm">
+                            ${task.status === 'em_andamento' ? `
+                            <button type="button" 
+                                    class="btn btn-outline-warning btn-pause" 
+                                    data-task-id="${task.id}"
+                                    title="Pausar tarefa">
+                                <i class="fas fa-pause"></i>
+                            </button>
+                            ` : ''}
                             <button type="button" 
                                     class="btn btn-outline-primary btn-duplicate" 
                                     data-task-id="${task.id}"
@@ -164,6 +181,74 @@
             
             tbody.append(row);
         });
+    }
+    
+    /**
+     * Constrói HTML dos filtros
+     */
+    function buildFiltrosHtml(task) {
+        const filtros = [];
+        
+        // CNAEs
+        if (task.cnaes) {
+            const cnaes = task.cnaes.split(',');
+            filtros.push(`<strong>CNAEs:</strong> ${cnaes.map(escapeHtml).join(', ')}`);
+        }
+        
+        // Estados
+        if (task.estados) {
+            const estados = task.estados.split(',');
+            filtros.push(`<strong>Estados:</strong> ${estados.map(escapeHtml).join(', ')}`);
+        }
+        
+        // Situações Fiscais
+        if (task.situacoes_fiscais) {
+            const situacoes = task.situacoes_fiscais.split(',');
+            const situacoesLabel = {
+                '1': 'NULA',
+                '2': 'ATIVA',
+                '3': 'SUSPENSA',
+                '4': 'INAPTA',
+                '8': 'BAIXADA'
+            };
+            const situacoesTexto = situacoes.map(s => situacoesLabel[s] || s);
+            filtros.push(`<strong>Situações:</strong> ${situacoesTexto.join(', ')}`);
+        }
+        
+        if (filtros.length === 0) {
+            return '<small class="text-muted">Sem filtros</small>';
+        }
+        
+        return '<small>' + filtros.join('<br>') + '</small>';
+    }
+    
+    /**
+     * Pausa tarefa
+     */
+    function pauseTask(taskId) {
+        alertify.confirm(
+            'Pausar Tarefa',
+            'Deseja pausar esta tarefa? Ela poderá ser retomada posteriormente.',
+            function() {
+                $.ajax({
+                    url: baseUrl + 'receita/pause-task/' + taskId,
+                    method: 'POST',
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            alertify.success('Tarefa pausada com sucesso');
+                            refreshTable();
+                        } else {
+                            alertify.error(response.message || 'Erro ao pausar tarefa');
+                        }
+                    },
+                    error: function() {
+                        alertify.error('Erro ao pausar tarefa');
+                    }
+                });
+            },
+            function() {}
+        );
     }
     
     /**

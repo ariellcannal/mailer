@@ -13,18 +13,19 @@
                     <thead>
                         <tr>
                             <th width="5%">#</th>
-                            <th width="20%">Nome</th>
-                            <th width="10%">Status</th>
-                            <th width="30%">Progresso</th>
-                            <th width="10%">Arquivos</th>
-                            <th width="15%">Agendado em</th>
-                            <th width="10%" class="text-center">Ações</th>
+                            <th width="15%">Nome</th>
+                            <th width="8%">Status</th>
+                            <th width="20%">Progresso</th>
+                            <th width="8%">Arquivos</th>
+                            <th width="20%">Filtros</th>
+                            <th width="12%">Agendado em</th>
+                            <th width="12%" class="text-center">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($tasks)): ?>
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">
+                            <td colspan="8" class="text-center text-muted py-4">
                                 <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
                                 Nenhuma tarefa encontrada
                             </td>
@@ -76,7 +77,7 @@
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center gap-2 mb-1">
-                                        <div class="progress flex-grow-1" style="height: 20px;">
+                                        <div class="progress" style="height: 20px; width: 200px;">
                                             <div class="progress-bar <?= $task['status'] === 'concluida' ? 'bg-success' : '' ?>" 
                                                  role="progressbar" 
                                                  style="width: <?= $progress ?>%"
@@ -97,12 +98,59 @@
                                     </span>
                                 </td>
                                 <td>
+                                    <?php
+                                    $filtros = [];
+                                    
+                                    // CNAEs
+                                    if (!empty($task['cnaes'])) {
+                                        $cnaes = explode(',', $task['cnaes']);
+                                        $filtros[] = '<strong>CNAEs:</strong> ' . implode(', ', array_map('esc', $cnaes));
+                                    }
+                                    
+                                    // Estados
+                                    if (!empty($task['estados'])) {
+                                        $estados = explode(',', $task['estados']);
+                                        $filtros[] = '<strong>Estados:</strong> ' . implode(', ', array_map('esc', $estados));
+                                    }
+                                    
+                                    // Situações Fiscais
+                                    if (!empty($task['situacoes_fiscais'])) {
+                                        $situacoes = explode(',', $task['situacoes_fiscais']);
+                                        $situacoesLabel = [
+                                            '1' => 'NULA',
+                                            '2' => 'ATIVA',
+                                            '3' => 'SUSPENSA',
+                                            '4' => 'INAPTA',
+                                            '8' => 'BAIXADA'
+                                        ];
+                                        $situacoesTexto = array_map(function($s) use ($situacoesLabel) {
+                                            return $situacoesLabel[$s] ?? $s;
+                                        }, $situacoes);
+                                        $filtros[] = '<strong>Situações:</strong> ' . implode(', ', $situacoesTexto);
+                                    }
+                                    
+                                    if (empty($filtros)) {
+                                        echo '<small class="text-muted">Sem filtros</small>';
+                                    } else {
+                                        echo '<small>' . implode('<br>', $filtros) . '</small>';
+                                    }
+                                    ?>
+                                </td>
+                                <td>
                                     <?php if ($task['created_at']): ?>
                                         <?= date('d/m/Y H:i', strtotime($task['created_at'])) ?>
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm">
+                                        <?php if ($task['status'] === 'em_andamento'): ?>
+                                        <button type="button" 
+                                                class="btn btn-outline-warning btn-pause" 
+                                                data-task-id="<?= $task['id'] ?>"
+                                                title="Pausar tarefa">
+                                            <i class="fas fa-pause"></i>
+                                        </button>
+                                        <?php endif; ?>
                                         <button type="button" 
                                                 class="btn btn-outline-primary btn-duplicate" 
                                                 data-task-id="<?= $task['id'] ?>"

@@ -90,3 +90,12 @@ Remover campos de lista do formulário de importação e transferir para /receit
 - [x] Ajustar toolbar: "NOVA IMPORTAÇÃO" → "Nova Importação"
 - [x] Alinhar toolbar à direita
 - [x] Controlar estado "active" na toolbar
+
+
+## Correções Solicitadas - Interface de Tarefas
+
+- [x] Corrigir capitalização da toolbar ("NOVA IMPORTAÇÃO" → "Nova Importação") - já estava correto, problema de cache
+- [x] Adicionar botão "Pausar" na lista de tarefas
+- [x] Adicionar coluna "Filtros" mostrando CNAEs, Estados e Situações Fiscais
+- [x] Uniformizar largura das barras de progresso (200px fixo)
+- [x] Corrigir contagem de linhas importadas (usar affectedRows() em vez de count())
