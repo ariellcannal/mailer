@@ -144,3 +144,11 @@ Remover campos de lista do formulário de importação e transferir para /receit
 - [x] Botão Clonar não preenche formulário (sessionStorage não carrega dados) - Timeout adicionado + parsing flexível
 - [x] Reiniciar tarefa: progresso volta após CRON (arquivo não apagado ou campos não resetados corretamente) - Validação adicionada (não reiniciar em andamento)
 - [x] Filtro de situações fiscais usa coluna errada (deve ser coluna 6, 2 dígitos com zero: 01, 02, 03, 04, 08) - Normalização com str_pad
+
+
+## Problema: Contagem de Registros Importados Incorreta (NOVAMENTE)
+
+- [x] Interface mostra 264 registros importados
+- [x] Banco de dados tem 33.549 registros
+- [x] Investigar por que affectedRows() não funcionou - affectedRows() ignora duplicatas
+- [x] Corrigir lógica de contagem definitivamente - usar count($batchData) em vez de affectedRows()
