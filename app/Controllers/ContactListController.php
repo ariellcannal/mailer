@@ -244,7 +244,7 @@ class ContactListController extends BaseController
 
         return redirect()->back()->with('contact_lists_success', 'Contato removido da lista.');
     }
-}
+
 
     /**
      * Atualiza o total_contacts de uma ou todas as listas.
@@ -289,3 +289,4 @@ class ContactListController extends BaseController
             'total_updated' => count($listIds)
         ]);
     }
+}
