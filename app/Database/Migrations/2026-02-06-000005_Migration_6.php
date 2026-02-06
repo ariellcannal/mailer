@@ -6,7 +6,7 @@ use CodeIgniter\Database\Migration;
 
 /**
  * Migration 6: Adicionar Foreign Keys e Índices Otimizados
- * 
+ *
  * Objetivo: Garantir integridade referencial e otimizar buscas por:
  * - Nome (razão social e nome fantasia)
  * - CNAE (principal e secundário)
@@ -129,11 +129,11 @@ class Migration_6 extends Migration
         // FK: estabelecimentos.cnpj_basico → empresas.cnpj_basico
         if (!$this->foreignKeyExists('receita_estabelecimentos', 'fk_estabelecimento_empresa')) {
             $db->query('
-                ALTER TABLE receita_estabelecimentos 
-                ADD CONSTRAINT fk_estabelecimento_empresa 
-                FOREIGN KEY (cnpj_basico) 
-                REFERENCES receita_empresas(cnpj_basico) 
-                ON DELETE CASCADE 
+                ALTER TABLE receita_estabelecimentos
+                ADD CONSTRAINT fk_estabelecimento_empresa
+                FOREIGN KEY (cnpj_basico)
+                REFERENCES receita_empresas(cnpj_basico)
+                ON DELETE CASCADE
                 ON UPDATE CASCADE
             ');
         }
@@ -141,11 +141,11 @@ class Migration_6 extends Migration
         // FK: socios.cnpj_basico → empresas.cnpj_basico
         if (!$this->foreignKeyExists('receita_socios', 'fk_socio_empresa')) {
             $db->query('
-                ALTER TABLE receita_socios 
-                ADD CONSTRAINT fk_socio_empresa 
-                FOREIGN KEY (cnpj_basico) 
-                REFERENCES receita_empresas(cnpj_basico) 
-                ON DELETE CASCADE 
+                ALTER TABLE receita_socios
+                ADD CONSTRAINT fk_socio_empresa
+                FOREIGN KEY (cnpj_basico)
+                REFERENCES receita_empresas(cnpj_basico)
+                ON DELETE CASCADE
                 ON UPDATE CASCADE
             ');
         }
@@ -211,6 +211,12 @@ class Migration_6 extends Migration
     private function indexExists(string $table, string $indexName): bool
     {
         $db = \Config\Database::connect();
+        
+        // Verificar se a tabela existe antes de verificar o índice
+        if (!$this->tableExists($table)) {
+            return false;
+        }
+        
         $query = $db->query("SHOW INDEX FROM $table WHERE Key_name = ?", [$indexName]);
         return $query->getNumRows() > 0;
     }
@@ -222,11 +228,11 @@ class Migration_6 extends Migration
     {
         $db = \Config\Database::connect();
         $query = $db->query("
-            SELECT CONSTRAINT_NAME 
-            FROM information_schema.TABLE_CONSTRAINTS 
-            WHERE TABLE_SCHEMA = DATABASE() 
-            AND TABLE_NAME = ? 
-            AND CONSTRAINT_NAME = ? 
+            SELECT CONSTRAINT_NAME
+            FROM information_schema.TABLE_CONSTRAINTS
+            WHERE TABLE_SCHEMA = DATABASE()
+            AND TABLE_NAME = ?
+            AND CONSTRAINT_NAME = ?
             AND CONSTRAINT_TYPE = 'FOREIGN KEY'
         ", [$table, $fkName]);
         return $query->getNumRows() > 0;
