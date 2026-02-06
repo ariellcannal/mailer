@@ -105,6 +105,14 @@
                     </select>
                 </div>
                 <div class="col-auto">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="include_contabilidade_list" name="include_contabilidade" value="1">
+                        <label class="form-check-label" for="include_contabilidade_list">
+                            Incluir Contabilidade
+                        </label>
+                    </div>
+                </div>
+                <div class="col-auto">
                     <button type="button" id="btn-add-to-list" class="btn btn-success">
                         <i class="fas fa-plus me-2"></i>Adicionar
                     </button>

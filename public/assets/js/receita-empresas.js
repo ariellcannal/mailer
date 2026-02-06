@@ -326,7 +326,8 @@
                 method: 'POST',
                 data: {
                     lists: selectedLists,
-                    filters: currentFilters
+                    filters: currentFilters,
+                    include_contabilidade: $('#include_contabilidade_list').is(':checked') ? '1' : '0'
                 },
                 dataType: 'json',
                 success: function(response) {

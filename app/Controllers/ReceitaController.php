@@ -421,8 +421,7 @@ class ReceitaController extends BaseController
             
             // Filtro: somente com e-mail
             if ($comEmail == '1') {
-                $builder->where('correio_eletronico IS NOT NULL');
-                $builder->where('correio_eletronico !=', '');
+                $builder->where('(correio_eletronico IS NOT NULL AND correio_eletronico != "" AND TRIM(correio_eletronico) != "")', null, false);
             }
             
             // Filtro: somente com telefone
@@ -589,8 +588,7 @@ class ReceitaController extends BaseController
             
             // Filtro: somente com e-mail
             if (!empty($filters['com_email'])) {
-                $builder->where('correio_eletronico IS NOT NULL');
-                $builder->where('correio_eletronico !=', '');
+                $builder->where('(correio_eletronico IS NOT NULL AND correio_eletronico != "" AND TRIM(correio_eletronico) != "")', null, false);
             }
             
             // Filtro: somente com telefone
@@ -602,8 +600,7 @@ class ReceitaController extends BaseController
             }
             
             // Sempre buscar apenas empresas com email válido (necessário para criar contatos)
-            $builder->where('correio_eletronico IS NOT NULL');
-            $builder->where('correio_eletronico !=', '');
+            $builder->where('(correio_eletronico IS NOT NULL AND correio_eletronico != "" AND TRIM(correio_eletronico) != "")', null, false);
             
             $empresas = $builder->get()->getResultArray();
             

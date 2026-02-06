@@ -80,25 +80,6 @@
                                 </button>
                             </div>
                         </div>
-                        
-                        <!-- Segunda linha: Lista de Contatos -->
-                        <div class="row g-3 mt-3">
-                            <div class="col-md-8">
-                                <label class="form-label">Criar Lista de Contatos (opcional)</label>
-                                <input type="text" class="form-control" id="contact_list_name" name="contact_list_name" placeholder="Ex: Empresas SP - Janeiro 2025">
-                                <small class="text-muted">Se preenchido, criará uma lista de contatos com os estabelecimentos importados.</small>
-                            </div>
-                            
-                            <div class="col-md-4 d-flex align-items-center">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="include_contabilidade" name="include_contabilidade" value="1">
-                                    <label class="form-check-label" for="include_contabilidade">
-                                        Incluir Contatos de Contabilidade
-                                    </label>
-                                    <small class="d-block text-muted">Adicionar e-mails de contabilidade à lista.</small>
-                                </div>
-                            </div>
-                        </div>
                     </form>
                 </div>
             </div>

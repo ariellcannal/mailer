@@ -173,3 +173,15 @@ Remover campos de lista do formulário de importação e transferir para /receit
 - [x] **CORRIGIDO:** Filtros de e-mail e telefone - nomes de colunas corrigidos (ddd1, telefone1, ddd2, telefone2)
 - [x] Formatar CNPJ para 00.000.000/0000-00
 - [x] Adicionar opção para criar lista de contatos a partir das empresas filtradas (já estava implementada)
+
+
+## Correções: Sistema de Listas de Contatos (Solicitação Original)
+
+- [x] Remover campo "Criar Lista de Contatos" do formulário de importação
+- [x] Remover checkbox "Adicionar Contatos de Contabilidade" do formulário de importação
+- [x] Remover campos do JavaScript (receita-index.js)
+- [x] Verificar/corrigir card na view /receita/empresas - Adicionado checkbox de contabilidade
+- [x] Garantir que card aparece quando há filtros ativos - Já estava implementado
+- [x] Implementar Select2 com tagging para criar novas listas - Já estava implementado
+- [x] Corrigir filtro de e-mail (está listando empresas com e-mail em branco) - Usando TRIM e validação robusta
+- [x] Corrigir importação para salvar NULL em vez de "" no campo correio_eletronico

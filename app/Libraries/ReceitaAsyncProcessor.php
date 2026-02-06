@@ -558,6 +558,10 @@ class ReceitaAsyncProcessor
                         if ($value !== null && is_string($value)) {
                             $value = mb_convert_encoding($value, 'UTF-8', 'ISO-8859-1');
                         }
+                        // Converter string vazia em NULL para correio_eletronico
+                        if ($fName === 'correio_eletronico' && trim($value) === '') {
+                            $value = null;
+                        }
                         $row[$fName] = $value;
                     }
                 }
