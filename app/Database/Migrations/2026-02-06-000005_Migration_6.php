@@ -26,7 +26,6 @@ class Migration_6 extends Migration
         // Verificar se as tabelas existem
         $tabelasExistem = [
             'receita_estabelecimentos' => $db->tableExists('receita_estabelecimentos'),
-            'receita_empresas' => $db->tableExists('receita_empresas'),
             'receita_socios' => $db->tableExists('receita_socios'),
         ];
         
@@ -90,20 +89,6 @@ class Migration_6 extends Migration
         }
         
         // ========================================
-        // ÍNDICES PARA EMPRESAS
-        // ========================================
-        
-        // Índice para busca por razão social (FULLTEXT)
-        if (!$this->indexExists('receita_empresas', 'idx_razao_social')) {
-            $db->query('CREATE FULLTEXT INDEX idx_razao_social ON receita_empresas(razao_social)');
-        }
-        
-        // Índice único para CNPJ base (chave primária)
-        if (!$this->indexExists('receita_empresas', 'idx_cnpj_basico_empresa')) {
-            $db->query('CREATE UNIQUE INDEX idx_cnpj_basico_empresa ON receita_empresas(cnpj_basico)');
-        }
-        
-        // ========================================
         // ÍNDICES PARA SÓCIOS
         // ========================================
         
@@ -113,42 +98,18 @@ class Migration_6 extends Migration
         }
         
         // Índice para busca por CPF/CNPJ do sócio
-        if (!$this->indexExists('receita_socios', 'idx_cpf_cnpj_socio')) {
-            $db->query('CREATE INDEX idx_cpf_cnpj_socio ON receita_socios(cpf_cnpj_socio)');
+        if (!$this->indexExists('receita_socios', 'idx_cnpj_cpf_socio')) {
+            $db->query('CREATE INDEX idx_cnpj_cpf_socio ON receita_socios(cnpj_cpf_socio)');
         }
         
         // Índice para busca por nome do sócio
         if (!$this->indexExists('receita_socios', 'idx_nome_socio')) {
-            $db->query('CREATE INDEX idx_nome_socio ON receita_socios(nome_socio_razao_social(100))');
+            $db->query('CREATE INDEX idx_nome_socio ON receita_socios(nome_socio(100))');
         }
         
         // ========================================
         // FOREIGN KEYS (Integridade Referencial)
         // ========================================
-        
-        // FK: estabelecimentos.cnpj_basico → empresas.cnpj_basico
-        if (!$this->foreignKeyExists('receita_estabelecimentos', 'fk_estabelecimento_empresa')) {
-            $db->query('
-                ALTER TABLE receita_estabelecimentos
-                ADD CONSTRAINT fk_estabelecimento_empresa
-                FOREIGN KEY (cnpj_basico)
-                REFERENCES receita_empresas(cnpj_basico)
-                ON DELETE CASCADE
-                ON UPDATE CASCADE
-            ');
-        }
-        
-        // FK: socios.cnpj_basico → empresas.cnpj_basico
-        if (!$this->foreignKeyExists('receita_socios', 'fk_socio_empresa')) {
-            $db->query('
-                ALTER TABLE receita_socios
-                ADD CONSTRAINT fk_socio_empresa
-                FOREIGN KEY (cnpj_basico)
-                REFERENCES receita_empresas(cnpj_basico)
-                ON DELETE CASCADE
-                ON UPDATE CASCADE
-            ');
-        }
         
         log_message('info', '========================================');
         log_message('info', 'Migration 6: CONCLUÍDA COM SUCESSO');
@@ -158,15 +119,6 @@ class Migration_6 extends Migration
     public function down()
     {
         $db = \Config\Database::connect();
-        
-        // Remover foreign keys
-        if ($this->foreignKeyExists('receita_estabelecimentos', 'fk_estabelecimento_empresa')) {
-            $db->query('ALTER TABLE receita_estabelecimentos DROP FOREIGN KEY fk_estabelecimento_empresa');
-        }
-        
-        if ($this->foreignKeyExists('receita_socios', 'fk_socio_empresa')) {
-            $db->query('ALTER TABLE receita_socios DROP FOREIGN KEY fk_socio_empresa');
-        }
         
         // Remover índices de estabelecimentos
         $indices = [
@@ -185,17 +137,9 @@ class Migration_6 extends Migration
                 $db->query("ALTER TABLE receita_estabelecimentos DROP INDEX $index");
             }
         }
-        
-        // Remover índices de empresas
-        if ($this->indexExists('receita_empresas', 'idx_razao_social')) {
-            $db->query('ALTER TABLE receita_empresas DROP INDEX idx_razao_social');
-        }
-        if ($this->indexExists('receita_empresas', 'idx_cnpj_basico_empresa')) {
-            $db->query('ALTER TABLE receita_empresas DROP INDEX idx_cnpj_basico_empresa');
-        }
-        
+                
         // Remover índices de sócios
-        $indicesSocios = ['idx_cnpj_basico_socio', 'idx_cpf_cnpj_socio', 'idx_nome_socio'];
+        $indicesSocios = ['idx_cnpj_basico_socio', 'idx_cnpj_cpf_socio', 'idx_nome_socio'];
         foreach ($indicesSocios as $index) {
             if ($this->indexExists('receita_socios', $index)) {
                 $db->query("ALTER TABLE receita_socios DROP INDEX $index");

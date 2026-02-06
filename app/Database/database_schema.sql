@@ -314,6 +314,33 @@ CREATE TABLE IF NOT EXISTS activity_logs (
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+/*RECEITA*/
+CREATE TABLE IF NOT EXISTS paises (codigo INT PRIMARY KEY, descricao VARCHAR(255)) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS municipios (codigo INT PRIMARY KEY, descricao VARCHAR(255)) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS qualificacoes (codigo INT PRIMARY KEY, descricao VARCHAR(255)) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS naturezas (codigo INT PRIMARY KEY, descricao VARCHAR(255)) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS motivos (codigo INT PRIMARY KEY, descricao VARCHAR(255)) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS cnaes (codigo INT PRIMARY KEY, descricao VARCHAR(255)) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS estabelecimentos (
+    cnpj_basico CHAR(8), cnpj_ordem CHAR(4), cnpj_dv CHAR(2), matriz_filial INT, 
+    nome_fantasia VARCHAR(255), situacao_cadastral INT, data_situacao_cadastral DATE,
+    motivo_situacao_cadastral INT, nome_cidade_exterior VARCHAR(255), pais INT,
+    data_inicio_atividade DATE, cnae_fiscal_principal INT, cnae_fiscal_secundario TEXT,
+    tipo_logradouro VARCHAR(50), logradouro VARCHAR(255), numero VARCHAR(50), 
+    complemento VARCHAR(255), bairro VARCHAR(255), cep VARCHAR(10), uf VARCHAR(2), 
+    municipio INT, ddd1 VARCHAR(5), telefone1 VARCHAR(20), ddd2 VARCHAR(5), 
+    telefone2 VARCHAR(20), ddd_fax VARCHAR(5), fax VARCHAR(20), correio_eletronico VARCHAR(255),
+    situacao_especial VARCHAR(255), data_situacao_especial DATE,
+    PRIMARY KEY (cnpj_basico, cnpj_ordem, cnpj_dv)
+) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS socios (
+    cnpj_basico CHAR(8), identificador_socio INT, nome_socio VARCHAR(255), 
+    cnpj_cpf_socio VARCHAR(20), qualificacao_socio INT, data_entrada_sociedade DATE,
+    pais INT, representante_legal VARCHAR(20), nome_representante VARCHAR(255),
+    qualificacao_representante_legal INT, faixa_etaria INT,
+    INDEX (cnpj_basico)
+) ENGINE=InnoDB;
+
 -- Inserir configurações padrão do sistema
 INSERT INTO system_settings (setting_key, setting_value) VALUES
 ('aws_ses_region', 'us-east-1'),
