@@ -473,10 +473,14 @@ class ReceitaController extends BaseController
     public function empresa($cnpjBasico, $cnpjOrdem, $cnpjDv)
     {
         try {
+            log_message('info', '[empresa] Parâmetros recebidos - CNPJ Básico: ' . $cnpjBasico . ', Ordem: ' . $cnpjOrdem . ', DV: ' . $cnpjDv);
+            
             // Remover zeros à esquerda (ltrim) para compatibilidade com o banco
             $cnpjBasico = ltrim($cnpjBasico, '0') ?: '0';
             $cnpjOrdem = ltrim($cnpjOrdem, '0') ?: '0';
             $cnpjDv = ltrim($cnpjDv, '0') ?: '0';
+            
+            log_message('info', '[empresa] Após ltrim - CNPJ Básico: ' . $cnpjBasico . ', Ordem: ' . $cnpjOrdem . ', DV: ' . $cnpjDv);
             
             $db = \Config\Database::connect();
             
@@ -488,7 +492,10 @@ class ReceitaController extends BaseController
                 ->get()
                 ->getRowArray();
             
+            log_message('info', '[empresa] Estabelecimento encontrado: ' . ($estabelecimento ? 'SIM' : 'NÃO'));
+            
             if (!$estabelecimento) {
+                log_message('warning', '[empresa] Empresa não encontrada com CNPJ: ' . $cnpjBasico . '/' . $cnpjOrdem . '/' . $cnpjDv);
                 throw new \Exception('Empresa não encontrada');
             }
             
@@ -554,10 +561,16 @@ class ReceitaController extends BaseController
     public function adicionarEmpresasALista()
     {
         try {
+            log_message('info', '[adicionarEmpresasALista] Início do método');
+            
             $lists = $this->request->getPost('lists');
             $filters = $this->request->getPost('filters');
             
+            log_message('info', '[adicionarEmpresasALista] Lists recebidas: ' . json_encode($lists));
+            log_message('info', '[adicionarEmpresasALista] Filters recebidos: ' . json_encode($filters));
+            
             if (empty($lists)) {
+                log_message('warning', '[adicionarEmpresasALista] Nenhuma lista selecionada');
                 return $this->response->setJSON([
                     'success' => false,
                     'message' => 'Nenhuma lista selecionada'
@@ -609,7 +622,10 @@ class ReceitaController extends BaseController
             
             $empresas = $builder->get()->getResultArray();
             
+            log_message('info', '[adicionarEmpresasALista] Total de empresas encontradas: ' . count($empresas));
+            
             if (empty($empresas)) {
+                log_message('warning', '[adicionarEmpresasALista] Nenhuma empresa encontrada');
                 return $this->response->setJSON([
                     'success' => false,
                     'message' => 'Nenhuma empresa encontrada com os filtros selecionados'
@@ -621,20 +637,35 @@ class ReceitaController extends BaseController
             
             // Processar cada lista
             foreach ($lists as $listId) {
+                log_message('info', '[adicionarEmpresasALista] Processando lista: ' . $listId);
+                
                 // Se começa com 'new:', é uma nova lista
                 if (strpos($listId, 'new:') === 0) {
                     $listName = substr($listId, 4);
+                    log_message('info', '[adicionarEmpresasALista] Criando nova lista: ' . $listName);
+                    
                     $newListId = $contactListModel->insert([
                         'name' => $listName,
                         'description' => 'Lista criada automaticamente via importação da Receita Federal',
                         'contact_count' => 0
                     ]);
+                    
+                    if ($newListId === false) {
+                        log_message('error', '[adicionarEmpresasALista] Falha ao criar lista: ' . json_encode($contactListModel->errors()));
+                        continue;
+                    }
+                    
+                    log_message('info', '[adicionarEmpresasALista] Nova lista criada com ID: ' . $newListId);
                     $listId = $newListId;
                     $listasProcessadas[] = $listName;
                 } else {
                     $lista = $contactListModel->find($listId);
                     if ($lista) {
+                        log_message('info', '[adicionarEmpresasALista] Usando lista existente: ' . $lista['name']);
                         $listasProcessadas[] = $lista['name'];
+                    } else {
+                        log_message('error', '[adicionarEmpresasALista] Lista não encontrada: ' . $listId);
+                        continue;
                     }
                 }
                 
