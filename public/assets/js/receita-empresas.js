@@ -278,6 +278,8 @@
         $('#select-contact-lists').select2({
             theme: 'bootstrap-5',
             tags: true,
+            tokenSeparators: [','],
+            minimumInputLength: 0,
             createTag: function(params) {
                 const term = $.trim(params.term);
                 if (term === '') {
@@ -285,7 +287,7 @@
                 }
                 return {
                     id: 'new:' + term,
-                    text: term + ' (criar nova lista)',
+                    text: term + ' (criar nova)',
                     newTag: true
                 };
             },
@@ -295,7 +297,7 @@
                 delay: 250,
                 data: function(params) {
                     return {
-                        q: params.term
+                        q: params.term || ''
                     };
                 },
                 processResults: function(data) {
@@ -305,14 +307,20 @@
                 },
                 cache: true
             },
-            placeholder: 'Selecione ou crie uma lista',
+            placeholder: 'Clique para selecionar ou digite para criar',
             allowClear: true,
             language: {
+                inputTooShort: function() {
+                    return 'Digite para buscar ou criar uma lista';
+                },
                 searching: function() {
                     return 'Buscando listas...';
                 },
                 noResults: function() {
-                    return 'Digite para criar uma nova lista';
+                    return 'Nenhuma lista encontrada. Digite para criar uma nova';
+                },
+                loadingMore: function() {
+                    return 'Carregando mais resultados...';
                 }
             }
         });

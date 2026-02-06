@@ -230,3 +230,15 @@ Remover campos de lista do formulário de importação e transferir para /receit
 - [x] Permitir compartilhamento de URLs com filtros aplicados
 - [x] Criar função updateURLWithFilters()
 - [x] Chamar updateURLWithFilters() em buscarEmpresas()
+
+
+## Problema: Select2 de Listas de Contatos Não Funciona
+
+- [x] Select2 não está exibindo listas existentes
+- [x] Tagging não está permitindo criar novas listas
+- [x] Verificar endpoint buscarListasContatos (estava correto)
+- [x] Verificar configuração do Select2 (AJAX + tags)
+- [x] Adicionar minimumInputLength: 0 para permitir busca ao clicar
+- [x] Adicionar tokenSeparators para separar por vírgula
+- [x] Melhorar mensagens de language
+- [x] Garantir que params.term || '' não seja undefined
