@@ -185,3 +185,9 @@ Remover campos de lista do formulário de importação e transferir para /receit
 - [x] Implementar Select2 com tagging para criar novas listas - Já estava implementado
 - [x] Corrigir filtro de e-mail (está listando empresas com e-mail em branco) - Usando TRIM e validação robusta
 - [x] Corrigir importação para salvar NULL em vez de "" no campo correio_eletronico
+
+
+## Nova Solicitação: Converter Todos os Campos Vazios em NULL
+
+- [x] Aplicar lógica de conversão de strings vazias para NULL em **todos os campos** durante importação
+- [x] Não apenas correio_eletronico, mas todos os campos da tabela
