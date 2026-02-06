@@ -682,7 +682,17 @@ class ReceitaController extends BaseController
                 
                 // Adicionar empresas à lista
                 foreach ($empresas as $empresa) {
-                    $email = $empresa['correio_eletronico'];
+                    $email = trim($empresa['correio_eletronico']);
+                    
+                    // Limpar caracteres inválidos do email
+                    $email = preg_replace('/[<>]/', '', $email);
+                    
+                    // Validar email antes de processar
+                    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                        log_message('warning', '[adicionarEmpresasALista] Email inválido ignorado: ' . $email);
+                        continue;
+                    }
+                    
                     $nome = $empresa['nome_fantasia'] ?: '';
                     
                     // Criar ou atualizar contato
@@ -733,7 +743,12 @@ class ReceitaController extends BaseController
                 $count = $contactListMemberModel
                     ->where('list_id', $listId)
                     ->countAllResults();
-                $contactListModel->update($listId, ['contact_count' => $count]);
+                
+                // Buscar lista atual para comparar
+                $listaAtual = $contactListModel->find($listId);
+                if ($listaAtual && $listaAtual['contact_count'] != $count) {
+                    $contactListModel->update($listId, ['contact_count' => $count]);
+                }
             }
             
             $message = sprintf(
