@@ -152,3 +152,9 @@ Remover campos de lista do formulário de importação e transferir para /receit
 - [x] Banco de dados tem 33.549 registros
 - [x] Investigar por que affectedRows() não funcionou - affectedRows() ignora duplicatas
 - [x] Corrigir lógica de contagem definitivamente - usar count($batchData) em vez de affectedRows()
+
+
+## Nova Regra: Contar Apenas Estabelecimentos
+
+- [x] Modificar contagem de imported_lines para somar apenas arquivo "estabelecimentos"
+- [x] Ignorar contagem de empresas, socios, simples, etc.

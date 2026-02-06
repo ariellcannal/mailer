@@ -567,7 +567,11 @@ class ReceitaAsyncProcessor
                 if (count($batchData) >= 500) {
                     $batchSize = count($batchData);
                     $this->db->table($tableName)->ignore(true)->insertBatch($batchData);
-                    $linesImported += $batchSize;  // Contar total enviado, não apenas inseridos
+                    
+                    // Contar apenas estabelecimentos
+                    if ($rawName == 'estabelecimentos') {
+                        $linesImported += $batchSize;
+                    }
                     
                     // Criar/atualizar contatos se lista foi fornecida
                     if ($contactListId && $rawName == 'estabelecimentos') {
@@ -588,7 +592,11 @@ class ReceitaAsyncProcessor
             if (!empty($batchData)) {
                 $batchSize = count($batchData);
                 $this->db->table($tableName)->ignore(true)->insertBatch($batchData);
-                $linesImported += $batchSize;  // Contar total enviado, não apenas inseridos
+                
+                // Contar apenas estabelecimentos
+                if ($rawName == 'estabelecimentos') {
+                    $linesImported += $batchSize;
+                }
                 
                 // Criar/atualizar contatos se lista foi fornecida
                 if ($contactListId && $rawName == 'estabelecimentos') {
