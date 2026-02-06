@@ -206,6 +206,15 @@ class Migration_6 extends Migration
     }
     
     /**
+     * Verifica se uma tabela existe
+     */
+    private function tableExists(string $table): bool
+    {
+        $db = \Config\Database::connect();
+        return $db->tableExists($table);
+    }
+    
+    /**
      * Verifica se um índice existe
      */
     private function indexExists(string $table, string $indexName): bool
