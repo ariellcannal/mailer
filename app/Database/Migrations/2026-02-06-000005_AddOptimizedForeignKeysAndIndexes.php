@@ -12,12 +12,12 @@ use CodeIgniter\Database\Migration;
  * - CNAE (principal e secundário)
  * - CNPJ (base, completo)
  */
-class Migration_6 extends Migration
+class AddOptimizedForeignKeysAndIndexes extends Migration
 {
     public function up()
     {
         log_message('info', '========================================');
-        log_message('info', 'Migration 6: INICIANDO');
+        log_message('info', 'AddOptimizedForeignKeysAndIndexes: INICIANDO');
         log_message('info', '========================================');
         
         $db = \Config\Database::connect();
@@ -35,7 +35,7 @@ class Migration_6 extends Migration
         }
         
         if (!$tabelasExistem['receita_estabelecimentos']) {
-            log_message('warning', 'Migration 6: Tabela receita_estabelecimentos não existe! Abortando.');
+            log_message('warning', 'AddOptimizedForeignKeysAndIndexes: Tabela receita_estabelecimentos não existe! Abortando.');
             return;
         }
         
@@ -44,13 +44,13 @@ class Migration_6 extends Migration
         // ========================================
         
         // Índice para busca por nome fantasia (FULLTEXT para busca rápida)
-        log_message('info', 'Migration 6: Verificando idx_nome_fantasia...');
+        log_message('info', 'AddOptimizedForeignKeysAndIndexes: Verificando idx_nome_fantasia...');
         if (!$this->indexExists('receita_estabelecimentos', 'idx_nome_fantasia')) {
-            log_message('info', 'Migration 6: Criando idx_nome_fantasia...');
+            log_message('info', 'AddOptimizedForeignKeysAndIndexes: Criando idx_nome_fantasia...');
             $db->query('CREATE INDEX idx_nome_fantasia ON receita_estabelecimentos(nome_fantasia(100))');
-            log_message('info', 'Migration 6: idx_nome_fantasia criado!');
+            log_message('info', 'AddOptimizedForeignKeysAndIndexes: idx_nome_fantasia criado!');
         } else {
-            log_message('info', 'Migration 6: idx_nome_fantasia já existe, pulando.');
+            log_message('info', 'AddOptimizedForeignKeysAndIndexes: idx_nome_fantasia já existe, pulando.');
         }
         
         // Índice para busca por CNPJ completo (base + ordem + dv)
@@ -112,7 +112,7 @@ class Migration_6 extends Migration
         // ========================================
         
         log_message('info', '========================================');
-        log_message('info', 'Migration 6: CONCLUÍDA COM SUCESSO');
+        log_message('info', 'AddOptimizedForeignKeysAndIndexes: CONCLUÍDA COM SUCESSO');
         log_message('info', '========================================');
     }
     
@@ -146,7 +146,7 @@ class Migration_6 extends Migration
             }
         }
         
-        log_message('info', 'Migration 6: Foreign keys e índices removidos');
+        log_message('info', 'AddOptimizedForeignKeysAndIndexes: Foreign keys e índices removidos');
     }
     
     /**

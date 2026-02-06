@@ -7,7 +7,7 @@ use CodeIgniter\Database\BaseConnection;
 /**
  * Migration 4: Adicionar campos total_bytes e processed_bytes na tabela receita_import_tasks
  */
-class Migration_4
+class AddBytesCols
 {
     protected BaseConnection $db;
     
@@ -38,7 +38,7 @@ class Migration_4
         
         $forge->addColumn('receita_import_tasks', $fields);
         
-        log_message('info', 'Migration 4: Campos total_bytes e processed_bytes adicionados à tabela receita_import_tasks');
+        log_message('info', 'AddBytesCols: Campos total_bytes e processed_bytes adicionados à tabela receita_import_tasks');
     }
 
     public function down(): void
@@ -47,6 +47,6 @@ class Migration_4
         
         $forge->dropColumn('receita_import_tasks', ['total_bytes', 'processed_bytes']);
         
-        log_message('info', 'Migration 4: Campos total_bytes e processed_bytes removidos da tabela receita_import_tasks');
+        log_message('info', 'AddBytesCols: Campos total_bytes e processed_bytes removidos da tabela receita_import_tasks');
     }
 }

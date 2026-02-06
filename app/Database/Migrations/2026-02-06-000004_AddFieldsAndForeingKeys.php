@@ -7,7 +7,7 @@ use CodeIgniter\Database\BaseConnection;
 /**
  * Migration 5: Adicionar campo situacoes_fiscais e criar foreign keys + índices otimizados
  */
-class Migration_5
+class AddFieldsAndForeingKeys
 {
     protected BaseConnection $db;
     
@@ -108,7 +108,7 @@ class Migration_5
             }
         }
         
-        log_message('info', 'Migration 5: Campo situacoes_fiscais, índices e foreign keys criados com sucesso');
+        log_message('info', 'AddFieldsAndForeingKeys: Campo situacoes_fiscais, índices e foreign keys criados com sucesso');
     }
 
     public function down(): void
@@ -140,7 +140,7 @@ class Migration_5
         // Remover campo
         $forge->dropColumn('receita_import_tasks', 'situacoes_fiscais');
         
-        log_message('info', 'Migration 5: Rollback concluído');
+        log_message('info', 'AddFieldsAndForeingKeys: Rollback concluído');
     }
     
     /**

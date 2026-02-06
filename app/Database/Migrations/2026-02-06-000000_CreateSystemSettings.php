@@ -10,7 +10,7 @@ use CodeIgniter\Database\Migration;
  * Esta migration cria a tabela que armazena configurações do sistema,
  * incluindo a versão atual do banco de dados.
  */
-class Migration_1 extends Migration
+class Migration_1 extends CreateSystemSettings
 {
     public function up()
     {
@@ -18,7 +18,7 @@ class Migration_1 extends Migration
         
         // Verificar se tabela já existe
         if ($db->tableExists('system_settings')) {
-            log_message('info', 'Migration 1: Tabela system_settings já existe, pulando criação');
+            log_message('info', 'CreateSystemSettings: Tabela system_settings já existe, pulando criação');
             return;
         }
         
@@ -62,7 +62,7 @@ class Migration_1 extends Migration
             'created_at' => date('Y-m-d H:i:s'),
         ]);
         
-        log_message('info', 'Migration 1: Tabela system_settings criada com sucesso');
+        log_message('info', 'CreateSystemSettings: Tabela system_settings criada com sucesso');
     }
     
     public function down()
@@ -70,6 +70,6 @@ class Migration_1 extends Migration
         $forge = \Config\Database::forge();
         $forge->dropTable('system_settings', true);
         
-        log_message('info', 'Migration 1: Tabela system_settings removida');
+        log_message('info', 'CreateSystemSettings: Tabela system_settings removida');
     }
 }

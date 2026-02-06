@@ -7,7 +7,7 @@ use CodeIgniter\Database\Migration;
 /**
  * Migration 2: Criar tabela contact_imports para importação assíncrona
  */
-class Migration_2 extends Migration
+class CreateAsyncContactImports extends Migration
 {
     
     public function up(): void
