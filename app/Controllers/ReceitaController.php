@@ -653,6 +653,18 @@ class ReceitaController extends BaseController
                             'name' => $nome,
                             'email' => $email
                         ]);
+                        
+                        // Verificar se insert foi bem-sucedido
+                        if ($contactId === false) {
+                            log_message('error', 'Falha ao criar contato: ' . $email . ' - Erros: ' . json_encode($contactModel->errors()));
+                            continue; // Pular este contato e continuar com o próximo
+                        }
+                    }
+                    
+                    // Validar contactId antes de inserir na lista
+                    if (empty($contactId) || !is_numeric($contactId)) {
+                        log_message('error', 'contact_id inválido para email: ' . $email . ' - contactId: ' . var_export($contactId, true));
+                        continue;
                     }
                     
                     // Verificar se já está na lista
