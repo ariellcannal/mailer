@@ -657,13 +657,13 @@ class ReceitaController extends BaseController
                     
                     // Verificar se já está na lista
                     $exists = $contactListMemberModel
-                        ->where('contact_list_id', $listId)
+                        ->where('list_id', $listId)
                         ->where('contact_id', $contactId)
                         ->first();
                     
                     if (!$exists) {
                         $contactListMemberModel->insert([
-                            'contact_list_id' => $listId,
+                            'list_id' => $listId,
                             'contact_id' => $contactId
                         ]);
                         $totalAdicionados++;
@@ -672,7 +672,7 @@ class ReceitaController extends BaseController
                 
                 // Atualizar contador da lista
                 $count = $contactListMemberModel
-                    ->where('contact_list_id', $listId)
+                    ->where('list_id', $listId)
                     ->countAllResults();
                 $contactListModel->update($listId, ['contact_count' => $count]);
             }
