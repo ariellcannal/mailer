@@ -427,8 +427,8 @@ class ReceitaController extends BaseController
             // Filtro: somente com telefone
             if ($comTelefone == '1') {
                 $builder->groupStart();
-                $builder->where('((ddd_telefone_1 IS NOT NULL AND ddd_telefone_1 != "") OR (telefone_1 IS NOT NULL AND telefone_1 != ""))', null, false);
-                $builder->orWhere('((ddd_telefone_2 IS NOT NULL AND ddd_telefone_2 != "") OR (telefone_2 IS NOT NULL AND telefone_2 != ""))', null, false);
+                $builder->where('((ddd1 IS NOT NULL AND ddd1 != "") OR (telefone1 IS NOT NULL AND telefone1 != ""))', null, false);
+                $builder->orWhere('((ddd2 IS NOT NULL AND ddd2 != "") OR (telefone2 IS NOT NULL AND telefone2 != ""))', null, false);
                 $builder->groupEnd();
             }
             
@@ -442,7 +442,7 @@ class ReceitaController extends BaseController
             
             // Buscar dados
             $empresas = $builder
-                ->select('cnpj_basico, cnpj_ordem, cnpj_dv, nome_fantasia, ddd_telefone_1, telefone_1, ddd_telefone_2, telefone_2, ddd_fax, fax, correio_eletronico')
+                ->select('cnpj_basico, cnpj_ordem, cnpj_dv, nome_fantasia, ddd1, telefone1, ddd2, telefone2, ddd_fax, fax, correio_eletronico')
                 ->limit($perPage, $offset)
                 ->get()
                 ->getResultArray();

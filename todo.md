@@ -212,3 +212,12 @@ Remover campos de lista do formulário de importação e transferir para /receit
 - [x] Card deve aparecer automaticamente quando há parâmetros GET com filtros ativos
 - [x] Criar função loadFiltersFromURL() para popular formulário com parâmetros GET
 - [x] Executar busca automaticamente ao carregar página com parâmetros GET
+
+
+## URGENTE: Nomes de Colunas Incorretos
+
+- [x] Estrutura real da tabela: ddd1, telefone1, ddd2, telefone2 (sem underscores)
+- [x] Corrigir controller: ddd_telefone_1 → ddd1, telefone_1 → telefone1, etc
+- [x] Corrigir JavaScript: ddd_telefone_1 → ddd1, etc
+- [x] Corrigir filtro de telefone no controller
+- [x] Corrigir SELECT no controller

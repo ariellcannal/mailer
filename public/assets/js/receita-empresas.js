@@ -172,11 +172,11 @@
             const cnpjOrdem = empresa.cnpj_ordem.padStart(4, '0');
             const cnpjDv = empresa.cnpj_dv.padStart(2, '0');
             const cnpj = `${cnpjBasico.substring(0,2)}.${cnpjBasico.substring(2,5)}.${cnpjBasico.substring(5,8)}/${cnpjOrdem}-${cnpjDv}`;
-            const telefone1 = empresa.ddd_telefone_1 && empresa.telefone_1 
-                ? `(${empresa.ddd_telefone_1}) ${empresa.telefone_1}` 
+            const telefone1 = empresa.ddd1 && empresa.telefone1 
+                ? `(${empresa.ddd1}) ${empresa.telefone1}` 
                 : '-';
-            const telefone2 = empresa.ddd_telefone_2 && empresa.telefone_2 
-                ? `(${empresa.ddd_telefone_2}) ${empresa.telefone_2}` 
+            const telefone2 = empresa.ddd2 && empresa.telefone2 
+                ? `(${empresa.ddd2}) ${empresa.telefone2}` 
                 : '-';
             const fax = empresa.ddd_fax && empresa.fax 
                 ? `(${empresa.ddd_fax}) ${empresa.fax}` 
