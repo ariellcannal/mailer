@@ -746,7 +746,10 @@ class ReceitaController extends BaseController
                 
                 // Buscar lista atual para comparar
                 $listaAtual = $contactListModel->find($listId);
-                if ($listaAtual && $listaAtual['contact_count'] != $count) {
+                if ($listaAtual && isset($listaAtual['contact_count']) && $listaAtual['contact_count'] != $count) {
+                    $contactListModel->update($listId, ['contact_count' => $count]);
+                } elseif ($listaAtual && !isset($listaAtual['contact_count'])) {
+                    // Se contact_count não existe, criar
                     $contactListModel->update($listId, ['contact_count' => $count]);
                 }
             }
