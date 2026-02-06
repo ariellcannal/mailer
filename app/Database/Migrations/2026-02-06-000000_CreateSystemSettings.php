@@ -10,7 +10,7 @@ use CodeIgniter\Database\Migration;
  * Esta migration cria a tabela que armazena configurações do sistema,
  * incluindo a versão atual do banco de dados.
  */
-class Migration_1 extends CreateSystemSettings
+class CreateSystemSettings extends CreateSystemSettings
 {
     public function up()
     {
