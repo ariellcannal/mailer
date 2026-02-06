@@ -10,7 +10,11 @@
     $(document).ready(function() {
         initSelect2();
         initFormSubmit();
-        loadDuplicateTask();
+        
+        // Aguardar Select2 inicializar antes de carregar dados
+        setTimeout(function() {
+            loadDuplicateTask();
+        }, 500);
     });
     
     /**
@@ -29,18 +33,40 @@
                 
                 // Preencher CNAEs
                 if (task.cnaes) {
-                    const cnaes = JSON.parse(task.cnaes);
-                    cnaes.forEach(function(cnae) {
-                        const option = new Option(cnae, cnae, true, true);
-                        $('#cnaes_select').append(option);
-                    });
-                    $('#cnaes_select').trigger('change');
+                    let cnaes = task.cnaes;
+                    // Parsear se for string JSON
+                    if (typeof cnaes === 'string') {
+                        try {
+                            cnaes = JSON.parse(cnaes);
+                        } catch (e) {
+                            cnaes = cnaes.split(',');
+                        }
+                    }
+                    
+                    if (Array.isArray(cnaes)) {
+                        cnaes.forEach(function(cnae) {
+                            const option = new Option(cnae, cnae, true, true);
+                            $('#cnaes_select').append(option);
+                        });
+                        $('#cnaes_select').trigger('change');
+                    }
                 }
                 
                 // Preencher UFs
                 if (task.ufs) {
-                    const ufs = JSON.parse(task.ufs);
-                    $('#ufs_select').val(ufs).trigger('change');
+                    let ufs = task.ufs;
+                    // Parsear se for string JSON
+                    if (typeof ufs === 'string') {
+                        try {
+                            ufs = JSON.parse(ufs);
+                        } catch (e) {
+                            ufs = ufs.split(',');
+                        }
+                    }
+                    
+                    if (Array.isArray(ufs)) {
+                        $('#ufs_select').val(ufs).trigger('change');
+                    }
                 }
                 
                 // Preencher Situações Fiscais

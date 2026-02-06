@@ -520,11 +520,20 @@ class ReceitaAsyncProcessor
                         continue;
                     }
                     
-                    // Filtro por Situação Fiscal (coluna 5 = situacao_cadastral)
-                    // Valores: 1=NULA, 2=ATIVA, 3=SUSPENSA, 4=INAPTA, 8=BAIXADA
-                    if (!empty($situacoes) && !in_array($data[5] ?? '', $situacoes)) {
-                        unset($data);
-                        continue;
+                    // Filtro por Situação Fiscal (coluna 6 = situacao_cadastral, índice 5)
+                    // Valores no arquivo: 01=NULA, 02=ATIVA, 03=SUSPENSA, 04=INAPTA, 08=BAIXADA (2 dígitos)
+                    // Valores no filtro: 1, 2, 3, 4, 8 (1 dígito) ou 01, 02, 03, 04, 08 (2 dígitos)
+                    if (!empty($situacoes)) {
+                        $situacaoArquivo = $data[5] ?? '';
+                        // Normalizar para 2 dígitos com zero à esquerda
+                        $situacoesNormalizadas = array_map(function($s) {
+                            return str_pad($s, 2, '0', STR_PAD_LEFT);
+                        }, $situacoes);
+                        
+                        if (!in_array($situacaoArquivo, $situacoesNormalizadas)) {
+                            unset($data);
+                            continue;
+                        }
                     }
                     
                     $data[] = $this->isContabilidade($data[27] ?? '') ? 1 : 0;

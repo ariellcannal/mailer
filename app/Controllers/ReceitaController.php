@@ -274,6 +274,14 @@ class ReceitaController extends BaseController
                 ]);
             }
             
+            // Não permitir reiniciar tarefa em andamento (evitar race condition)
+            if ($task['status'] === 'em_andamento') {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Pause a tarefa antes de reiniciar'
+                ]);
+            }
+            
             // Resetar status e progresso
             $this->taskModel->update((int) $taskId, [
                 'status' => 'agendada',

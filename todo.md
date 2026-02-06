@@ -137,3 +137,10 @@ Remover campos de lista do formulário de importação e transferir para /receit
   - [x] Botão Reload sempre visível - Implementado
   - [x] Lógica coerente entre Play/Pause/Reload - Reorganizado
   - [x] Ao reiniciar: zerar colunas de progresso e apagar arquivo - restartTask completo
+
+
+## Novos Problemas Reportados
+
+- [x] Botão Clonar não preenche formulário (sessionStorage não carrega dados) - Timeout adicionado + parsing flexível
+- [x] Reiniciar tarefa: progresso volta após CRON (arquivo não apagado ou campos não resetados corretamente) - Validação adicionada (não reiniciar em andamento)
+- [x] Filtro de situações fiscais usa coluna errada (deve ser coluna 6, 2 dígitos com zero: 01, 02, 03, 04, 08) - Normalização com str_pad
