@@ -34,6 +34,7 @@ class Filters extends BaseFilters
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
+        'automigrate'   => \App\Filters\AutoMigrate::class,
     ];
 
     /**
@@ -72,9 +73,7 @@ class Filters extends BaseFilters
      */
     public array $globals = [
         'before' => [
-            // 'honeypot',
-            // 'csrf',
-            // 'invalidchars',
+            'automigrate'
         ],
         'after' => [
             // 'honeypot',
