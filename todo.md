@@ -242,3 +242,10 @@ Remover campos de lista do formulário de importação e transferir para /receit
 - [x] Adicionar tokenSeparators para separar por vírgula
 - [x] Melhorar mensagens de language
 - [x] Garantir que params.term || '' não seja undefined
+
+
+## URGENTE: Rota buscarListasContatos Não Existe (404)
+
+- [x] Adicionar rota GET /receita/buscarListasContatos ao Routes.php
+- [x] Verificar outras rotas faltantes relacionadas
+- [x] Adicionar também rota POST /receita/adicionarEmpresasALista

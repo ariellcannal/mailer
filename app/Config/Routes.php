@@ -108,6 +108,8 @@ $routes->group('receita', function($routes) {
     $routes->get('empresas', 'ReceitaController::empresas');           // Página de consulta de empresas
     $routes->get('buscarEmpresas', 'ReceitaController::buscarEmpresas'); // Buscar empresas com filtros
     $routes->get('empresa/(:segment)/(:segment)/(:segment)', 'ReceitaController::empresa/$1/$2/$3'); // Detalhes da empresa
+    $routes->get('buscarListasContatos', 'ReceitaController::buscarListasContatos'); // Buscar listas de contatos (AJAX)
+    $routes->post('adicionarEmpresasALista', 'ReceitaController::adicionarEmpresasALista'); // Adicionar empresas à lista
 });
 
 // Gerenciador de arquivos
