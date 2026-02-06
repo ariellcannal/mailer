@@ -78,6 +78,12 @@
                                 Somente com telefone
                             </label>
                         </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="filtro_excluir_contabilidade" name="excluir_contabilidade" value="1">
+                            <label class="form-check-label" for="filtro_excluir_contabilidade">
+                                Excluir contabilidade
+                            </label>
+                        </div>
                     </div>
                     
                     <div class="col-md-1 d-flex align-items-end">

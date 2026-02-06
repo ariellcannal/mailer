@@ -211,6 +211,12 @@ class Migration_6 extends Migration
     private function indexExists(string $table, string $indexName): bool
     {
         $db = \Config\Database::connect();
+        
+        // Verificar se a tabela existe antes de verificar o índice
+        if (!$this->tableExists($table)) {
+            return false;
+        }
+        
         $query = $db->query("SHOW INDEX FROM $table WHERE Key_name = ?", [$indexName]);
         return $query->getNumRows() > 0;
     }

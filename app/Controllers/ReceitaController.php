@@ -396,6 +396,7 @@ class ReceitaController extends BaseController
             $uf = $this->request->getGet('uf');
             $comEmail = $this->request->getGet('com_email');
             $comTelefone = $this->request->getGet('com_telefone');
+            $excluirContabilidade = $this->request->getGet('excluir_contabilidade');
             
             // Aplicar filtros
             if (!empty($nome)) {
@@ -430,6 +431,11 @@ class ReceitaController extends BaseController
                 $builder->where('((ddd1 IS NOT NULL AND ddd1 != "") OR (telefone1 IS NOT NULL AND telefone1 != ""))', null, false);
                 $builder->orWhere('((ddd2 IS NOT NULL AND ddd2 != "") OR (telefone2 IS NOT NULL AND telefone2 != ""))', null, false);
                 $builder->groupEnd();
+            }
+            
+            // Filtro: excluir contabilidade
+            if ($excluirContabilidade == '1') {
+                $builder->where('is_contabilidade', 0);
             }
             
             // Paginação
@@ -615,6 +621,11 @@ class ReceitaController extends BaseController
                 $builder->where('((ddd1 IS NOT NULL AND ddd1 != "") OR (telefone1 IS NOT NULL AND telefone1 != ""))', null, false);
                 $builder->orWhere('((ddd2 IS NOT NULL AND ddd2 != "") OR (telefone2 IS NOT NULL AND telefone2 != ""))', null, false);
                 $builder->groupEnd();
+            }
+            
+            // Filtro: excluir contabilidade
+            if (!empty($filters['excluir_contabilidade'])) {
+                $builder->where('is_contabilidade', 0);
             }
             
             // Sempre buscar apenas empresas com email válido (necessário para criar contatos)
