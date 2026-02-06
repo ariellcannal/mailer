@@ -165,3 +165,12 @@ Remover campos de lista do formulário de importação e transferir para /receit
 - [x] A cada CRON, imported_lines é sobrescrito com valor da execução atual
 - [x] Deve somar ao valor já existente no banco (incremento)
 - [x] Modificar UPDATE para usar SQL direto: SET imported_lines = imported_lines + X
+
+
+## Novas Funcionalidades - Listagem de Empresas Importadas
+
+- [x] Adicionar checkbox "Somente com e-mail" no filtro
+- [x] Adicionar checkbox "Somente com telefone" no filtro
+- [x] Implementar validação de e-mail e telefone no backend
+- [x] Formatar CNPJ para 00.000.000/0000-00
+- [x] Adicionar opção para criar lista de contatos a partir das empresas filtradas (já estava implementada)

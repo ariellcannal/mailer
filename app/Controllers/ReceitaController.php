@@ -394,6 +394,8 @@ class ReceitaController extends BaseController
             $cnpjBasico = $this->request->getGet('cnpj_basico');
             $cnaes = $this->request->getGet('cnae') ?? [];
             $uf = $this->request->getGet('uf');
+            $comEmail = $this->request->getGet('com_email');
+            $comTelefone = $this->request->getGet('com_telefone');
             
             // Aplicar filtros
             if (!empty($nome)) {
@@ -415,6 +417,20 @@ class ReceitaController extends BaseController
             
             if (!empty($uf)) {
                 $builder->where('uf', $uf);
+            }
+            
+            // Filtro: somente com e-mail
+            if ($comEmail == '1') {
+                $builder->where('correio_eletronico IS NOT NULL');
+                $builder->where('correio_eletronico !=', '');
+            }
+            
+            // Filtro: somente com telefone
+            if ($comTelefone == '1') {
+                $builder->groupStart();
+                $builder->where('(telefone1 IS NOT NULL AND telefone1 != "")', null, false);
+                $builder->orWhere('(telefone2 IS NOT NULL AND telefone2 != "")', null, false);
+                $builder->groupEnd();
             }
             
             // Paginação
@@ -571,7 +587,21 @@ class ReceitaController extends BaseController
                 $builder->where('uf', $filters['uf']);
             }
             
-            // Buscar apenas empresas com email válido
+            // Filtro: somente com e-mail
+            if (!empty($filters['com_email'])) {
+                $builder->where('correio_eletronico IS NOT NULL');
+                $builder->where('correio_eletronico !=', '');
+            }
+            
+            // Filtro: somente com telefone
+            if (!empty($filters['com_telefone'])) {
+                $builder->groupStart();
+                $builder->where('(telefone1 IS NOT NULL AND telefone1 != "")', null, false);
+                $builder->orWhere('(telefone2 IS NOT NULL AND telefone2 != "")', null, false);
+                $builder->groupEnd();
+            }
+            
+            // Sempre buscar apenas empresas com email válido (necessário para criar contatos)
             $builder->where('correio_eletronico IS NOT NULL');
             $builder->where('correio_eletronico !=', '');
             

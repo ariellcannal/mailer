@@ -64,6 +64,22 @@
                         </select>
                     </div>
                     
+                    <div class="col-md-2">
+                        <label class="form-label">Filtros Adicionais</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="filtro_com_email" name="com_email" value="1">
+                            <label class="form-check-label" for="filtro_com_email">
+                                Somente com e-mail
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="filtro_com_telefone" name="com_telefone" value="1">
+                            <label class="form-check-label" for="filtro_com_telefone">
+                                Somente com telefone
+                            </label>
+                        </div>
+                    </div>
+                    
                     <div class="col-md-1 d-flex align-items-end">
                         <button type="submit" class="btn btn-primary w-100">
                             <i class="fas fa-search"></i>

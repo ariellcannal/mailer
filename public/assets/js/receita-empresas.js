@@ -87,6 +87,8 @@
             cnpj_basico: $('#filtro_cnpj').val(),
             cnae: $('#filtro_cnae').val() || [],
             uf: $('#filtro_uf').val(),
+            com_email: $('#filtro_com_email').is(':checked') ? '1' : '',
+            com_telefone: $('#filtro_com_telefone').is(':checked') ? '1' : '',
             page: currentPage
         };
         
@@ -111,7 +113,7 @@
                     // Mostrar card de adição à lista se houver filtros ativos
                     const hasFilters = currentFilters.nome || currentFilters.cnpj_basico || 
                                      (currentFilters.cnae && currentFilters.cnae.length > 0) || 
-                                     currentFilters.uf;
+                                     currentFilters.uf || currentFilters.com_email || currentFilters.com_telefone;
                     
                     if (hasFilters && response.pagination && response.pagination.total > 0) {
                         $('#total-empresas-encontradas').text(response.pagination.total);
@@ -152,7 +154,11 @@
         }
         
         empresas.forEach(function(empresa) {
-            const cnpj = `${empresa.cnpj_basico}/${empresa.cnpj_ordem}-${empresa.cnpj_dv}`;
+            // Formatar CNPJ: 00.000.000/0000-00
+            const cnpjBasico = empresa.cnpj_basico.padStart(8, '0');
+            const cnpjOrdem = empresa.cnpj_ordem.padStart(4, '0');
+            const cnpjDv = empresa.cnpj_dv.padStart(2, '0');
+            const cnpj = `${cnpjBasico.substring(0,2)}.${cnpjBasico.substring(2,5)}.${cnpjBasico.substring(5,8)}/${cnpjOrdem}-${cnpjDv}`;
             const telefone1 = empresa.ddd_telefone_1 && empresa.telefone_1 
                 ? `(${empresa.ddd_telefone_1}) ${empresa.telefone_1}` 
                 : '-';
