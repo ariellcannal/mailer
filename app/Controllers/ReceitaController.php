@@ -442,7 +442,7 @@ class ReceitaController extends BaseController
             
             // Buscar dados
             $empresas = $builder
-                ->select('cnpj_basico, cnpj_ordem, cnpj_dv, nome_fantasia, razao_social, ddd_telefone_1, telefone_1, ddd_telefone_2, telefone_2, ddd_fax, fax, correio_eletronico')
+                ->select('cnpj_basico, cnpj_ordem, cnpj_dv, nome_fantasia, ddd_telefone_1, telefone_1, ddd_telefone_2, telefone_2, ddd_fax, fax, correio_eletronico')
                 ->limit($perPage, $offset)
                 ->get()
                 ->getResultArray();

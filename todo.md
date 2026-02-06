@@ -203,3 +203,12 @@ Remover campos de lista do formulário de importação e transferir para /receit
 - [x] Adicionar razao_social ao SELECT
 - [x] Trocar slideDown/slideUp por show/hide para exibição instantânea
 - [x] Adicionar console.log para debug
+
+
+## Novos Problemas Reportados
+
+- [x] Erro SQL: Unknown column 'razao_social' - verificar nome correto da coluna (removido do SELECT)
+- [x] Implementar busca automática por GET (quando URL tem parâmetros de filtro)
+- [x] Card deve aparecer automaticamente quando há parâmetros GET com filtros ativos
+- [x] Criar função loadFiltersFromURL() para popular formulário com parâmetros GET
+- [x] Executar busca automaticamente ao carregar página com parâmetros GET

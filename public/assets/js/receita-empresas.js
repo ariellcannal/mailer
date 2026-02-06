@@ -15,6 +15,13 @@
         initFormSubmit();
         initContactListsSelect();
         initAddToListButton();
+        
+        // Buscar automaticamente se houver parâmetros GET
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.toString()) {
+            loadFiltersFromURL();
+            buscarEmpresas();
+        }
     });
     
     /**
@@ -175,7 +182,7 @@
                 ? `(${empresa.ddd_fax}) ${empresa.fax}` 
                 : '-';
             const email = empresa.correio_eletronico || '-';
-            const nomeFantasia = empresa.nome_fantasia || empresa.razao_social || '-';
+            const nomeFantasia = empresa.nome_fantasia || '-';
             
             tbody.append(`
                 <tr>
@@ -306,6 +313,48 @@
                 }
             }
         });
+    }
+    
+    /**
+     * Carrega filtros da URL (parâmetros GET)
+     */
+    function loadFiltersFromURL() {
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Nome
+        if (urlParams.has('nome')) {
+            $('#filtro_nome').val(urlParams.get('nome'));
+        }
+        
+        // CNPJ
+        if (urlParams.has('cnpj_basico')) {
+            $('#filtro_cnpj').val(urlParams.get('cnpj_basico'));
+        }
+        
+        // UF
+        if (urlParams.has('uf')) {
+            $('#filtro_uf').val(urlParams.get('uf')).trigger('change');
+        }
+        
+        // CNAEs (múltiplos valores)
+        if (urlParams.has('cnae[]')) {
+            const cnaes = urlParams.getAll('cnae[]');
+            // Criar options e selecionar
+            cnaes.forEach(cnae => {
+                const option = new Option(cnae, cnae, true, true);
+                $('#filtro_cnae').append(option);
+            });
+            $('#filtro_cnae').trigger('change');
+        }
+        
+        // Checkboxes
+        if (urlParams.get('com_email') === '1') {
+            $('#filtro_com_email').prop('checked', true);
+        }
+        
+        if (urlParams.get('com_telefone') === '1') {
+            $('#filtro_com_telefone').prop('checked', true);
+        }
     }
     
     /**
