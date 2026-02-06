@@ -444,8 +444,7 @@
                 method: 'POST',
                 data: {
                     lists: selectedLists,
-                    filters: currentFilters,
-                    include_contabilidade: $('#include_contabilidade_list').is(':checked') ? '1' : '0'
+                    filters: currentFilters
                 },
                 dataType: 'json',
                 success: function(response) {
