@@ -682,7 +682,7 @@ class ReceitaController extends BaseController
                 
                 // Adicionar empresas à lista
                 foreach ($empresas as $empresa) {
-                    $email = trim($empresa['correio_eletronico']);
+                    $email = strtolower(trim($empresa['correio_eletronico']));
                     
                     // Limpar caracteres inválidos do email
                     $email = preg_replace('/[<>]/', '', $email);

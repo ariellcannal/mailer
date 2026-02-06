@@ -570,10 +570,16 @@ class ReceitaAsyncProcessor
                         // Converter encoding apenas se for string
                         if ($value !== null && is_string($value)) {
                             $value = mb_convert_encoding($value, 'UTF-8', 'ISO-8859-1');
+                            // Aplicar trim em todos os campos string
+                            $value = trim($value);
                         }
                         // Converter string vazia em NULL para todos os campos
-                        if (is_string($value) && trim($value) === '') {
+                        if (is_string($value) && $value === '') {
                             $value = null;
+                        }
+                        // Aplicar lowercase em emails
+                        if ($fName === 'correio_eletronico' && $value !== null) {
+                            $value = strtolower($value);
                         }
                         $row[$fName] = $value;
                     }
@@ -763,7 +769,7 @@ class ReceitaAsyncProcessor
 
         foreach ($batchData as $row) {
             // Verificar se tem email
-            $email = trim($row['correio_eletronico'] ?? '');
+            $email = strtolower(trim($row['correio_eletronico'] ?? ''));
             if (empty($email) || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 continue;
             }
