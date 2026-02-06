@@ -428,8 +428,8 @@ class ReceitaController extends BaseController
             // Filtro: somente com telefone
             if ($comTelefone == '1') {
                 $builder->groupStart();
-                $builder->where('(telefone1 IS NOT NULL AND telefone1 != "")', null, false);
-                $builder->orWhere('(telefone2 IS NOT NULL AND telefone2 != "")', null, false);
+                $builder->where('((ddd1 IS NOT NULL AND ddd1 != "") OR (telefone1 IS NOT NULL AND telefone1 != ""))', null, false);
+                $builder->orWhere('((ddd2 IS NOT NULL AND ddd2 != "") OR (telefone2 IS NOT NULL AND telefone2 != ""))', null, false);
                 $builder->groupEnd();
             }
             
@@ -596,8 +596,8 @@ class ReceitaController extends BaseController
             // Filtro: somente com telefone
             if (!empty($filters['com_telefone'])) {
                 $builder->groupStart();
-                $builder->where('(telefone1 IS NOT NULL AND telefone1 != "")', null, false);
-                $builder->orWhere('(telefone2 IS NOT NULL AND telefone2 != "")', null, false);
+                $builder->where('((ddd1 IS NOT NULL AND ddd1 != "") OR (telefone1 IS NOT NULL AND telefone1 != ""))', null, false);
+                $builder->orWhere('((ddd2 IS NOT NULL AND ddd2 != "") OR (telefone2 IS NOT NULL AND telefone2 != ""))', null, false);
                 $builder->groupEnd();
             }
             

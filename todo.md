@@ -3,14 +3,13 @@
 ## Novas Funcionalidades
 
 ### Sistema de Listas de Contatos na Importação
-- [ ] Adicionar campo "Criar Lista de Contatos" no formulário de importação
-- [ ] Adicionar checkbox "Adicionar Contatos de Contabilidade à Nova Lista"
-- [ ] Remover bloco "Sobre o Processamento Assíncrono"
-- [ ] Expandir formulário para largura total
-- [ ] Implementar criação de lista de contatos ao agendar importação
-- [ ] Implementar criação/atualização de contatos durante processamento
-- [ ] Implementar inserção de contatos na lista criada
-- [ ] Respeitar checkbox de contabilidade ao inserir contatos
+- [x] **COMPLETO:** Sistema completo de listas de contatos na importação já estava implementado!
+- [x] Adicionar campo "Criar Lista de Contatos" no formulário de importação
+- [x] Adicionar checkbox "Adicionar Contatos de Contabilidade à Nova Lista"
+- [x] Implementar criação de lista de contatos ao agendar importação
+- [x] Implementar criação/atualização de contatos durante processamento
+- [x] Implementar inserção de contatos na lista criada
+- [x] Respeitar checkbox de contabilidade ao inserir contatos
 
 ### Toolbar de Navegação
 - [ ] Criar componente de toolbar com botões: Voltar, Nova Importação, Ver Tarefas, Registros Importados
@@ -171,6 +170,6 @@ Remover campos de lista do formulário de importação e transferir para /receit
 
 - [x] Adicionar checkbox "Somente com e-mail" no filtro
 - [x] Adicionar checkbox "Somente com telefone" no filtro
-- [x] Implementar validação de e-mail e telefone no backend
+- [x] **CORRIGIDO:** Filtros de e-mail e telefone - nomes de colunas corrigidos (ddd1, telefone1, ddd2, telefone2)
 - [x] Formatar CNPJ para 00.000.000/0000-00
 - [x] Adicionar opção para criar lista de contatos a partir das empresas filtradas (já estava implementada)
