@@ -10,7 +10,55 @@
     $(document).ready(function() {
         initSelect2();
         initFormSubmit();
+        loadDuplicateTask();
     });
+    
+    /**
+     * Carrega dados de tarefa duplicada do sessionStorage
+     */
+    function loadDuplicateTask() {
+        const duplicateData = sessionStorage.getItem('duplicateTask');
+        if (duplicateData) {
+            try {
+                const task = JSON.parse(duplicateData);
+                
+                // Preencher nome da tarefa
+                if (task.name) {
+                    $('#task_name').val(task.name + ' (Cópia)');
+                }
+                
+                // Preencher CNAEs
+                if (task.cnaes) {
+                    const cnaes = JSON.parse(task.cnaes);
+                    cnaes.forEach(function(cnae) {
+                        const option = new Option(cnae, cnae, true, true);
+                        $('#cnaes_select').append(option);
+                    });
+                    $('#cnaes_select').trigger('change');
+                }
+                
+                // Preencher UFs
+                if (task.ufs) {
+                    const ufs = JSON.parse(task.ufs);
+                    $('#ufs_select').val(ufs).trigger('change');
+                }
+                
+                // Preencher Situações Fiscais
+                if (task.situacoes_fiscais) {
+                    const situacoes = task.situacoes_fiscais.split(',');
+                    $('#situacoes_select').val(situacoes).trigger('change');
+                }
+                
+                // Limpar sessionStorage
+                sessionStorage.removeItem('duplicateTask');
+                
+                alertify.success('Dados da tarefa carregados. Ajuste conforme necessário e clique em Agendar.');
+                
+            } catch (e) {
+                console.error('Erro ao carregar dados da tarefa:', e);
+            }
+        }
+    }
     
     /**
      * Inicializa Select2 para CNAEs e UFs

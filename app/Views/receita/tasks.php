@@ -101,16 +101,26 @@
                                     <?php
                                     $filtros = [];
                                     
-                                    // CNAEs
+                                    // CNAEs (pode vir como JSON)
                                     if (!empty($task['cnaes'])) {
-                                        $cnaes = explode(',', $task['cnaes']);
-                                        $filtros[] = '<strong>CNAEs:</strong> ' . implode(', ', array_map('esc', $cnaes));
+                                        $cnaes = json_decode($task['cnaes'], true);
+                                        if (!is_array($cnaes)) {
+                                            $cnaes = explode(',', $task['cnaes']);
+                                        }
+                                        if (!empty($cnaes)) {
+                                            $filtros[] = '<strong>CNAEs:</strong> ' . implode(', ', array_map('esc', $cnaes));
+                                        }
                                     }
                                     
-                                    // Estados
-                                    if (!empty($task['estados'])) {
-                                        $estados = explode(',', $task['estados']);
-                                        $filtros[] = '<strong>Estados:</strong> ' . implode(', ', array_map('esc', $estados));
+                                    // Estados (campo 'ufs' no banco, pode vir como JSON)
+                                    if (!empty($task['ufs'])) {
+                                        $estados = json_decode($task['ufs'], true);
+                                        if (!is_array($estados)) {
+                                            $estados = explode(',', $task['ufs']);
+                                        }
+                                        if (!empty($estados)) {
+                                            $filtros[] = '<strong>Estados:</strong> ' . implode(', ', array_map('esc', $estados));
+                                        }
                                     }
                                     
                                     // Situações Fiscais
@@ -150,7 +160,20 @@
                                                 title="Pausar tarefa">
                                             <i class="fas fa-pause"></i>
                                         </button>
+                                        <?php elseif ($task['status'] !== 'concluida' && $task['status'] !== 'erro'): ?>
+                                        <button type="button" 
+                                                class="btn btn-outline-success btn-start" 
+                                                data-task-id="<?= $task['id'] ?>"
+                                                title="Iniciar tarefa">
+                                            <i class="fas fa-play"></i>
+                                        </button>
                                         <?php endif; ?>
+                                        <button type="button" 
+                                                class="btn btn-outline-info btn-restart" 
+                                                data-task-id="<?= $task['id'] ?>"
+                                                title="Reiniciar tarefa">
+                                            <i class="fas fa-redo"></i>
+                                        </button>
                                         <button type="button" 
                                                 class="btn btn-outline-primary btn-duplicate" 
                                                 data-task-id="<?= $task['id'] ?>"

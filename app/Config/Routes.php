@@ -99,7 +99,10 @@ $routes->group('receita', function($routes) {
     $routes->get('tasks', 'ReceitaController::tasks');                 // Listagem de tarefas
     $routes->get('tasks-data', 'ReceitaController::tasksData');        // Dados das tarefas (JSON)
     $routes->post('schedule', 'ReceitaController::schedule');          // Agendar nova tarefa
-    $routes->post('duplicate-task/(:num)', 'ReceitaController::duplicateTask/$1'); // Duplicar tarefa
+    $routes->post('pause-task/(:num)', 'ReceitaController::pauseTask/$1');         // Pausar tarefa
+    $routes->post('start-task/(:num)', 'ReceitaController::startTask/$1');         // Iniciar tarefa
+    $routes->post('restart-task/(:num)', 'ReceitaController::restartTask/$1');     // Reiniciar tarefa
+    $routes->get('duplicate-task/(:num)', 'ReceitaController::duplicateTask/$1');  // Carregar dados para duplicar
     $routes->post('delete-task/(:num)', 'ReceitaController::deleteTask/$1');       // Excluir tarefa
     $routes->get('buscarCnaes', 'ReceitaController::buscarCnaes');     // Busca AJAX para o Select2
     $routes->get('empresas', 'ReceitaController::empresas');           // Página de consulta de empresas

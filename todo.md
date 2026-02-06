@@ -99,3 +99,15 @@ Remover campos de lista do formulário de importação e transferir para /receit
 - [x] Adicionar coluna "Filtros" mostrando CNAEs, Estados e Situações Fiscais
 - [x] Uniformizar largura das barras de progresso (200px fixo)
 - [x] Corrigir contagem de linhas importadas (usar affectedRows() em vez de count())
+
+
+## Correções Urgentes - Interface de Tarefas
+
+- [x] Corrigir layout quebrado na atualização AJAX (coluna Filtros sumindo) - usar 'ufs' em vez de 'estados'
+- [x] Exibir Estados na coluna Filtros (campo 'estados' não está sendo mostrado) - campo correto é 'ufs'
+- [x] Formatar CNAEs separados por vírgula (não em JSON) - parsear JSON e exibir separado por vírgula
+- [x] Corrigir erro 404 ao pausar tarefa (adicionar rota) - rotas adicionadas no Routes.php
+- [x] Adicionar botão "Iniciar" (play) para tarefas não em andamento
+- [x] Botão Iniciar deve pausar outras tarefas e iniciar a clicada
+- [x] Adicionar botão "Reiniciar" (reload) que reseta status e apaga arquivo de progresso
+- [x] Modificar botão "Clonar" para redirecionar ao formulário com dados preenchidos

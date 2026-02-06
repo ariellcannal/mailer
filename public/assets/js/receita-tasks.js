@@ -24,6 +24,18 @@
             pauseTask(taskId);
         });
         
+        // Iniciar tarefa
+        $(document).on('click', '.btn-start', function() {
+            const taskId = $(this).data('task-id');
+            startTask(taskId);
+        });
+        
+        // Reiniciar tarefa
+        $(document).on('click', '.btn-restart', function() {
+            const taskId = $(this).data('task-id');
+            restartTask(taskId);
+        });
+        
         // Duplicar tarefa
         $(document).on('click', '.btn-duplicate', function() {
             const taskId = $(this).data('task-id');
@@ -159,7 +171,20 @@
                                     title="Pausar tarefa">
                                 <i class="fas fa-pause"></i>
                             </button>
-                            ` : ''}
+                            ` : (task.status !== 'concluida' && task.status !== 'erro' ? `
+                            <button type="button" 
+                                    class="btn btn-outline-success btn-start" 
+                                    data-task-id="${task.id}"
+                                    title="Iniciar tarefa">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            ` : '')}
+                            <button type="button" 
+                                    class="btn btn-outline-info btn-restart" 
+                                    data-task-id="${task.id}"
+                                    title="Reiniciar tarefa">
+                                <i class="fas fa-redo"></i>
+                            </button>
                             <button type="button" 
                                     class="btn btn-outline-primary btn-duplicate" 
                                     data-task-id="${task.id}"
@@ -189,16 +214,34 @@
     function buildFiltrosHtml(task) {
         const filtros = [];
         
-        // CNAEs
+        // CNAEs (pode vir como JSON ou string)
         if (task.cnaes) {
-            const cnaes = task.cnaes.split(',');
-            filtros.push(`<strong>CNAEs:</strong> ${cnaes.map(escapeHtml).join(', ')}`);
+            let cnaes = [];
+            try {
+                // Tentar parsear como JSON
+                cnaes = typeof task.cnaes === 'string' ? JSON.parse(task.cnaes) : task.cnaes;
+            } catch (e) {
+                // Se não for JSON, assumir que é string separada por vírgula
+                cnaes = task.cnaes.split(',');
+            }
+            if (cnaes.length > 0) {
+                filtros.push(`<strong>CNAEs:</strong> ${cnaes.map(escapeHtml).join(', ')}`);
+            }
         }
         
-        // Estados
-        if (task.estados) {
-            const estados = task.estados.split(',');
-            filtros.push(`<strong>Estados:</strong> ${estados.map(escapeHtml).join(', ')}`);
+        // Estados (campo 'ufs' no banco, pode vir como JSON ou string)
+        if (task.ufs) {
+            let estados = [];
+            try {
+                // Tentar parsear como JSON
+                estados = typeof task.ufs === 'string' ? JSON.parse(task.ufs) : task.ufs;
+            } catch (e) {
+                // Se não for JSON, assumir que é string separada por vírgula
+                estados = task.ufs.split(',');
+            }
+            if (estados.length > 0) {
+                filtros.push(`<strong>Estados:</strong> ${estados.map(escapeHtml).join(', ')}`);
+            }
         }
         
         // Situações Fiscais
@@ -220,6 +263,64 @@
         }
         
         return '<small>' + filtros.join('<br>') + '</small>';
+    }
+    
+    /**
+     * Inicia tarefa
+     */
+    function startTask(taskId) {
+        alertify.confirm(
+            'Iniciar Tarefa',
+            'Deseja iniciar esta tarefa? Outras tarefas em andamento serão pausadas.',
+            function() {
+                $.ajax({
+                    url: baseUrl + 'receita/start-task/' + taskId,
+                    method: 'POST',
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            alertify.success('Tarefa iniciada com sucesso');
+                            refreshTable();
+                        } else {
+                            alertify.error(response.message || 'Erro ao iniciar tarefa');
+                        }
+                    },
+                    error: function() {
+                        alertify.error('Erro ao iniciar tarefa');
+                    }
+                });
+            },
+            function() {}
+        );
+    }
+    
+    /**
+     * Reinicia tarefa
+     */
+    function restartTask(taskId) {
+        alertify.confirm(
+            'Reiniciar Tarefa',
+            'Deseja reiniciar esta tarefa? Todo o progresso será perdido e a tarefa voltará ao início.',
+            function() {
+                $.ajax({
+                    url: baseUrl + 'receita/restart-task/' + taskId,
+                    method: 'POST',
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            alertify.success('Tarefa reiniciada com sucesso');
+                            refreshTable();
+                        } else {
+                            alertify.error(response.message || 'Erro ao reiniciar tarefa');
+                        }
+                    },
+                    error: function() {
+                        alertify.error('Erro ao reiniciar tarefa');
+                    }
+                });
+            },
+            function() {}
+        );
     }
     
     /**
@@ -252,32 +353,27 @@
     }
     
     /**
-     * Duplica tarefa
+     * Carrega dados da tarefa para duplicação (redireciona ao formulário)
      */
     function duplicateTask(taskId) {
-        alertify.confirm(
-            'Duplicar Tarefa',
-            'Deseja duplicar esta tarefa? Os filtros e configurações serão copiados.',
-            function() {
-                $.ajax({
-                    url: baseUrl + 'receita/duplicate-task/' + taskId,
-                    method: 'POST',
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.success) {
-                            alertify.success('Tarefa duplicada com sucesso');
-                            refreshTable();
-                        } else {
-                            alertify.error(response.message || 'Erro ao duplicar tarefa');
-                        }
-                    },
-                    error: function() {
-                        alertify.error('Erro ao duplicar tarefa');
-                    }
-                });
+        $.ajax({
+            url: baseUrl + 'receita/duplicate-task/' + taskId,
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    // Armazenar dados no sessionStorage
+                    sessionStorage.setItem('duplicateTask', JSON.stringify(response.task));
+                    // Redirecionar para o formulário
+                    window.location.href = baseUrl + 'receita';
+                } else {
+                    alertify.error(response.message || 'Erro ao carregar tarefa');
+                }
             },
-            function() {}
-        );
+            error: function() {
+                alertify.error('Erro ao carregar tarefa');
+            }
+        });
     }
     
     /**

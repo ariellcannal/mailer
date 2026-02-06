@@ -132,31 +132,36 @@ class ReceitaController extends BaseController
     }
     
     /**
-     * Duplica uma tarefa
+     * Retorna dados de uma tarefa para duplicação (carrega formulário)
      */
     public function duplicateTask($taskId)
     {
         try {
-            $newTaskId = $this->taskModel->duplicateTask((int) $taskId);
+            $task = $this->taskModel->find((int) $taskId);
             
-            if ($newTaskId) {
+            if (!$task) {
                 return $this->response->setJSON([
-                    'success' => true,
-                    'task_id' => $newTaskId,
-                    'message' => 'Tarefa duplicada com sucesso'
+                    'success' => false,
+                    'message' => 'Tarefa não encontrada'
                 ]);
             }
             
+            // Retornar dados da tarefa para preencher formulário
             return $this->response->setJSON([
-                'success' => false,
-                'message' => 'Tarefa não encontrada'
+                'success' => true,
+                'task' => [
+                    'name' => $task['name'],
+                    'cnaes' => $task['cnaes'],
+                    'ufs' => $task['ufs'],
+                    'situacoes_fiscais' => $task['situacoes_fiscais']
+                ]
             ]);
             
         } catch (\Exception $e) {
-            log_message('error', 'Erro ao duplicar tarefa: ' . $e->getMessage());
+            log_message('error', 'Erro ao carregar tarefa: ' . $e->getMessage());
             return $this->response->setJSON([
                 'success' => false,
-                'message' => 'Erro ao duplicar tarefa'
+                'message' => 'Erro ao carregar tarefa'
             ]);
         }
     }
@@ -197,6 +202,99 @@ class ReceitaController extends BaseController
             return $this->response->setJSON([
                 'success' => false,
                 'message' => 'Erro ao pausar tarefa'
+            ]);
+        }
+    }
+    
+    /**
+     * Inicia uma tarefa (pausa outras e inicia a selecionada)
+     */
+    public function startTask($taskId)
+    {
+        try {
+            $task = $this->taskModel->find((int) $taskId);
+            
+            if (!$task) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Tarefa não encontrada'
+                ]);
+            }
+            
+            if ($task['status'] === 'concluida' || $task['status'] === 'erro') {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Tarefas concluídas ou com erro não podem ser iniciadas'
+                ]);
+            }
+            
+            // Pausar todas as tarefas em andamento
+            $this->taskModel->where('status', 'em_andamento')
+                           ->set(['status' => 'agendada'])
+                           ->update();
+            
+            // Iniciar a tarefa selecionada
+            $this->taskModel->update((int) $taskId, [
+                'status' => 'em_andamento'
+            ]);
+            
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Tarefa iniciada com sucesso'
+            ]);
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Erro ao iniciar tarefa: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Erro ao iniciar tarefa'
+            ]);
+        }
+    }
+    
+    /**
+     * Reinicia uma tarefa (reseta status e apaga arquivo de progresso)
+     */
+    public function restartTask($taskId)
+    {
+        try {
+            $task = $this->taskModel->find((int) $taskId);
+            
+            if (!$task) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Tarefa não encontrada'
+                ]);
+            }
+            
+            // Resetar status e progresso
+            $this->taskModel->update((int) $taskId, [
+                'status' => 'agendada',
+                'processed_files' => 0,
+                'processed_lines' => 0,
+                'imported_lines' => 0,
+                'processed_bytes' => 0,
+                'current_file' => null,
+                'error_message' => null
+            ]);
+            
+            // Apagar arquivo de progresso
+            $basePath = FCPATH . '../' . rtrim(env('CNPJ_DOWNLOAD_PATH', 'writable/receita/'), '/') . '/';
+            $processFile = $basePath . 'process_' . $taskId;
+            if (file_exists($processFile)) {
+                unlink($processFile);
+            }
+            
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Tarefa reiniciada com sucesso'
+            ]);
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Erro ao reiniciar tarefa: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Erro ao reiniciar tarefa'
             ]);
         }
     }
