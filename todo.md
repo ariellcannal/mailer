@@ -221,3 +221,12 @@ Remover campos de lista do formulário de importação e transferir para /receit
 - [x] Corrigir JavaScript: ddd_telefone_1 → ddd1, etc
 - [x] Corrigir filtro de telefone no controller
 - [x] Corrigir SELECT no controller
+
+
+## Problema: Busca Não Atualiza URL com Parâmetros GET
+
+- [x] Formulário está fazendo AJAX sem atualizar URL
+- [x] Modificar para usar history.pushState() e atualizar URL com parâmetros
+- [x] Permitir compartilhamento de URLs com filtros aplicados
+- [x] Criar função updateURLWithFilters()
+- [x] Chamar updateURLWithFilters() em buscarEmpresas()

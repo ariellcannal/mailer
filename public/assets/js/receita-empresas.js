@@ -99,6 +99,9 @@
             page: currentPage
         };
         
+        // Atualizar URL com parâmetros GET
+        updateURLWithFilters();
+        
         // Mostrar loading
         $('#loading').show();
         $('#resultados').hide();
@@ -313,6 +316,49 @@
                 }
             }
         });
+    }
+    
+    /**
+     * Atualiza URL com parâmetros de filtro
+     */
+    function updateURLWithFilters() {
+        const params = new URLSearchParams();
+        
+        // Adicionar apenas parâmetros não vazios
+        if (currentFilters.nome) {
+            params.set('nome', currentFilters.nome);
+        }
+        
+        if (currentFilters.cnpj_basico) {
+            params.set('cnpj_basico', currentFilters.cnpj_basico);
+        }
+        
+        if (currentFilters.uf) {
+            params.set('uf', currentFilters.uf);
+        }
+        
+        // CNAEs (múltiplos valores)
+        if (currentFilters.cnae && currentFilters.cnae.length > 0) {
+            currentFilters.cnae.forEach(cnae => {
+                params.append('cnae[]', cnae);
+            });
+        }
+        
+        if (currentFilters.com_email === '1') {
+            params.set('com_email', '1');
+        }
+        
+        if (currentFilters.com_telefone === '1') {
+            params.set('com_telefone', '1');
+        }
+        
+        if (currentFilters.page > 1) {
+            params.set('page', currentFilters.page);
+        }
+        
+        // Atualizar URL sem recarregar a página
+        const newUrl = params.toString() ? `${window.location.pathname}?${params.toString()}` : window.location.pathname;
+        window.history.pushState({}, '', newUrl);
     }
     
     /**
