@@ -147,7 +147,6 @@ h1, h2, h3, h4, h5, h6 {
 .btn-outline-primary {
 	color: var(--color-primary);
 	border-color: var(--color-primary);
-	text-transform: uppercase;
 }
 
 .btn-outline-primary:hover {
