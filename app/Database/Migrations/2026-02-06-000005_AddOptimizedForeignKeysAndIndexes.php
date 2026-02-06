@@ -20,13 +20,10 @@ class AddOptimizedForeignKeysAndIndexes extends Migration
         log_message('info', 'AddOptimizedForeignKeysAndIndexes: INICIANDO');
         log_message('info', '========================================');
         
-        $db = \Config\Database::connect();
-        $forge = \Config\Database::forge();
-        
         // Verificar se as tabelas existem
         $tabelasExistem = [
-            'receita_estabelecimentos' => $db->tableExists('receita_estabelecimentos'),
-            'receita_socios' => $db->tableExists('receita_socios'),
+            'receita_estabelecimentos' => $this->db->tableExists('receita_estabelecimentos'),
+            'receita_socios' => $this->db->tableExists('receita_socios'),
         ];
         
         log_message('info', 'Migration 6: Verificando tabelas...');
@@ -47,7 +44,7 @@ class AddOptimizedForeignKeysAndIndexes extends Migration
         log_message('info', 'AddOptimizedForeignKeysAndIndexes: Verificando idx_nome_fantasia...');
         if (!$this->indexExists('receita_estabelecimentos', 'idx_nome_fantasia')) {
             log_message('info', 'AddOptimizedForeignKeysAndIndexes: Criando idx_nome_fantasia...');
-            $db->query('CREATE INDEX idx_nome_fantasia ON receita_estabelecimentos(nome_fantasia(100))');
+            $this->db->query('CREATE INDEX idx_nome_fantasia ON receita_estabelecimentos(nome_fantasia(100))');
             log_message('info', 'AddOptimizedForeignKeysAndIndexes: idx_nome_fantasia criado!');
         } else {
             log_message('info', 'AddOptimizedForeignKeysAndIndexes: idx_nome_fantasia já existe, pulando.');
@@ -55,37 +52,37 @@ class AddOptimizedForeignKeysAndIndexes extends Migration
         
         // Índice para busca por CNPJ completo (base + ordem + dv)
         if (!$this->indexExists('receita_estabelecimentos', 'idx_cnpj_completo')) {
-            $db->query('CREATE UNIQUE INDEX idx_cnpj_completo ON receita_estabelecimentos(cnpj_basico, cnpj_ordem, cnpj_dv)');
+            $this->db->query('CREATE UNIQUE INDEX idx_cnpj_completo ON receita_estabelecimentos(cnpj_basico, cnpj_ordem, cnpj_dv)');
         }
         
         // Índice para busca por CNPJ base (para listar todos estabelecimentos de uma empresa)
         if (!$this->indexExists('receita_estabelecimentos', 'idx_cnpj_basico')) {
-            $db->query('CREATE INDEX idx_cnpj_basico ON receita_estabelecimentos(cnpj_basico)');
+            $this->db->query('CREATE INDEX idx_cnpj_basico ON receita_estabelecimentos(cnpj_basico)');
         }
         
         // Índice para busca por CNAE principal
         if (!$this->indexExists('receita_estabelecimentos', 'idx_cnae_principal')) {
-            $db->query('CREATE INDEX idx_cnae_principal ON receita_estabelecimentos(cnae_fiscal_principal)');
+            $this->db->query('CREATE INDEX idx_cnae_principal ON receita_estabelecimentos(cnae_fiscal_principal)');
         }
         
         // Índice para busca por CNAE secundária (FULLTEXT para busca em lista)
         if (!$this->indexExists('receita_estabelecimentos', 'idx_cnae_secundaria')) {
-            $db->query('CREATE FULLTEXT INDEX idx_cnae_secundaria ON receita_estabelecimentos(cnae_fiscal_secundario)');
+            $this->db->query('CREATE FULLTEXT INDEX idx_cnae_secundaria ON receita_estabelecimentos(cnae_fiscal_secundario)');
         }
         
         // Índice para busca por UF
         if (!$this->indexExists('receita_estabelecimentos', 'idx_uf')) {
-            $db->query('CREATE INDEX idx_uf ON receita_estabelecimentos(uf)');
+            $this->db->query('CREATE INDEX idx_uf ON receita_estabelecimentos(uf)');
         }
         
         // Índice para busca por situação cadastral
         if (!$this->indexExists('receita_estabelecimentos', 'idx_situacao')) {
-            $db->query('CREATE INDEX idx_situacao ON receita_estabelecimentos(situacao_cadastral)');
+            $this->db->query('CREATE INDEX idx_situacao ON receita_estabelecimentos(situacao_cadastral)');
         }
         
         // Índice composto para filtros combinados (UF + CNAE + Situação)
         if (!$this->indexExists('receita_estabelecimentos', 'idx_filtros_combinados')) {
-            $db->query('CREATE INDEX idx_filtros_combinados ON receita_estabelecimentos(uf, cnae_fiscal_principal, situacao_cadastral)');
+            $this->db->query('CREATE INDEX idx_filtros_combinados ON receita_estabelecimentos(uf, cnae_fiscal_principal, situacao_cadastral)');
         }
         
         // ========================================
@@ -94,17 +91,17 @@ class AddOptimizedForeignKeysAndIndexes extends Migration
         
         // Índice para busca por CNPJ base (listar sócios de uma empresa)
         if (!$this->indexExists('receita_socios', 'idx_cnpj_basico_socio')) {
-            $db->query('CREATE INDEX idx_cnpj_basico_socio ON receita_socios(cnpj_basico)');
+            $this->db->query('CREATE INDEX idx_cnpj_basico_socio ON receita_socios(cnpj_basico)');
         }
         
         // Índice para busca por CPF/CNPJ do sócio
         if (!$this->indexExists('receita_socios', 'idx_cnpj_cpf_socio')) {
-            $db->query('CREATE INDEX idx_cnpj_cpf_socio ON receita_socios(cnpj_cpf_socio)');
+            $this->db->query('CREATE INDEX idx_cnpj_cpf_socio ON receita_socios(cnpj_cpf_socio)');
         }
         
         // Índice para busca por nome do sócio
         if (!$this->indexExists('receita_socios', 'idx_nome_socio')) {
-            $db->query('CREATE INDEX idx_nome_socio ON receita_socios(nome_socio(100))');
+            $this->db->query('CREATE INDEX idx_nome_socio ON receita_socios(nome_socio(100))');
         }
         
         // ========================================
@@ -118,8 +115,6 @@ class AddOptimizedForeignKeysAndIndexes extends Migration
     
     public function down()
     {
-        $db = \Config\Database::connect();
-        
         // Remover índices de estabelecimentos
         $indices = [
             'idx_nome_fantasia',
@@ -134,7 +129,7 @@ class AddOptimizedForeignKeysAndIndexes extends Migration
         
         foreach ($indices as $index) {
             if ($this->indexExists('receita_estabelecimentos', $index)) {
-                $db->query("ALTER TABLE receita_estabelecimentos DROP INDEX $index");
+                $this->db->query("ALTER TABLE receita_estabelecimentos DROP INDEX $index");
             }
         }
                 
@@ -142,7 +137,7 @@ class AddOptimizedForeignKeysAndIndexes extends Migration
         $indicesSocios = ['idx_cnpj_basico_socio', 'idx_cnpj_cpf_socio', 'idx_nome_socio'];
         foreach ($indicesSocios as $index) {
             if ($this->indexExists('receita_socios', $index)) {
-                $db->query("ALTER TABLE receita_socios DROP INDEX $index");
+                $this->db->query("ALTER TABLE receita_socios DROP INDEX $index");
             }
         }
         
@@ -154,8 +149,7 @@ class AddOptimizedForeignKeysAndIndexes extends Migration
      */
     private function tableExists(string $table): bool
     {
-        $db = \Config\Database::connect();
-        return $db->tableExists($table);
+        return $this->db->tableExists($table);
     }
     
     /**
@@ -163,14 +157,12 @@ class AddOptimizedForeignKeysAndIndexes extends Migration
      */
     private function indexExists(string $table, string $indexName): bool
     {
-        $db = \Config\Database::connect();
-        
         // Verificar se a tabela existe antes de verificar o índice
         if (!$this->tableExists($table)) {
             return false;
         }
         
-        $query = $db->query("SHOW INDEX FROM $table WHERE Key_name = ?", [$indexName]);
+        $query = $this->db->query("SHOW INDEX FROM $table WHERE Key_name = ?", [$indexName]);
         return $query->getNumRows() > 0;
     }
     
@@ -179,8 +171,7 @@ class AddOptimizedForeignKeysAndIndexes extends Migration
      */
     private function foreignKeyExists(string $table, string $fkName): bool
     {
-        $db = \Config\Database::connect();
-        $query = $db->query("
+        $query = $this->db->query("
             SELECT CONSTRAINT_NAME
             FROM information_schema.TABLE_CONSTRAINTS
             WHERE TABLE_SCHEMA = DATABASE()

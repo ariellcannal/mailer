@@ -2,24 +2,16 @@
 
 namespace App\Database\Migrations;
 
-use CodeIgniter\Database\BaseConnection;
+use CodeIgniter\Database\Migration;
 
 /**
  * Migration 5: Adicionar campo situacoes_fiscais e criar foreign keys + índices otimizados
  */
-class AddFieldsAndForeingKeys
+class AddFieldsAndForeingKeys extends Migration
 {
-    protected BaseConnection $db;
-    
-    public function __construct(BaseConnection $db)
-    {
-        $this->db = $db;
-    }
     
     public function up(): void
     {
-        $forge = \Config\Database::forge();
-        
         // 1. Adicionar campo situacoes_fiscais na tabela receita_import_tasks
         $fields = [
             'situacoes_fiscais' => [
@@ -31,7 +23,7 @@ class AddFieldsAndForeingKeys
             ],
         ];
         
-        $forge->addColumn('receita_import_tasks', $fields);
+        $this->forge->addColumn('receita_import_tasks', $fields);
         
         // 2. Criar índices otimizados na tabela estabelecimentos
         // Verificar se tabela existe antes de criar índices
@@ -113,8 +105,6 @@ class AddFieldsAndForeingKeys
 
     public function down(): void
     {
-        $forge = \Config\Database::forge();
-        
         // Remover foreign keys
         if ($this->db->tableExists('estabelecimentos') && $this->foreignKeyExists('estabelecimentos', 'fk_estabelecimentos_empresas')) {
             $this->db->query('ALTER TABLE estabelecimentos DROP FOREIGN KEY fk_estabelecimentos_empresas');
@@ -138,7 +128,7 @@ class AddFieldsAndForeingKeys
         }
         
         // Remover campo
-        $forge->dropColumn('receita_import_tasks', 'situacoes_fiscais');
+        $this->forge->dropColumn('receita_import_tasks', 'situacoes_fiscais');
         
         log_message('info', 'AddFieldsAndForeingKeys: Rollback concluído');
     }

@@ -1,27 +1,19 @@
 <?php
 namespace App\Database\Migrations;
 
-use CodeIgniter\Database\BaseConnection;
+use CodeIgniter\Database\Migration;
 
 /**
  * Criar tabelas para importação da Receita
  */
-class ReceitaImports
+class ReceitaImports extends Migration
 {
 
-    protected BaseConnection $db;
-
-    public function __construct(BaseConnection $db)
-    {
-        $this->db = $db;
-    }
-
+    
     public function up(): void
     {
-        $forge = \Config\Database::forge();
-
         // Criar tabela receita_import_tasks
-        $forge->addField([
+        $this->forge->addField([
             'id' => [
                 'type' => 'INT',
                 'constraint' => 11,
@@ -109,6 +101,12 @@ class ReceitaImports
             ]
         ]);
 
+        $this->forge->addKey('id', true);
+        $this->forge->addKey('status');
+        $this->forge->addKey('created_at');
+
+        $this->forge->createTable('receita_import_tasks');
+
         $queries = [
             "CREATE TABLE IF NOT EXISTS receita_paises (codigo INT PRIMARY KEY, descricao VARCHAR(255)) ENGINE=InnoDB;",
             "CREATE TABLE IF NOT EXISTS receita_municipios (codigo INT PRIMARY KEY, descricao VARCHAR(255)) ENGINE=InnoDB;",
@@ -137,30 +135,24 @@ class ReceitaImports
             ) ENGINE=InnoDB;"
         ];
 
-        foreach ($queries as $q)
-            $conn->query($q);
-
-        $forge->addKey('id', true);
-        $forge->addKey('status');
-        $forge->addKey('created_at');
-
-        $forge->createTable('receita_import_tasks');
+        foreach ($queries as $q) {
+            $this->db->query($q);
+        }
 
         log_message('info', 'ReceitaImports: Tabela receita_import_tasks criada com sucesso');
     }
 
     public function down(): void
     {
-        $forge = \Config\Database::forge();
-        $forge->dropTable('receita_import_tasks', true);
-        $forge->dropTable('receita_paises', true);
-        $forge->dropTable('receita_municipios', true);
-        $forge->dropTable('receita_qualificacoes', true);
-        $forge->dropTable('receita_naturezas', true);
-        $forge->dropTable('receita_motivos', true);
-        $forge->dropTable('receita_cnaes', true);
-        $forge->dropTable('receita_estabelecimentos', true);
-        $forge->dropTable('receita_socios', true);
+        $this->forge->dropTable('receita_import_tasks', true);
+        $this->forge->dropTable('receita_paises', true);
+        $this->forge->dropTable('receita_municipios', true);
+        $this->forge->dropTable('receita_qualificacoes', true);
+        $this->forge->dropTable('receita_naturezas', true);
+        $this->forge->dropTable('receita_motivos', true);
+        $this->forge->dropTable('receita_cnaes', true);
+        $this->forge->dropTable('receita_estabelecimentos', true);
+        $this->forge->dropTable('receita_socios', true);
         log_message('info', 'ReceitaImports: Tabela receita_import_tasks removida');
     }
 }
