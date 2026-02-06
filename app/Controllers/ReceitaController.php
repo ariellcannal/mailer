@@ -658,7 +658,7 @@ class ReceitaController extends BaseController
                     $newListId = $contactListModel->insert([
                         'name' => $listName,
                         'description' => 'Lista criada automaticamente via importação da Receita Federal',
-                        'contact_count' => 0
+                        'total_contacts' => 0
                     ]);
                     
                     if ($newListId === false) {
@@ -754,17 +754,18 @@ class ReceitaController extends BaseController
                     ->where('list_id', $listId)
                     ->countAllResults();
                 
-                // Buscar lista atual para comparar
-                $listaAtual = $contactListModel->find($listId);
+                log_message('info', '[adicionarEmpresasALista] Atualizando total_contacts para lista ' . $listId . ' com valor ' . $count);
+                
                 try {
-                    if ($listaAtual && isset($listaAtual['contact_count']) && $listaAtual['contact_count'] != $count) {
-                        $contactListModel->update($listId, ['contact_count' => $count]);
-                    } elseif ($listaAtual && !isset($listaAtual['contact_count'])) {
-                        // Se contact_count não existe, criar
-                        $contactListModel->update($listId, ['contact_count' => $count]);
-                    }
+                    // Usar save() ao invés de update() para garantir que funcione
+                    $contactListModel->save([
+                        'id' => $listId,
+                        'total_contacts' => $count
+                    ]);
+                    log_message('info', '[adicionarEmpresasALista] total_contacts atualizado com sucesso');
                 } catch (\Exception $e) {
-                    log_message('warning', '[adicionarEmpresasALista] Erro ao atualizar contact_count: ' . $e->getMessage());
+                    log_message('error', '[adicionarEmpresasALista] Erro ao atualizar total_contacts: ' . $e->getMessage());
+                    log_message('error', '[adicionarEmpresasALista] Stack trace: ' . $e->getTraceAsString());
                 }
             }
             
