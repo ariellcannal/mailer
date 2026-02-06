@@ -52,6 +52,19 @@ class QueueController extends BaseController
 
     /**
      * Processa notificações de bounces e complaints no SNS/SQS.
+     * 
+     * CRON SETUP (OBRIGATÓRIO PARA EVITAR BLACKLIST)
+     * 
+     * LINUX:
+     * */5 * * * * /usr/local/bin/ea-php82 /home/cannal/public_html/mailer/public/index.php queue/process-bounces >> /home/cannal/public_html/mailer/writable/logs/bounces.log 2>&1
+     * 
+     * OU via wget/curl:
+     * */5 * * * * wget -q -O- https://seu-dominio.com/queue/process-bounces >> /home/cannal/public_html/mailer/writable/logs/bounces.log 2>&1
+     * 
+     * IMPORTANTE:
+     * - Executar a cada 5 minutos para processar bounces rapidamente
+     * - Bounces não processados podem causar suspensão da conta AWS SES
+     * - Complaints (spam reports) são automaticamente convertidos em opt-outs
      *
      * @return ResponseInterface
      */

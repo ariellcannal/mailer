@@ -69,8 +69,12 @@ class BounceProcessor
      */
     public function process(int $limit = 50): array
     {
+        log_message('info', '[BounceProcessor] Iniciando processamento de bounces/complaints');
+        
         $senderModel = new SenderModel();
         $domains = array_unique(array_filter(array_column($senderModel->findAll(), 'domain')));
+        
+        log_message('info', '[BounceProcessor] Domínios encontrados: ' . implode(', ', $domains));
 
         $summary = [
             'processed' => 0,
@@ -81,15 +85,23 @@ class BounceProcessor
 
         foreach ($domains as $domain) {
             $queueName = $this->notificationService->getBounceQueueName((string) $domain);
+            log_message('info', "[BounceProcessor] Processando domínio: {$domain}, fila: {$queueName}");
+            
             $queueUrl = $this->resolveQueueUrl($queueName);
 
             if ($queueUrl === null) {
-                $summary['errors'][] = 'Fila não encontrada para o domínio ' . $domain;
+                $error = 'Fila não encontrada para o domínio ' . $domain;
+                $summary['errors'][] = $error;
+                log_message('warning', "[BounceProcessor] {$error}");
                 continue;
             }
+            
+            log_message('info', "[BounceProcessor] Fila encontrada: {$queueUrl}");
 
             $summary = $this->consumeQueue($queueUrl, $limit, $summary);
         }
+        
+        log_message('info', '[BounceProcessor] Processamento finalizado: ' . json_encode($summary));
 
         return $summary;
     }
@@ -214,6 +226,8 @@ class BounceProcessor
 
         $messageId = (int) ($mail['tags']['message_id'][0] ?? 0);
         $recipients = $bounce['bouncedRecipients'] ?? [];
+        
+        log_message('info', "[BounceProcessor] Registrando bounce: tipo={$bounceType}, messageId={$messageId}, recipients=" . count($recipients));
 
         foreach ($recipients as $recipient) {
             $email = strtolower(trim((string) ($recipient['emailAddress'] ?? '')));
@@ -221,7 +235,8 @@ class BounceProcessor
             if ($email === '') {
                 continue;
             }
-
+            
+            log_message('info', "[BounceProcessor] Bounce registrado: {$email} (tipo: {$bounceType})");
             $this->applyContactBounce($email, $messageId, $bounceType, $reason);
         }
 
@@ -240,6 +255,8 @@ class BounceProcessor
         $complaint = $data['complaint'] ?? [];
         $messageId = (int) ($mail['tags']['message_id'][0] ?? 0);
         $recipients = $complaint['complainedRecipients'] ?? [];
+        
+        log_message('warning', "[BounceProcessor] Registrando complaint (spam): messageId={$messageId}, recipients=" . count($recipients));
 
         foreach ($recipients as $recipient) {
             $email = strtolower(trim((string) ($recipient['emailAddress'] ?? '')));
@@ -247,7 +264,8 @@ class BounceProcessor
             if ($email === '') {
                 continue;
             }
-
+            
+            log_message('warning', "[BounceProcessor] Complaint registrado: {$email} (marcado como opt-out)");
             $this->applyComplaint($email, $messageId);
         }
 

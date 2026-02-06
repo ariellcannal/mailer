@@ -55,9 +55,15 @@ class ReceitaController extends BaseController
             ->orderBy('created_at', 'DESC')
             ->findAll();
         
+        // Renderizar HTML usando a mesma partial da view principal
+        $html = '';
+        foreach ($tasks as $task) {
+            $html .= view('receita/partials/_task_row', ['task' => $task]);
+        }
+        
         return $this->response->setJSON([
             'success' => true,
-            'tasks' => $tasks
+            'html' => $html
         ]);
     }
     
@@ -228,8 +234,9 @@ class ReceitaController extends BaseController
                 ]);
             }
             
-            // Pausar todas as tarefas em andamento
+            // Pausar TODAS as outras tarefas (garantir apenas 1 em andamento)
             $this->taskModel->where('status', 'em_andamento')
+                           ->where('id !=', (int) $taskId)
                            ->set(['status' => 'agendada'])
                            ->update();
             

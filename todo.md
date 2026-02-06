@@ -111,3 +111,29 @@ Remover campos de lista do formulário de importação e transferir para /receit
 - [x] Botão Iniciar deve pausar outras tarefas e iniciar a clicada
 - [x] Adicionar botão "Reiniciar" (reload) que reseta status e apaga arquivo de progresso
 - [x] Modificar botão "Clonar" para redirecionar ao formulário com dados preenchidos
+
+
+## 🚨 PROBLEMAS CRÍTICOS - PRIORIDADE MÁXIMA
+
+### Sistema de Bounces/Complaints (AWS SNS)
+- [x] Investigar por que bounces não estão sendo registrados na aplicação - CRON não configurado
+- [x] Verificar configuração do endpoint SNS - Implementação correta, falta executar
+- [x] Verificar processamento de notificações SNS (QueueController) - Funcional
+- [ ] **URGENTE: Configurar CRON para /queue/process-bounces (a cada 5 minutos)**
+- [x] Implementar logging detalhado de bounces - Logs adicionados
+- [ ] Testar recebimento de bounces/complaints após CRON configurado
+- [ ] Sincronizar lista de supressão da AWS com aplicação
+
+### Opt-out
+- [x] Revisar funcionamento completo do opt-out - Funcionando corretamente
+- [x] Verificar se contatos opt-out são excluídos dos envios - Sim, filtrados no QueueManager
+- [x] Testar fluxo completo de opt-out - Complaints viram opt-out automaticamente
+
+### Interface de Tarefas
+- [x] Unificar HTML (usar mesma view para primeira requisição e AJAX) - Partial _task_row.php criada
+- [x] Corrigir botão Clonar (erro 404 em duplicate-task/1:1) - Validação de ID adicionada
+- [x] Reorganizar lógica dos botões:
+  - [x] Garantir que apenas 1 tarefa rode por vez - startTask pausa outras
+  - [x] Botão Reload sempre visível - Implementado
+  - [x] Lógica coerente entre Play/Pause/Reload - Reorganizado
+  - [x] Ao reiniciar: zerar colunas de progresso e apagar arquivo - restartTask completo

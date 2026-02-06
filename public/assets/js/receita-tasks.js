@@ -68,8 +68,8 @@
             method: 'GET',
             dataType: 'json',
             success: function(response) {
-                if (response.success && response.tasks) {
-                    updateTable(response.tasks);
+                if (response.success && response.html !== undefined) {
+                    updateTable(response.html);
                 }
             },
             error: function() {
@@ -79,12 +79,12 @@
     }
     
     /**
-     * Atualiza conteúdo da tabela
+     * Atualiza conteúdo da tabela com HTML renderizado pelo servidor
      */
-    function updateTable(tasks) {
+    function updateTable(html) {
         const tbody = $('#tasks-table tbody');
         
-        if (tasks.length === 0) {
+        if (!html || html.trim() === '') {
             tbody.html(`
                 <tr>
                     <td colspan="8" class="text-center text-muted py-4">
@@ -96,173 +96,7 @@
             return;
         }
         
-        tbody.empty();
-        
-        tasks.forEach(function(task) {
-            // Progresso baseado em bytes processados (fallback para arquivos)
-            let progress = 0;
-            if (task.total_bytes && task.total_bytes > 0) {
-                progress = Math.round((task.processed_bytes / task.total_bytes) * 100 * 100) / 100;
-            } else if (task.total_files && task.total_files > 0) {
-                progress = Math.round((task.processed_files / task.total_files) * 100 * 100) / 100;
-            }
-            
-            const statusClass = {
-                'agendada': 'secondary',
-                'em_andamento': 'primary',
-                'concluida': 'success',
-                'erro': 'danger'
-            };
-            
-            const statusLabel = {
-                'agendada': 'Agendada',
-                'em_andamento': 'Em Andamento',
-                'concluida': 'Concluída',
-                'erro': 'Erro'
-            };
-            
-            let row = `
-                <tr data-task-id="${task.id}">
-                    <td>${task.id}</td>
-                    <td>
-                        <strong>${escapeHtml(task.name || 'Importação #' + task.id)}</strong>
-                        ${task.current_file ? `<br><small class="text-muted"><i class="fas fa-file-archive me-1"></i>${escapeHtml(task.current_file)}</small>` : ''}
-                    </td>
-                    <td>
-                        <span class="badge bg-${statusClass[task.status]}">
-                            ${statusLabel[task.status]}
-                        </span>
-                        ${task.status === 'erro' && task.error_message ? `<br><small class="text-danger" title="${escapeHtml(task.error_message)}"><i class="fas fa-exclamation-circle"></i> Ver erro</small>` : ''}
-                    </td>
-                    <td>
-                        <div class="d-flex align-items-center gap-2 mb-1">
-                            <div class="progress" style="height: 20px; width: 200px;">
-                                <div class="progress-bar ${task.status === 'concluida' ? 'bg-success' : ''}" 
-                                     role="progressbar" 
-                                     style="width: ${progress}%"
-                                     aria-valuenow="${progress}" 
-                                     aria-valuemin="0" 
-                                     aria-valuemax="100">
-                                </div>
-                            </div>
-                            <small class="text-muted text-nowrap">${progress}%</small>
-                        </div>
-                        <small class="text-muted">
-                            ${formatNumber(task.imported_lines || 0)} registros importados
-                        </small>
-                    </td>
-                    <td>
-                        <span class="badge bg-info">
-                            ${task.processed_files} / ${task.total_files}
-                        </span>
-                    </td>
-                    <td>
-                        ${buildFiltrosHtml(task)}
-                    </td>
-                    <td>
-                        ${task.created_at ? formatDateTime(task.created_at) : ''}
-                    </td>
-                    <td class="text-center">
-                        <div class="btn-group btn-group-sm">
-                            ${task.status === 'em_andamento' ? `
-                            <button type="button" 
-                                    class="btn btn-outline-warning btn-pause" 
-                                    data-task-id="${task.id}"
-                                    title="Pausar tarefa">
-                                <i class="fas fa-pause"></i>
-                            </button>
-                            ` : (task.status !== 'concluida' && task.status !== 'erro' ? `
-                            <button type="button" 
-                                    class="btn btn-outline-success btn-start" 
-                                    data-task-id="${task.id}"
-                                    title="Iniciar tarefa">
-                                <i class="fas fa-play"></i>
-                            </button>
-                            ` : '')}
-                            <button type="button" 
-                                    class="btn btn-outline-info btn-restart" 
-                                    data-task-id="${task.id}"
-                                    title="Reiniciar tarefa">
-                                <i class="fas fa-redo"></i>
-                            </button>
-                            <button type="button" 
-                                    class="btn btn-outline-primary btn-duplicate" 
-                                    data-task-id="${task.id}"
-                                    title="Duplicar tarefa">
-                                <i class="fas fa-copy"></i>
-                            </button>
-                            ${task.status === 'agendada' ? `
-                            <button type="button" 
-                                    class="btn btn-outline-danger btn-delete" 
-                                    data-task-id="${task.id}"
-                                    title="Excluir tarefa">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                            ` : ''}
-                        </div>
-                    </td>
-                </tr>
-            `;
-            
-            tbody.append(row);
-        });
-    }
-    
-    /**
-     * Constrói HTML dos filtros
-     */
-    function buildFiltrosHtml(task) {
-        const filtros = [];
-        
-        // CNAEs (pode vir como JSON ou string)
-        if (task.cnaes) {
-            let cnaes = [];
-            try {
-                // Tentar parsear como JSON
-                cnaes = typeof task.cnaes === 'string' ? JSON.parse(task.cnaes) : task.cnaes;
-            } catch (e) {
-                // Se não for JSON, assumir que é string separada por vírgula
-                cnaes = task.cnaes.split(',');
-            }
-            if (cnaes.length > 0) {
-                filtros.push(`<strong>CNAEs:</strong> ${cnaes.map(escapeHtml).join(', ')}`);
-            }
-        }
-        
-        // Estados (campo 'ufs' no banco, pode vir como JSON ou string)
-        if (task.ufs) {
-            let estados = [];
-            try {
-                // Tentar parsear como JSON
-                estados = typeof task.ufs === 'string' ? JSON.parse(task.ufs) : task.ufs;
-            } catch (e) {
-                // Se não for JSON, assumir que é string separada por vírgula
-                estados = task.ufs.split(',');
-            }
-            if (estados.length > 0) {
-                filtros.push(`<strong>Estados:</strong> ${estados.map(escapeHtml).join(', ')}`);
-            }
-        }
-        
-        // Situações Fiscais
-        if (task.situacoes_fiscais) {
-            const situacoes = task.situacoes_fiscais.split(',');
-            const situacoesLabel = {
-                '1': 'NULA',
-                '2': 'ATIVA',
-                '3': 'SUSPENSA',
-                '4': 'INAPTA',
-                '8': 'BAIXADA'
-            };
-            const situacoesTexto = situacoes.map(s => situacoesLabel[s] || s);
-            filtros.push(`<strong>Situações:</strong> ${situacoesTexto.join(', ')}`);
-        }
-        
-        if (filtros.length === 0) {
-            return '<small class="text-muted">Sem filtros</small>';
-        }
-        
-        return '<small>' + filtros.join('<br>') + '</small>';
+        tbody.html(html);
     }
     
     /**
@@ -356,6 +190,13 @@
      * Carrega dados da tarefa para duplicação (redireciona ao formulário)
      */
     function duplicateTask(taskId) {
+        // Validar que taskId é numérico
+        taskId = parseInt(taskId, 10);
+        if (isNaN(taskId) || taskId <= 0) {
+            alertify.error('ID de tarefa inválido');
+            return;
+        }
+        
         $.ajax({
             url: baseUrl + 'receita/duplicate-task/' + taskId,
             method: 'GET',
