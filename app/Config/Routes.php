@@ -79,6 +79,8 @@ $routes->group('contact-lists', function($routes) {
     $routes->post('delete/(:num)', 'ContactListController::delete/$1');
     $routes->post('detach-contact/(:num)/(:num)', 'ContactListController::detachContact/$1/$2');
     $routes->post('buscar-contatos', 'ContactListController::buscarContatos');
+    $routes->post('refresh-counts', 'ContactListController::refreshCounts');
+    $routes->post('refresh-counts/(:num)', 'ContactListController::refreshCounts/$1');
 });
 
 // Templates

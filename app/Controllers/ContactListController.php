@@ -245,3 +245,47 @@ class ContactListController extends BaseController
         return redirect()->back()->with('contact_lists_success', 'Contato removido da lista.');
     }
 }
+
+    /**
+     * Atualiza o total_contacts de uma ou todas as listas.
+     *
+     * @param int|null $id Identificador da lista (null = todas).
+     * @return ResponseInterface
+     */
+    public function refreshCounts(?int $id = null): ResponseInterface
+    {
+        $listModel = new ContactListModel();
+        
+        if ($id !== null) {
+            // Atualizar apenas uma lista
+            $list = $listModel->find($id);
+            
+            if (!$list) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Lista não encontrada.'
+                ]);
+            }
+            
+            $listModel->refreshCounters([$id]);
+            
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Contador atualizado com sucesso.'
+            ]);
+        }
+        
+        // Atualizar todas as listas
+        $allLists = $listModel->findAll();
+        $listIds = array_column($allLists, 'id');
+        
+        if (!empty($listIds)) {
+            $listModel->refreshCounters($listIds);
+        }
+        
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => 'Contadores atualizados com sucesso.',
+            'total_updated' => count($listIds)
+        ]);
+    }
