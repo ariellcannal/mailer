@@ -23,7 +23,6 @@ class ContactModel extends Model
     protected $protectFields = true;
 
     protected $allowedFields = [
-        'id',
         'email',
         'name',
         'nickname',
