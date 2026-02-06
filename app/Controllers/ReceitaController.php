@@ -473,6 +473,11 @@ class ReceitaController extends BaseController
     public function empresa($cnpjBasico, $cnpjOrdem, $cnpjDv)
     {
         try {
+            // Remover zeros à esquerda (ltrim) para compatibilidade com o banco
+            $cnpjBasico = ltrim($cnpjBasico, '0') ?: '0';
+            $cnpjOrdem = ltrim($cnpjOrdem, '0') ?: '0';
+            $cnpjDv = ltrim($cnpjDv, '0') ?: '0';
+            
             $db = \Config\Database::connect();
             
             // Buscar estabelecimento
