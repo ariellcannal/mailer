@@ -96,6 +96,7 @@
             uf: $('#filtro_uf').val(),
             com_email: $('#filtro_com_email').is(':checked') ? '1' : '',
             com_telefone: $('#filtro_com_telefone').is(':checked') ? '1' : '',
+            excluir_contabilidade: $('#filtro_excluir_contabilidade').is(':checked') ? '1' : '',
             page: currentPage
         };
         
@@ -360,6 +361,10 @@
             params.set('com_telefone', '1');
         }
         
+        if (currentFilters.excluir_contabilidade === '1') {
+            params.set('excluir_contabilidade', '1');
+        }
+        
         if (currentFilters.page > 1) {
             params.set('page', currentFilters.page);
         }
@@ -408,6 +413,10 @@
         
         if (urlParams.get('com_telefone') === '1') {
             $('#filtro_com_telefone').prop('checked', true);
+        }
+        
+        if (urlParams.get('excluir_contabilidade') === '1') {
+            $('#filtro_excluir_contabilidade').prop('checked', true);
         }
     }
     
