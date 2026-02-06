@@ -699,9 +699,13 @@ class ReceitaController extends BaseController
                     $contato = $contactModel->where('email', $email)->first();
                     
                     if ($contato) {
-                        // Atualizar nome se estiver vazio
+                        // Atualizar nome se estiver vazio E for diferente
                         if (empty($contato['name']) && !empty($nome)) {
-                            $contactModel->update($contato['id'], ['name' => $nome]);
+                            try {
+                                $contactModel->update($contato['id'], ['name' => $nome]);
+                            } catch (\Exception $e) {
+                                log_message('warning', '[adicionarEmpresasALista] Erro ao atualizar nome do contato: ' . $e->getMessage());
+                            }
                         }
                         $contactId = $contato['id'];
                     } else {
@@ -731,11 +735,17 @@ class ReceitaController extends BaseController
                         ->first();
                     
                     if (!$exists) {
-                        $contactListMemberModel->insert([
-                            'list_id' => $listId,
-                            'contact_id' => $contactId
-                        ]);
-                        $totalAdicionados++;
+                        try {
+                            $result = $contactListMemberModel->insert([
+                                'list_id' => $listId,
+                                'contact_id' => $contactId
+                            ]);
+                            if ($result) {
+                                $totalAdicionados++;
+                            }
+                        } catch (\Exception $e) {
+                            log_message('error', '[adicionarEmpresasALista] Erro ao inserir membro na lista: ' . $e->getMessage());
+                        }
                     }
                 }
                 
@@ -746,11 +756,15 @@ class ReceitaController extends BaseController
                 
                 // Buscar lista atual para comparar
                 $listaAtual = $contactListModel->find($listId);
-                if ($listaAtual && isset($listaAtual['contact_count']) && $listaAtual['contact_count'] != $count) {
-                    $contactListModel->update($listId, ['contact_count' => $count]);
-                } elseif ($listaAtual && !isset($listaAtual['contact_count'])) {
-                    // Se contact_count não existe, criar
-                    $contactListModel->update($listId, ['contact_count' => $count]);
+                try {
+                    if ($listaAtual && isset($listaAtual['contact_count']) && $listaAtual['contact_count'] != $count) {
+                        $contactListModel->update($listId, ['contact_count' => $count]);
+                    } elseif ($listaAtual && !isset($listaAtual['contact_count'])) {
+                        // Se contact_count não existe, criar
+                        $contactListModel->update($listId, ['contact_count' => $count]);
+                    }
+                } catch (\Exception $e) {
+                    log_message('warning', '[adicionarEmpresasALista] Erro ao atualizar contact_count: ' . $e->getMessage());
                 }
             }
             
