@@ -191,3 +191,15 @@ Remover campos de lista do formulário de importação e transferir para /receit
 
 - [x] Aplicar lógica de conversão de strings vazias para NULL em **todos os campos** durante importação
 - [x] Não apenas correio_eletronico, mas todos os campos da tabela
+
+
+## Problema: Card de Adição à Lista Não Aparece
+
+- [x] Investigar por que o card não aparece quando há filtros ativos
+- [x] Verificar lógica de exibição no empresas.php
+- [x] Verificar JavaScript que controla visibilidade do card
+- [x] Corrigir condição de exibição
+- [x] Corrigir nomes de colunas no filtro de telefone (ddd1 → ddd_telefone_1, etc)
+- [x] Adicionar razao_social ao SELECT
+- [x] Trocar slideDown/slideUp por show/hide para exibição instantânea
+- [x] Adicionar console.log para debug

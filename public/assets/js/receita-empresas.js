@@ -115,11 +115,17 @@
                                      (currentFilters.cnae && currentFilters.cnae.length > 0) || 
                                      currentFilters.uf || currentFilters.com_email || currentFilters.com_telefone;
                     
+                    console.log('Debug card:', {
+                        hasFilters: hasFilters,
+                        total: response.pagination ? response.pagination.total : 0,
+                        filters: currentFilters
+                    });
+                    
                     if (hasFilters && response.pagination && response.pagination.total > 0) {
                         $('#total-empresas-encontradas').text(response.pagination.total);
-                        $('#card-add-to-list').slideDown();
+                        $('#card-add-to-list').show();
                     } else {
-                        $('#card-add-to-list').slideUp();
+                        $('#card-add-to-list').hide();
                     }
                 } else {
                     alertify.error(response.message || 'Erro ao buscar empresas');
