@@ -143,6 +143,7 @@ class ReceitaImportTaskModel extends Model
     public function updateProgress(int $taskId, array $progress): bool
     {
         $data = [];
+        $incrementFields = [];
         
         if (isset($progress['processed_files'])) {
             $data['processed_files'] = $progress['processed_files'];
@@ -156,8 +157,9 @@ class ReceitaImportTaskModel extends Model
             $data['processed_lines'] = $progress['processed_lines'];
         }
         
+        // imported_lines deve ser INCREMENTADO, não sobrescrito
         if (isset($progress['imported_lines'])) {
-            $data['imported_lines'] = $progress['imported_lines'];
+            $incrementFields['imported_lines'] = $progress['imported_lines'];
         }
         
         if (isset($progress['total_lines'])) {
@@ -176,7 +178,25 @@ class ReceitaImportTaskModel extends Model
             $data['processed_bytes'] = $progress['processed_bytes'];
         }
         
-        return empty($data) ? true : $this->update($taskId, $data);
+        // Aplicar updates normais
+        if (!empty($data)) {
+            $this->update($taskId, $data);
+        }
+        
+        // Aplicar incrementos usando SQL direto
+        if (!empty($incrementFields)) {
+            $db = \Config\Database::connect();
+            $builder = $db->table($this->table);
+            
+            foreach ($incrementFields as $field => $value) {
+                $builder->set($field, "$field + $value", false);
+            }
+            
+            $builder->where('id', $taskId);
+            $builder->update();
+        }
+        
+        return true;
     }
 
     /**

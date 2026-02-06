@@ -158,3 +158,10 @@ Remover campos de lista do formulário de importação e transferir para /receit
 
 - [x] Modificar contagem de imported_lines para somar apenas arquivo "estabelecimentos"
 - [x] Ignorar contagem de empresas, socios, simples, etc.
+
+
+## Problema: imported_lines sendo sobrescrito em vez de somado
+
+- [x] A cada CRON, imported_lines é sobrescrito com valor da execução atual
+- [x] Deve somar ao valor já existente no banco (incremento)
+- [x] Modificar UPDATE para usar SQL direto: SET imported_lines = imported_lines + X
