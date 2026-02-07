@@ -19,6 +19,11 @@ class QueueProcess extends BaseCommand
 
     public function run(array $params)
     {
+        // 0. Reduzir prioridade do processo
+        if (function_exists('proc_nice')) {
+            proc_nice(10);
+        }
+        
         // 1. Configurações de Limite
         set_time_limit(60); // Limite de 1 minuto
         ini_set('memory_limit', '128M'); // Limite de memória seguro para CLI

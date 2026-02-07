@@ -14,13 +14,30 @@ class QueueBounces extends BaseCommand
     protected $name = 'queue:bounces';
 
     protected $description = 'Processa notificações de bounces e complaints no SNS/SQS.';
+    
+    private $lockFile;
 
     public function run(array $params)
     {
+        // Reduzir prioridade do processo
+        if (function_exists('proc_nice')) {
+            proc_nice(10);
+        }
+        
         // Otimizações de memória e CPU
         set_time_limit(60);
         ini_set('memory_limit', '64M');
         gc_enable();
+        
+        // Lockfile
+        $this->lockFile = WRITEPATH . 'bounce_process.lock';
+        
+        if ($this->isLocked()) {
+            CLI::write('Processo já em execução. Saindo...', 'yellow');
+            return;
+        }
+        
+        $this->createLock();
         
         CLI::write("Verificando bounces e complaints...", 'yellow');
 
@@ -30,9 +47,49 @@ class QueueBounces extends BaseCommand
         } catch (\Throwable $exception) {
             CLI::error('Falha crítica: ' . $exception->getMessage());
             return;
+        } finally {
+            $this->removeLock();
+            gc_collect_cycles();
         }
 
         $this->displayBounceOutput($result);
+    }
+    
+    private function isLocked(): bool
+    {
+        if (!file_exists($this->lockFile)) {
+            return false;
+        }
+        
+        $lockData = json_decode(file_get_contents($this->lockFile), true);
+        $pid = $lockData['pid'] ?? 0;
+        
+        if (function_exists('posix_getpgid')) {
+            if (posix_getpgid($pid) === false) {
+                CLI::write("Detectado lock órfão (PID $pid inexistente). Removendo...", 'cyan');
+                unlink($this->lockFile);
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    private function createLock(): void
+    {
+        $lockData = [
+            'pid' => getmypid(),
+            'started_at' => date('Y-m-d H:i:s'),
+            'command' => 'queue:bounces'
+        ];
+        file_put_contents($this->lockFile, json_encode($lockData));
+    }
+    
+    private function removeLock(): void
+    {
+        if (file_exists($this->lockFile)) {
+            unlink($this->lockFile);
+        }
     }
 
     private function displayBounceOutput(array $result): void

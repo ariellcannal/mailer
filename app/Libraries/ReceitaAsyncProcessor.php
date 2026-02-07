@@ -585,7 +585,7 @@ class ReceitaAsyncProcessor
                     }
                 }
                 $batchData[] = $row;
-                unset($data);
+                unset($data, $row, $value);
 
                 if (count($batchData) >= 500) {
                     $batchSize = count($batchData);
@@ -603,12 +603,16 @@ class ReceitaAsyncProcessor
                         $this->processContactsFromBatch($batchData, $contactListId, $includeContabilidade);
                     }
 
-                    unset($batchData);
+                    // Liberar memória explicitamente
+                    unset($batchData, $batchSize);
                     $batchData = [];
 
                     $this->db->transCommit();
                     $this->saveProgress($zipName, $lineCount);
+                    
+                    // Forçar coleta de lixo a cada batch
                     gc_collect_cycles();
+                    
                     $this->db->transBegin();
                 }
             }
@@ -629,6 +633,9 @@ class ReceitaAsyncProcessor
                 if ($contactListId && $rawName == 'estabelecimentos') {
                     $this->processContactsFromBatch($batchData, $contactListId, $includeContabilidade);
                 }
+                
+                // Liberar memória do último batch
+                unset($batchData, $batchSize);
             }
 
             $this->db->transCommit();
@@ -636,6 +643,9 @@ class ReceitaAsyncProcessor
 
             $zip->close();
             fclose($fp);
+            
+            // Liberar memória de variáveis grandes
+            unset($fields, $zip, $fp);
 
             // Arquivo completamente processado
             $completed = ! $this->isTimeExceeded();
@@ -823,6 +833,9 @@ class ReceitaAsyncProcessor
                     'added_at' => date('Y-m-d H:i:s')
                 ]);
             }
+            
+            // Liberar memória
+            unset($existingContact, $existingMember, $contactData, $email, $nome, $isContabilidade);
         }
 
         // Atualizar contador da lista
