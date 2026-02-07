@@ -17,6 +17,11 @@ class QueueBounces extends BaseCommand
 
     public function run(array $params)
     {
+        // Otimizações de memória e CPU
+        set_time_limit(60);
+        ini_set('memory_limit', '64M');
+        gc_enable();
+        
         CLI::write("Verificando bounces e complaints...", 'yellow');
 
         try {

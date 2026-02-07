@@ -344,8 +344,6 @@ class ReceitaAsyncProcessor
      */
     private function processTask(array $progress): array
     {
-        set_time_limit(90);
-        ini_set('memory_limit', '128M');
         gc_enable();
 
         $cnaes = json_decode($this->currentTask['cnaes'] ?? '[]', true);
@@ -450,6 +448,8 @@ class ReceitaAsyncProcessor
                 'ultimo_arquivo' => '',
                 'ultima_linha' => 0
             ];
+            
+            gc_collect_cycles();
         }
 
         // Verificar se todos os arquivos foram processados

@@ -22,8 +22,8 @@ class ProcessContactImports extends BaseCommand
     public function run(array $params)
     {
         // Otimizações de memória e CPU
-        set_time_limit(0);
-        ini_set('memory_limit', '512M');
+        set_time_limit(60);
+        ini_set('memory_limit', '128M');
         gc_enable();
         
         $db = \Config\Database::connect();
