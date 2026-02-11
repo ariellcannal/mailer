@@ -17,7 +17,7 @@ class AddDeliveryAtColumnToMessageSendsTable extends Migration
                 'type' => 'DATETIME',
                 'default' => null,
                 'comment' => '',
-                'after' => 'send_at'
+                'after' => 'sent_at'
             ]
         ];
 

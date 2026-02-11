@@ -2,7 +2,6 @@
 
 namespace App\Controllers;
 
-use App\Libraries\MigrationManager;
 use CodeIgniter\Controller;
 use CodeIgniter\HTTP\CLIRequest;
 use App\Models\UserModel;
@@ -82,16 +81,6 @@ abstract class BaseController extends Controller
     {
         // Do Not Edit This Line
         parent::initController($request, $response, $logger);
-        
-        // Verificar e executar migrations pendentes (apenas em requisições HTTP)
-        if (!($this->request instanceof CLIRequest)) {
-            error_log('[BaseController] Iniciando verificação de migrations...');
-            $this->checkDatabaseMigrations();
-            error_log('[BaseController] Verificação de migrations concluída');
-        } else {
-            error_log('[BaseController] Requisição CLI detectada, pulando migrations');
-        }
-
         $this->enforceAuthentication();
     }
 
@@ -182,40 +171,5 @@ abstract class BaseController extends Controller
 
         redirect()->to($redirectUrl)->withCookies()->send();
         exit;
-    }
-    
-    /**
-     * Verifica e executa migrations pendentes
-     * 
-     * @return void
-     */
-    protected function checkDatabaseMigrations(): void
-    {
-        error_log('[BaseController::checkDatabaseMigrations] Método chamado');
-        try {
-            // Garantir que sessão está iniciada
-            if (session_status() === PHP_SESSION_NONE) {
-                session();
-            }
-            
-            error_log('[BaseController::checkDatabaseMigrations] Criando MigrationManager...');
-            $migrationManager = new MigrationManager();
-            error_log('[BaseController::checkDatabaseMigrations] Executando checkAndRunMigrations...');
-            $result = $migrationManager->checkAndRunMigrations();
-            error_log('[BaseController::checkDatabaseMigrations] Resultado: ' . json_encode($result));
-            
-            if ($result['updated']) {
-                // Armazenar informação na sessão para exibir alerta
-                session()->setFlashdata('db_updated', [
-                    'from_version' => $result['from_version'],
-                    'to_version' => $result['to_version'],
-                ]);
-                
-                log_message('info', "Database migrated from version {$result['from_version']} to {$result['to_version']}");
-            }
-        } catch (\Exception $e) {
-            log_message('error', 'Migration error: ' . $e->getMessage());
-            log_message('error', 'Migration trace: ' . $e->getTraceAsString());
-        }
     }
 }

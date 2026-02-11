@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Filters;
 
 use CodeIgniter\Filters\FilterInterface;
@@ -9,6 +8,7 @@ use Config\Services;
 
 class AutoMigrate implements FilterInterface
 {
+
     public function before(RequestInterface $request, $arguments = null)
     {
         // Carrega o serviço de migração
@@ -17,7 +17,8 @@ class AutoMigrate implements FilterInterface
         try {
             // Executa todas as migrações pendentes
             // Se já estiver atualizado, ele apenas retorna true
-            $migrations->latest(); 
+            log_message('debug', 'Migração automática iniciada');
+            $migrations->latest();
         } catch (\Throwable $e) {
             // Logue o erro se necessário para não travar a aplicação
             log_message('error', 'Erro na Migração Automática: ' . $e->getMessage());
