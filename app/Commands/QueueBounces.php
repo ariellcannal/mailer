@@ -95,8 +95,9 @@ class QueueBounces extends BaseCommand
     private function displayBounceOutput(array $result): void
     {
         CLI::write('Mensagens analisadas: ' . ($result['processed'] ?? 0));
-        CLI::write('Bounces registrados: ' . ($result['bounced'] ?? 0), 'red');
-        CLI::write('Complaints registradas: ' . ($result['complained'] ?? 0), 'red');
+        CLI::write('Registro de Entrega: ' . ($result['deliveries'] ?? 0), 'green');
+        CLI::write('Registro de Bounce: ' . ($result['bounces'] ?? 0), 'red');
+        CLI::write('Registro de Complaint: ' . ($result['complaints'] ?? 0), 'red');
 
         if (! empty($result['errors'])) {
             CLI::newLine();

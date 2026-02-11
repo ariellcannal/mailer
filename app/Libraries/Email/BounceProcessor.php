@@ -35,7 +35,7 @@ class BounceProcessor
     {
         $senderModel = new SenderModel();
         $domains = array_unique(array_filter(array_column($senderModel->findAll(), 'domain')));
-        $summary = ['processed' => 0, 'bounced' => 0, 'complained' => 0, 'errors' => []];
+        $summary = ['processed' => 0, 'deliveries' => 0, 'bounces' => 0, 'complaints' => 0, 'errors' => []];
         
         foreach ($domains as $domain) {
             $queueName = $this->notificationService->getBounceQueueName((string) $domain);
@@ -74,8 +74,9 @@ class BounceProcessor
                 $handled = $this->handleMessage($message['Body'] ?? '');
                 if ($handled['handled']) {
                     $summary['processed']++;
-                    $summary['bounced'] += $handled['bounced'];
-                    $summary['complained'] += $handled['complained'];
+                    $summary['deliveries'] += $handled['deliveries'];
+                    $summary['bounces'] += $handled['bounces'];
+                    $summary['complaints'] += $handled['complaints'];
                 }
                 
                 if (!empty($message['ReceiptHandle'])) {
@@ -110,7 +111,7 @@ class BounceProcessor
             return $this->registerComplaint($data);
         }
         
-        return ['handled' => false, 'bounced' => 0, 'complained' => 0];
+        return ['handled' => false, 'deliveries' => 0, 'bounces' => 0, 'complaints' => 0];
     }
     
     protected function registerDelivery(array $data): array
@@ -124,17 +125,19 @@ class BounceProcessor
         
         if (empty($awsMessageId)) {
             log_message('error', '[BounceProcessor] aws_message_id ausente no webhook de Delivery');
-            return ['handled' => false, 'bounced' => 0, 'complained' => 0];
+            return ['handled' => false, 'deliveries' => 0, 'bounces' => 0, 'complaints' => 0];
         }
         
+        $deliveryCount = 0;
         foreach ($delivery['recipients'] as $email) {
             $this->updateMessageStatusByAwsId($email, $awsMessageId, [
                 'delivery_at' => $timestamp,
                 'status'      => 'sent'
             ]);
+            $deliveryCount++;
         }
         
-        return ['handled' => true, 'bounced' => 0, 'complained' => 0];
+        return ['handled' => true, 'deliveries' => $deliveryCount, 'bounces' => 0, 'complaints' => 0];
     }
     
     protected function registerBounce(array $data): array
@@ -148,7 +151,7 @@ class BounceProcessor
         
         if (empty($awsMessageId)) {
             log_message('error', '[BounceProcessor] aws_message_id ausente no webhook de Bounce');
-            return ['handled' => false, 'bounced' => 0, 'complained' => 0];
+            return ['handled' => false, 'deliveries' => 0, 'bounces' => 0, 'complaints' => 0];
         }
         
         foreach ($bounce['bouncedRecipients'] as $recipient) {
@@ -197,7 +200,7 @@ class BounceProcessor
             }
         }
         
-        return ['handled' => true, 'bounced' => count($bounce['bouncedRecipients']), 'complained' => 0];
+        return ['handled' => true, 'deliveries' => 0, 'bounces' => count($bounce['bouncedRecipients']), 'complaints' => 0];
     }
     
     protected function registerComplaint(array $data): array
@@ -210,7 +213,7 @@ class BounceProcessor
         
         if (empty($awsMessageId)) {
             log_message('error', '[BounceProcessor] aws_message_id ausente no webhook de Complaint');
-            return ['handled' => false, 'bounced' => 0, 'complained' => 0];
+            return ['handled' => false, 'deliveries' => 0, 'bounces' => 0, 'complaints' => 0];
         }
         
         foreach ($recipients as $recipient) {
@@ -230,7 +233,7 @@ class BounceProcessor
             }
         }
         
-        return ['handled' => true, 'bounced' => 0, 'complained' => count($recipients)];
+        return ['handled' => true, 'deliveries' => 0, 'bounces' => 0, 'complaints' => count($recipients)];
     }
     
     /**

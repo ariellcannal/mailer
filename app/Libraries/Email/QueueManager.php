@@ -288,14 +288,18 @@ class QueueManager
             ];
 
         // Otimização: Somente busca as colunas necessárias para o envio
-        $contact = $this->contactModel->select('id, email, name, nickname, is_active, opted_out, bounced')->find($send['contact_id']);
+        $contact = $this->contactModel->select('id, email, name, nickname, is_active, opted_out, bounced, bounce_type')->find($send['contact_id']);
         if (! $contact)
             return [
                 'success' => false,
                 'error' => 'Contact not found'
             ];
 
-        if (! $contact['is_active'] || $contact['opted_out'] || $contact['bounced']) {
+        // Remover apenas: inativos, opted_out, ou hard bounces
+        // Soft bounces são permitidos (podem ser temporários)
+        $isHardBounce = $contact['bounced'] && strtolower($contact['bounce_type'] ?? '') === 'hard';
+        
+        if (! $contact['is_active'] || $contact['opted_out'] || $isHardBounce) {
             $this->sendModel->update($send['id'], [
                 'status' => 'cancelled'
             ]);
