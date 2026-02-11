@@ -325,7 +325,7 @@ class QueueManager
         $result = $this->getSESService()->sendEmail(from: $sender['email'], fromName: $message['from_name'], to: $contact['email'], subject: $emailSubject, htmlBody: $htmlBody, replyTo: $message['reply_to'], tags: [
             [
                 'Name' => 'message_id',
-                'Value' => (string) $message['id']
+                'Value' => (string) $send['message_id']
             ]
         ]);
 

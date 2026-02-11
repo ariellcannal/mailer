@@ -6,6 +6,7 @@ use CodeIgniter\CLI\CLI;
 use App\Libraries\Email\QueueManager;
 
 # * * * * * /usr/local/bin/ea-php82 /home/cannal/public_html/mailer/spark queue:process 100 >> /dev/null 2>&1
+# php C:\TI\projetos\cannal\public_html\mailer\spark queue:process 100
 class QueueProcess extends BaseCommand
 {
 
