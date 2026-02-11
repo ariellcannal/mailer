@@ -529,7 +529,6 @@ class MessageController extends BaseController {
         }
         
         unset($message['id']);
-        $message['subject'] = '[CÓPIA] ' . $message['subject'];
         $message['status'] = 'draft';
         $message['total_sent'] = 0;
         $message['total_opens'] = 0;
