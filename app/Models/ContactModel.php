@@ -75,9 +75,13 @@ class ContactModel extends Model
             ->select(
                 'message_sends.id, message_sends.message_id, message_sends.resend_number, message_sends.sent_at, ' .
                 'message_sends.opened, message_sends.total_opens, message_sends.clicked, message_sends.total_clicks, ' .
-                'messages.subject, messages.status AS message_status'
+                'messages.subject, messages.status AS message_status, ' .
+                'optouts.id AS optout_id, optouts.opted_out_at, ' .
+                'bounces.id AS bounce_id, bounces.bounce_type, bounces.bounce_subtype, bounces.bounced_at'
             )
             ->join('messages', 'messages.id = message_sends.message_id')
+            ->join('optouts', 'optouts.contact_id = message_sends.contact_id AND optouts.message_id = message_sends.message_id', 'left')
+            ->join('bounces', 'bounces.contact_id = message_sends.contact_id AND bounces.message_id = message_sends.message_id', 'left')
             ->where('message_sends.contact_id', $contactId)
             ->orderBy('message_sends.sent_at', 'DESC')
             ->orderBy('message_sends.id', 'DESC')
