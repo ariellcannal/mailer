@@ -137,6 +137,24 @@ class ContactModel extends Model
     }
 
     /**
+     * Conta o total de contatos de uma lista com filtros aplicados.
+     *
+     * @param int   $listId   Identificador da lista.
+     * @param array $filters  Filtros de pesquisa.
+     * @return int
+     */
+    public function countContactsForList(int $listId, array $filters = []): int
+    {
+        $this->select('contacts.id')
+            ->join('contact_list_members', 'contact_list_members.contact_id = contacts.id')
+            ->where('contact_list_members.list_id', $listId);
+
+        $this->applyFilters($filters);
+
+        return $this->countAllResults();
+    }
+
+    /**
      * Aplica filtros reutilizáveis nas consultas de contatos.
      *
      * @param array $filters Filtros a serem aplicados.

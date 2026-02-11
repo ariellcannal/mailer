@@ -212,12 +212,16 @@ class ContactListController extends BaseController
         ];
 
         $contacts = $contactModel->getContactsForList($id, $filters, 20);
+        
+        // Contar total de contatos (com filtros aplicados)
+        $totalContacts = $contactModel->countContactsForList($id, $filters);
 
         return view('contact_lists/view', [
             'list' => $list,
             'contacts' => $contacts,
             'filters' => $filters,
             'pager' => $contactModel->pager,
+            'totalContacts' => $totalContacts,
             'activeMenu' => 'contact_lists',
             'pageTitle' => 'Contatos da Lista',
         ]);
