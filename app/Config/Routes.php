@@ -78,6 +78,7 @@ $routes->group('contact-lists', function($routes) {
     $routes->post('update/(:num)', 'ContactListController::update/$1');
     $routes->post('delete/(:num)', 'ContactListController::delete/$1');
     $routes->post('detach-contact/(:num)/(:num)', 'ContactListController::detachContact/$1/$2');
+    $routes->post('bulk-detach-contacts/(:num)', 'ContactListController::bulkDetachContacts/$1');
     $routes->post('buscar-contatos', 'ContactListController::buscarContatos');
     $routes->post('refresh-counts', 'ContactListController::refreshCounts');
     $routes->post('refresh-counts/(:num)', 'ContactListController::refreshCounts/$1');

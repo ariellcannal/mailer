@@ -44,10 +44,34 @@
             </form>
         </div>
 
+        <!-- Formulário de remoção em massa -->
+        <form id="bulkRemoveForm" action="<?= base_url('contact-lists/bulk-detach-contacts/' . $list['id']) ?>" method="POST" class="mb-3">
+            <?= csrf_field() ?>
+            <input type="hidden" name="select_all" id="selectAllFlag" value="0">
+            <input type="hidden" name="filters[email]" value="<?= esc($filters['email']) ?>">
+            <input type="hidden" name="filters[name]" value="<?= esc($filters['name']) ?>">
+            
+            <button type="submit" class="btn btn-danger btn-sm" id="bulkRemoveBtn" onclick="return confirm('Tem certeza que deseja remover os contatos selecionados desta lista?');">
+                <i class="fas fa-trash"></i> Remover Selecionados
+            </button>
+            <small class="text-muted ms-2">Selecione os contatos na tabela abaixo.</small>
+        </form>
+
         <div class="table-responsive">
+            <!-- Aviso de seleção total -->
+            <div id="selectAllNotice" class="alert alert-info d-none mb-3">
+                Deseja selecionar todos os <?= (int) $totalContacts ?> contatos do filtro? 
+                <a href="#" id="confirmSelectAll">Clique aqui</a>.
+            </div>
+            
             <table class="table align-middle">
                 <thead class="table-light">
                     <tr>
+                        <th class="text-center" style="width: 60px;">
+                            <div class="form-check d-flex justify-content-center mb-0">
+                                <input type="checkbox" id="selectAll" class="form-check-input">
+                            </div>
+                        </th>
                         <th>Email</th>
                         <th>Nome</th>
                         <th>Apelido</th>
@@ -58,11 +82,14 @@
                 <tbody>
                     <?php if (empty($contacts)): ?>
                         <tr>
-                            <td colspan="5" class="text-center text-muted py-4">Nenhum contato encontrado nesta lista.</td>
+                            <td colspan="6" class="text-center text-muted py-4">Nenhum contato encontrado nesta lista.</td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($contacts as $contact): ?>
                             <tr>
+                                <td class="text-center">
+                                    <input type="checkbox" name="contacts[]" value="<?= $contact['id'] ?>" form="bulkRemoveForm" class="form-check-input contact-checkbox">
+                                </td>
                                 <td><?= esc($contact['email']) ?></td>
                                 <td><?= esc($contact['name']) ?></td>
                                 <td><?= esc($contact['nickname'] ?? '') ?></td>
@@ -94,4 +121,6 @@
         <?= $pager->links('default', 'bootstrap_full') ?>
     </div>
 </div>
+
+<script src="<?= base_url('assets/js/contact-list-view.js') ?>"></script>
 <?= $this->endSection() ?>

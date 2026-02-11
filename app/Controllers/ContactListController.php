@@ -247,6 +247,75 @@ class ContactListController extends BaseController
 
 
     /**
+     * Remove múltiplos contatos de uma lista.
+     *
+     * @param int $listId Identificador da lista.
+     * @return RedirectResponse
+     */
+    public function bulkDetachContacts(int $listId): RedirectResponse
+    {
+        $contacts = $this->request->getPost('contacts');
+        $selectAll = (int) $this->request->getPost('select_all');
+        
+        if (empty($contacts) && !$selectAll) {
+            return redirect()->back()->with('contact_lists_error', 'Nenhum contato selecionado.');
+        }
+        
+        $memberModel = new ContactListMemberModel();
+        $listModel = new ContactListModel();
+        
+        if ($selectAll) {
+            // Remover todos os contatos com base nos filtros
+            $filters = $this->request->getPost('filters') ?? [];
+            $email = $filters['email'] ?? '';
+            $name = $filters['name'] ?? '';
+            
+            // Buscar IDs dos contatos filtrados
+            $contactModel = new ContactModel();
+            $builder = $contactModel->builder();
+            
+            // Aplicar filtros
+            if (!empty($email)) {
+                $builder->like('contacts.email', $email);
+            }
+            if (!empty($name)) {
+                $builder->like('contacts.name', $name);
+            }
+            
+            // Buscar apenas contatos que estão na lista
+            $builder->join('contact_list_members', 'contact_list_members.contact_id = contacts.id')
+                    ->where('contact_list_members.list_id', $listId)
+                    ->select('contacts.id');
+            
+            $filteredContacts = $builder->get()->getResultArray();
+            $contactIds = array_column($filteredContacts, 'id');
+            
+            if (empty($contactIds)) {
+                return redirect()->back()->with('contact_lists_error', 'Nenhum contato encontrado com os filtros aplicados.');
+            }
+            
+            // Remover em massa
+            $memberModel->where('list_id', $listId)
+                        ->whereIn('contact_id', $contactIds)
+                        ->delete();
+            
+            $count = count($contactIds);
+        } else {
+            // Remover apenas os selecionados
+            $memberModel->where('list_id', $listId)
+                        ->whereIn('contact_id', $contacts)
+                        ->delete();
+            
+            $count = count($contacts);
+        }
+        
+        // Atualizar contador da lista
+        $listModel->refreshCounters([$listId]);
+        
+        return redirect()->back()->with('contact_lists_success', "$count contato(s) removido(s) da lista.");
+    }
+
+    /**
      * Atualiza o total_contacts de uma ou todas as listas.
      *
      * @param int|null $id Identificador da lista (null = todas).
