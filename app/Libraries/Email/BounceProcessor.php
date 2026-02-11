@@ -118,12 +118,17 @@ class BounceProcessor
         $mail = $data['mail'] ?? [];
         $delivery = $data['delivery'] ?? [];
         
-        // CORREÇÃO: Extração segura do messageId das tags
-        $messageId = (int) ($mail['tags']['message_id'][0] ?? 0);
+        // Usar aws_message_id (messageId da AWS) como vínculo
+        $awsMessageId = (string) ($mail['messageId'] ?? '');
         $timestamp = date('Y-m-d H:i:s', strtotime($delivery['timestamp'] ?? 'now'));
         
+        if (empty($awsMessageId)) {
+            log_message('error', '[BounceProcessor] aws_message_id ausente no webhook de Delivery');
+            return ['handled' => false, 'bounced' => 0, 'complained' => 0];
+        }
+        
         foreach ($delivery['recipients'] as $email) {
-            $this->updateMessageStatus($email, $messageId, [
+            $this->updateMessageStatusByAwsId($email, $awsMessageId, [
                 'delivery_at' => $timestamp,
                 'status'      => 'sent'
             ]);
@@ -136,21 +141,38 @@ class BounceProcessor
     {
         $mail = $data['mail'] ?? [];
         $bounce = $data['bounce'] ?? [];
-        $messageId = (int) ($mail['tags']['message_id'][0] ?? 0);
+        $awsMessageId = (string) ($mail['messageId'] ?? '');
         $bounceType = strtolower((string) ($bounce['bounceType'] ?? 'hard'));
-        $reason = (string) ($bounce['bouncedRecipients'][0]['diagnosticCode'] ?? 'N/A');
+        $bounceSubtype = (string) ($bounce['bounceSubType'] ?? '');
+        $bouncedAt = date('Y-m-d H:i:s', strtotime($bounce['timestamp'] ?? 'now'));
+        
+        if (empty($awsMessageId)) {
+            log_message('error', '[BounceProcessor] aws_message_id ausente no webhook de Bounce');
+            return ['handled' => false, 'bounced' => 0, 'complained' => 0];
+        }
         
         foreach ($bounce['bouncedRecipients'] as $recipient) {
             $email = strtolower(trim((string) ($recipient['emailAddress'] ?? '')));
+            $reason = (string) ($recipient['diagnosticCode'] ?? 'N/A');
             
-            $this->updateMessageStatus($email, $messageId, [
+            // Buscar send pelo aws_message_id
+            $sendModel = new MessageSendModel();
+            $send = $sendModel->where('aws_message_id', $awsMessageId)->first();
+            
+            if (!$send) {
+                log_message('error', "[BounceProcessor] Send não encontrado para aws_message_id: {$awsMessageId}");
+                continue;
+            }
+            
+            // Atualizar message_sends
+            $this->updateMessageStatusByAwsId($email, $awsMessageId, [
                 'status'        => 'bounced',
                 'bounce_type'   => $bounceType,
                 'bounce_reason' => $reason,
-                'bounced_at'    => date('Y-m-d H:i:s')
+                'bounced_at'    => $bouncedAt
             ]);
             
-            // Atualiza o contato para não enviar mais
+            // Atualizar contato
             $contactModel = new ContactModel();
             $contact = $contactModel->where('email', $email)->first();
             if ($contact) {
@@ -158,6 +180,19 @@ class BounceProcessor
                     'bounced' => 1,
                     'bounce_type' => $bounceType,
                     'is_active' => 0
+                ]);
+                
+                // Registrar na tabela bounces
+                $db = \Config\Database::connect();
+                $db->table('bounces')->insert([
+                    'message_id' => $send['message_id'],
+                    'contact_id' => $contact['id'],
+                    'message_send_id' => $send['id'],
+                    'bounce_type' => $bounceType,
+                    'bounce_subtype' => $bounceSubtype,
+                    'reason' => $reason,
+                    'raw_payload' => json_encode($data),
+                    'bounced_at' => $bouncedAt
                 ]);
             }
         }
@@ -168,16 +203,26 @@ class BounceProcessor
     protected function registerComplaint(array $data): array
     {
         $mail = $data['mail'] ?? [];
-        $messageId = (int) ($mail['tags']['message_id'][0] ?? 0);
-        $recipients = $data['complaint']['complainedRecipients'] ?? [];
+        $complaint = $data['complaint'] ?? [];
+        $awsMessageId = (string) ($mail['messageId'] ?? '');
+        $complainedAt = date('Y-m-d H:i:s', strtotime($complaint['timestamp'] ?? 'now'));
+        $recipients = $complaint['complainedRecipients'] ?? [];
+        
+        if (empty($awsMessageId)) {
+            log_message('error', '[BounceProcessor] aws_message_id ausente no webhook de Complaint');
+            return ['handled' => false, 'bounced' => 0, 'complained' => 0];
+        }
         
         foreach ($recipients as $recipient) {
             $email = strtolower(trim((string) ($recipient['emailAddress'] ?? '')));
-            $this->updateMessageStatus($email, $messageId, [
+            
+            // Atualizar message_sends
+            $this->updateMessageStatusByAwsId($email, $awsMessageId, [
                 'status'        => 'complained',
-                'complained_at' => date('Y-m-d H:i:s')
+                'complained_at' => $complainedAt
             ]);
             
+            // Atualizar contato
             $contactModel = new ContactModel();
             $contact = $contactModel->where('email', $email)->first();
             if ($contact) {
@@ -188,11 +233,13 @@ class BounceProcessor
         return ['handled' => true, 'bounced' => 0, 'complained' => count($recipients)];
     }
     
-    protected function updateMessageStatus(string $email, int $messageId, array $updateData): void
+    /**
+     * Atualiza status de message_sends usando aws_message_id como vínculo
+     */
+    protected function updateMessageStatusByAwsId(string $email, string $awsMessageId, array $updateData): void
     {
-        // Se message_id for 0, o registro nunca será encontrado
-        if ($messageId <= 0) {
-            log_message('error', "[BounceProcessor] FALHA: message_id ausente no JSON da AWS para {$email}");
+        if (empty($awsMessageId)) {
+            log_message('error', "[BounceProcessor] FALHA: aws_message_id vazio para {$email}");
             return;
         }
         
@@ -205,18 +252,16 @@ class BounceProcessor
             return;
         }
         
-        // Busca o registro exato para atualizar
-        $send = $sendModel->where('message_id', $messageId)
-        ->where('contact_id', $contact['id'])
-        ->orderBy('id', 'DESC')
-        ->first();
+        // Busca o registro pelo aws_message_id
+        $send = $sendModel->where('aws_message_id', $awsMessageId)
+            ->where('contact_id', $contact['id'])
+            ->first();
         
         if ($send) {
-            // Garante que o ID do envio seja passado corretamente para o update
             $sendModel->update($send['id'], $updateData);
-            log_message('info', "[BounceProcessor] SUCESSO: Tabela message_sends (ID {$send['id']}) atualizada para {$email}");
+            log_message('info', "[BounceProcessor] SUCESSO: message_sends (ID {$send['id']}) atualizado para {$email} (AWS ID: {$awsMessageId})");
         } else {
-            log_message('error', "[BounceProcessor] Vínculo não encontrado: MsgID {$messageId} + ContactID {$contact['id']}");
+            log_message('error', "[BounceProcessor] Vínculo não encontrado: AWS MessageId {$awsMessageId} + ContactID {$contact['id']}");
         }
     }
 }

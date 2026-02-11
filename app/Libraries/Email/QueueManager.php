@@ -330,10 +330,17 @@ class QueueManager
         ]);
 
         if ($result['success']) {
-            $this->sendModel->update($send['id'], [
+            $updateData = [
                 'status' => 'sent',
                 'sent_at' => $this->now()
-            ]);
+            ];
+            
+            // Salvar aws_message_id para vincular com webhooks de bounce/complaint/delivery
+            if (!empty($result['messageId'])) {
+                $updateData['aws_message_id'] = $result['messageId'];
+            }
+            
+            $this->sendModel->update($send['id'], $updateData);
             $this->messageModel->increment($message['id'], 'total_sent');
             return [
                 'success' => true

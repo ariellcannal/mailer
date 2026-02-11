@@ -17,6 +17,7 @@ class MessageSendModel extends Model
         'contact_id',
         'resend_number',
         'tracking_hash',
+        'aws_message_id',
         'status',
         'sent_at',
         'delivery_at',
