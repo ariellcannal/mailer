@@ -414,11 +414,25 @@ class ReceitaAsyncProcessor
             }
 
             $path = $this->basePath . $zipName;
+            
+            // Se arquivo não existe, fazer download
             if (! file_exists($path)) {
-                continue;
+                log_message('info', "Baixando arquivo: {$zipName}");
+                $downloaded = $this->downloadFile($zipName);
+                
+                if (!$downloaded) {
+                    log_message('error', "Falha ao baixar arquivo: {$zipName}");
+                    continue; // Pular este arquivo
+                }
             }
 
             $result = $this->processFile($zipName, $progress, $cnaes, $ufs, $situacoes, $contactListId, $includeContabilidade);
+            
+            // Se completou o arquivo, apagar para liberar espaço
+            if ($result['completed'] && file_exists($path)) {
+                unlink($path);
+                log_message('info', "Arquivo removido após processamento: {$zipName}");
+            }
 
             $linesProcessed += $result['lines_processed'];
             $linesImported += $result['lines_imported'];
@@ -706,25 +720,114 @@ class ReceitaAsyncProcessor
     }
 
     /**
+     * Faz download de um arquivo da Receita Federal
+     * 
+     * @param string $fileName Nome do arquivo (ex: Estabelecimentos0.zip)
+     * @return bool Sucesso do download
+     */
+    private function downloadFile(string $fileName): bool
+    {
+        // URL base da Receita Federal (ajustar data conforme necessário)
+        $baseUrl = 'https://arquivos.receitafederal.gov.br/dados/cnpj/dados_abertos_cnpj/2024-10/';
+        $url = $baseUrl . $fileName;
+        $destination = $this->basePath . $fileName;
+        
+        try {
+            // Usar cURL para download com timeout
+            $ch = curl_init($url);
+            $fp = fopen($destination, 'wb');
+            
+            curl_setopt_array($ch, [
+                CURLOPT_FILE => $fp,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_TIMEOUT => 600, // 10 minutos
+                CURLOPT_CONNECTTIMEOUT => 30,
+                CURLOPT_FAILONERROR => true,
+                CURLOPT_SSL_VERIFYPEER => true
+            ]);
+            
+            $result = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $error = curl_error($ch);
+            
+            curl_close($ch);
+            fclose($fp);
+            
+            if ($result === false || $httpCode !== 200) {
+                if (file_exists($destination)) {
+                    unlink($destination); // Remover arquivo parcial
+                }
+                log_message('error', "Download falhou: {$fileName} (HTTP {$httpCode}) - {$error}");
+                return false;
+            }
+            
+            log_message('info', "Download concluído: {$fileName}");
+            return true;
+            
+        } catch (\Exception $e) {
+            if (file_exists($destination)) {
+                unlink($destination);
+            }
+            log_message('error', "Exceção no download: {$fileName} - " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Verifica se tabelas auxiliares já estão populadas
+     * 
+     * @return bool
+     */
+    private function areAuxiliaryTablesPopulated(): bool
+    {
+        $tables = [
+            'receita_cnaes',
+            'receita_motivos',
+            'receita_municipios',
+            'receita_naturezas',
+            'receita_paises',
+            'receita_qualificacoes'
+        ];
+        
+        foreach ($tables as $table) {
+            $count = $this->db->table($table)->countAllResults();
+            if ($count == 0) {
+                return false; // Pelo menos uma tabela vazia
+            }
+        }
+        
+        log_message('info', 'Tabelas auxiliares já populadas, pulando importação');
+        return true; // Todas as tabelas têm dados
+    }
+    
+    /**
      * Retorna fila de arquivos na ordem correta
      *
      * @return array
      */
     private function getFilaArquivos(): array
     {
-        $auxiliares = [
-            'Cnaes',
-            'Motivos',
-            'Municipios',
-            'Naturezas',
-            'Paises',
-            'Qualificacoes'
-        ];
-        sort($auxiliares);
-
         $fila = [];
-        foreach ($auxiliares as $b) {
-            $fila[] = "{$b}.zip";
+        
+        // Verificar se tabelas auxiliares já estão populadas
+        if (!$this->areAuxiliaryTablesPopulated()) {
+            $auxiliares = [
+                'Cnaes',
+                'Motivos',
+                'Municipios',
+                'Naturezas',
+                'Paises',
+                'Qualificacoes'
+            ];
+            sort($auxiliares);
+            
+            foreach ($auxiliares as $b) {
+                $fila[] = "{$b}.zip";
+            }
+            
+            log_message('info', 'Incluindo arquivos auxiliares na fila de processamento');
+        } else {
+            log_message('info', 'Pulando arquivos auxiliares (tabelas já populadas)');
         }
 
         // ORDEM CRÍTICA: Estabelecimentos ANTES de Sócios
