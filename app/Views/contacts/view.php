@@ -74,7 +74,8 @@
                                 <th>Status</th>
                                 <th>Abertura</th>
                                 <th>Clique</th>
-                                <th>Opt-out</th>
+                                <th>OptOut</th>
+                                <th>Bounce</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -110,10 +111,32 @@
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <?php if ((int) ($contact['opted_out'] ?? 0) === 1): ?>
+                                        <?php if (!empty($send['optout_id'])): ?>
                                             <span class="badge bg-danger">Sim</span>
+                                            <?php if (!empty($send['opted_out_at'])): ?>
+                                                <small class="text-muted d-block"><?= date('d/m/Y H:i', strtotime($send['opted_out_at'])) ?></small>
+                                            <?php endif; ?>
                                         <?php else: ?>
                                             <span class="badge bg-success">Não</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if (!empty($send['bounce_id'])): ?>
+                                            <?php 
+                                                $bounceType = $send['bounce_type'] ?? 'unknown';
+                                                $bounceSubtype = $send['bounce_subtype'] ?? '';
+                                                $bounceLabel = ucfirst($bounceType);
+                                                if ($bounceSubtype) {
+                                                    $bounceLabel .= ' (' . ucfirst($bounceSubtype) . ')';
+                                                }
+                                                $badgeClass = $bounceType === 'hard' ? 'bg-danger' : 'bg-warning';
+                                            ?>
+                                            <span class="badge <?= $badgeClass ?>"><?= esc($bounceLabel) ?></span>
+                                            <?php if (!empty($send['bounced_at'])): ?>
+                                                <small class="text-muted d-block"><?= date('d/m/Y H:i', strtotime($send['bounced_at'])) ?></small>
+                                            <?php endif; ?>
+                                        <?php else: ?>
+                                            <span class="badge bg-success">-</span>
                                         <?php endif; ?>
                                     </td>
                                 </tr>
