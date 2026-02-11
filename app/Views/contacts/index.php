@@ -54,7 +54,7 @@
             </div>
             <div class="col-md-2">
                 <label class="form-label">Qualidade</label>
-                <select name="quality_score" class="form-select">
+                <select name="quality_score" class="form-control">
                     <option value="">Todas</option>
                     <?php for ($i = 1; $i <= 5; $i++): ?>
                         <option value="<?= $i ?>" <?= (string) $filters['quality_score'] === (string) $i ? 'selected' : '' ?>><?= $i ?> estrela(s)</option>

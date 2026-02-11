@@ -114,7 +114,7 @@
                     <h5 class="card-title mb-0">
                         <i class="fas fa-chart-line"></i> Performance dos Últimos 7 Dias
                     </h5>
-                    <select class="form-select form-select-sm" style="width: auto;" id="chartPeriod" onchange="updateChart()">
+                    <select class="form-control form-control-sm" style="width: auto;" id="chartPeriod" onchange="updateChart()">
                         <option value="7days">7 dias</option>
                         <option value="30days">30 dias</option>
                         <option value="90days">90 dias</option>

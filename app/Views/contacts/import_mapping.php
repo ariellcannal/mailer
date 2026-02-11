@@ -21,7 +21,7 @@
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Coluna de E-mail</label>
-                    <select name="email_column" class="form-select" required>
+                    <select name="email_column" class="form-control" required>
                         <option value="">Selecione</option>
                         <?php foreach ($headers as $index => $label): ?>
                             <option value="<?= $index ?>"><?= esc($label ?: 'Coluna ' . ($index + 1)) ?></option>
@@ -30,7 +30,7 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Coluna de Nome (opcional)</label>
-                    <select name="name_column" class="form-select">
+                    <select name="name_column" class="form-control">
                         <option value="">Nenhuma</option>
                         <?php foreach ($headers as $index => $label): ?>
                             <option value="<?= $index ?>"><?= esc($label ?: 'Coluna ' . ($index + 1)) ?></option>
