@@ -414,20 +414,20 @@ class ReceitaAsyncProcessor
             }
 
             $path = $this->basePath . $zipName;
-            
+
             // Se arquivo não existe, fazer download
             if (! file_exists($path)) {
                 log_message('info', "Baixando arquivo: {$zipName}");
                 $downloaded = $this->downloadFile($zipName);
-                
-                if (!$downloaded) {
+
+                if (! $downloaded) {
                     log_message('error', "Falha ao baixar arquivo: {$zipName}");
                     continue; // Pular este arquivo
                 }
             }
 
             $result = $this->processFile($zipName, $progress, $cnaes, $ufs, $situacoes, $contactListId, $includeContabilidade);
-            
+
             // Se completou o arquivo, apagar para liberar espaço
             if ($result['completed'] && file_exists($path)) {
                 unlink($path);
@@ -462,7 +462,7 @@ class ReceitaAsyncProcessor
                 'ultimo_arquivo' => '',
                 'ultima_linha' => 0
             ];
-            
+
             gc_collect_cycles();
         }
 
@@ -623,10 +623,10 @@ class ReceitaAsyncProcessor
 
                     $this->db->transCommit();
                     $this->saveProgress($zipName, $lineCount);
-                    
+
                     // Forçar coleta de lixo a cada batch
                     gc_collect_cycles();
-                    
+
                     $this->db->transBegin();
                 }
             }
@@ -647,7 +647,7 @@ class ReceitaAsyncProcessor
                 if ($contactListId && $rawName == 'estabelecimentos') {
                     $this->processContactsFromBatch($batchData, $contactListId, $includeContabilidade);
                 }
-                
+
                 // Liberar memória do último batch
                 unset($batchData, $batchSize);
             }
@@ -657,7 +657,7 @@ class ReceitaAsyncProcessor
 
             $zip->close();
             fclose($fp);
-            
+
             // Liberar memória de variáveis grandes
             unset($fields, $zip, $fp);
 
@@ -721,38 +721,51 @@ class ReceitaAsyncProcessor
 
     /**
      * Faz download de um arquivo da Receita Federal
-     * 
-     * @param string $fileName Nome do arquivo (ex: Estabelecimentos0.zip)
+     *
+     * @param string $fileName
+     *            Nome do arquivo (ex: Estabelecimentos0.zip)
      * @return bool Sucesso do download
      */
     private function downloadFile(string $fileName): bool
     {
-        // URL base da Receita Federal (ajustar data conforme necessário)
-        $baseUrl = 'https://arquivos.receitafederal.gov.br/dados/cnpj/dados_abertos_cnpj/2024-10/';
-        $url = $baseUrl . $fileName;
+        // Configurações do Nextcloud (Extraídas da URL que discutimos)
+        $token = 'YggdBLfdninEJX9';
+        $dataReferencia = '2026-01'; // Ajustado para a pasta que você solicitou
+
+        // URL WebDAV para links públicos do Nextcloud
+        $url = "https://arquivos.receitafederal.gov.br/public.php/webdav/{$dataReferencia}/{$fileName}";
         $destination = $this->basePath . $fileName;
-        
+
         try {
-            // Usar cURL para download com timeout
             $ch = curl_init($url);
             $fp = fopen($destination, 'wb');
-            
-            curl_setopt_array($ch, [
+
+            $options = [
                 CURLOPT_FILE => $fp,
                 CURLOPT_FOLLOWLOCATION => true,
-                CURLOPT_TIMEOUT => 600, // 10 minutos
-                CURLOPT_CONNECTTIMEOUT => 30,
+                // No Nextcloud público, o token é o USERNAME e a senha fica vazia
+                CURLOPT_USERPWD => $token . ":",
+                CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
+                CURLOPT_TIMEOUT => 3600, // Aumentado para 1 hora (arquivos da Receita são grandes)
+                CURLOPT_CONNECTTIMEOUT => 60,
                 CURLOPT_FAILONERROR => true,
-                CURLOPT_SSL_VERIFYPEER => true
-            ]);
-            
+                CURLOPT_BINARYTRANSFER => true
+            ];
+
+            if (ENVIRONMENT == 'development') {
+                $options[CURLOPT_SSL_VERIFYPEER] = false; // Ignora a verificação do certificado
+                $options[CURLOPT_SSL_VERIFYHOST] = 0; // Não verifica se o nome no certificado bate com o host
+            }
+
+            curl_setopt_array($ch, $options);
+
             $result = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $error = curl_error($ch);
-            
+
             curl_close($ch);
             fclose($fp);
-            
+
             if ($result === false || $httpCode !== 200) {
                 if (file_exists($destination)) {
                     unlink($destination); // Remover arquivo parcial
@@ -760,11 +773,12 @@ class ReceitaAsyncProcessor
                 log_message('error', "Download falhou: {$fileName} (HTTP {$httpCode}) - {$error}");
                 return false;
             }
-            
-            log_message('info', "Download concluído: {$fileName}");
+
+            log_message('info', "Download concluído via WebDAV: {$fileName}");
             return true;
-            
         } catch (\Exception $e) {
+            if (isset($fp) && is_resource($fp))
+                fclose($fp);
             if (file_exists($destination)) {
                 unlink($destination);
             }
@@ -772,10 +786,10 @@ class ReceitaAsyncProcessor
             return false;
         }
     }
-    
+
     /**
      * Verifica se tabelas auxiliares já estão populadas
-     * 
+     *
      * @return bool
      */
     private function areAuxiliaryTablesPopulated(): bool
@@ -788,18 +802,18 @@ class ReceitaAsyncProcessor
             'receita_paises',
             'receita_qualificacoes'
         ];
-        
+
         foreach ($tables as $table) {
             $count = $this->db->table($table)->countAllResults();
             if ($count == 0) {
                 return false; // Pelo menos uma tabela vazia
             }
         }
-        
+
         log_message('info', 'Tabelas auxiliares já populadas, pulando importação');
         return true; // Todas as tabelas têm dados
     }
-    
+
     /**
      * Retorna fila de arquivos na ordem correta
      *
@@ -808,9 +822,9 @@ class ReceitaAsyncProcessor
     private function getFilaArquivos(): array
     {
         $fila = [];
-        
+
         // Verificar se tabelas auxiliares já estão populadas
-        if (!$this->areAuxiliaryTablesPopulated()) {
+        if (! $this->areAuxiliaryTablesPopulated()) {
             $auxiliares = [
                 'Cnaes',
                 'Motivos',
@@ -820,11 +834,11 @@ class ReceitaAsyncProcessor
                 'Qualificacoes'
             ];
             sort($auxiliares);
-            
+
             foreach ($auxiliares as $b) {
                 $fila[] = "{$b}.zip";
             }
-            
+
             log_message('info', 'Incluindo arquivos auxiliares na fila de processamento');
         } else {
             log_message('info', 'Pulando arquivos auxiliares (tabelas já populadas)');
@@ -936,7 +950,7 @@ class ReceitaAsyncProcessor
                     'added_at' => date('Y-m-d H:i:s')
                 ]);
             }
-            
+
             // Liberar memória
             unset($existingContact, $existingMember, $contactData, $email, $nome, $isContabilidade);
         }
