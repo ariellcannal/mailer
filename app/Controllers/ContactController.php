@@ -408,6 +408,11 @@ class ContactController extends BaseController {
         $contactIds = (array) $this->request->getPost('contacts');
         $selectAll = (bool) $this->request->getPost('select_all');
         $filters = (array) $this->request->getPost('filters');
+        
+        // Debug
+        log_message('debug', 'Export CSV - contactIds: ' . json_encode($contactIds));
+        log_message('debug', 'Export CSV - selectAll: ' . ($selectAll ? 'true' : 'false'));
+        log_message('debug', 'Export CSV - POST data: ' . json_encode($this->request->getPost()));
 
         if ($selectAll) {
             $contactIds = $model->getAllContactIds($filters);
