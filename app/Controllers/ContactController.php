@@ -406,15 +406,14 @@ class ContactController extends BaseController {
         $model = new ContactModel();
 
         $contactIds = (array) $this->request->getPost('contacts');
-        $selectAll = (bool) $this->request->getPost('select_all');
+        $selectAll = $this->request->getPost('select_all') === '1';
         $filters = (array) $this->request->getPost('filters');
         
-        // Debug
-        log_message('debug', 'Export CSV - contactIds: ' . json_encode($contactIds));
-        log_message('debug', 'Export CSV - selectAll: ' . ($selectAll ? 'true' : 'false'));
-        log_message('debug', 'Export CSV - POST data: ' . json_encode($this->request->getPost()));
-
-        if ($selectAll) {
+        // Filtrar IDs vazios
+        $contactIds = array_filter($contactIds);
+        
+        // Se select_all E não há IDs específicos, buscar todos com filtros
+        if ($selectAll && empty($contactIds)) {
             $contactIds = $model->getAllContactIds($filters);
         }
 
@@ -504,10 +503,14 @@ class ContactController extends BaseController {
         $sendModel = new \App\Models\MessageSendModel();
 
         $contactIds = (array) $this->request->getPost('contacts');
-        $selectAll = (bool) $this->request->getPost('select_all');
+        $selectAll = $this->request->getPost('select_all') === '1';
         $filters = (array) $this->request->getPost('filters');
-
-        if ($selectAll) {
+        
+        // Filtrar IDs vazios
+        $contactIds = array_filter($contactIds);
+        
+        // Se select_all E não há IDs específicos, buscar todos com filtros
+        if ($selectAll && empty($contactIds)) {
             $contactIds = $model->getAllContactIds($filters);
         }
 

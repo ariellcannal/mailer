@@ -78,6 +78,11 @@
             <input type="hidden" name="filters[email]" value="<?= esc($filters['email']) ?>">
             <input type="hidden" name="filters[name]" value="<?= esc($filters['name']) ?>">
             <input type="hidden" name="filters[quality_score]" value="<?= esc($filters['quality_score']) ?>">
+            <?php if (!empty($filters['list_id'])): ?>
+                <?php foreach ((array)$filters['list_id'] as $listId): ?>
+                    <input type="hidden" name="filters[list_id][]" value="<?= esc($listId) ?>">
+                <?php endforeach; ?>
+            <?php endif; ?>
             
             <div class="border rounded p-3 bg-light">
                 <div class="row g-2 align-items-end">
