@@ -119,7 +119,9 @@ class ContactModel extends Model
         $this->applyFilters($filters);
         $this->select('contacts.id');
 
-        return $this->findColumn('id') ?? [];
+        // Usar alias completo para evitar ambiguidade quando há JOINs
+        $result = $this->findAll();
+        return array_column($result, 'id');
     }
 
     /**
