@@ -18,7 +18,13 @@ class ContactController extends BaseController {
             'list_id' => $this->request->getGet('list_id'),
         ];
         
-        $contacts = $model->getContacts($filters, 20);
+        // Suporte a per_page (25, 50, 100, 200)
+        $perPage = (int) $this->request->getGet('per_page');
+        if (!in_array($perPage, [25, 50, 100, 200])) {
+            $perPage = 25; // Padrão
+        }
+        
+        $contacts = $model->getContacts($filters, $perPage);
 
         $contactIds = array_column($contacts, 'id');
         $memberModel = new ContactListMemberModel();
@@ -132,7 +138,14 @@ class ContactController extends BaseController {
     
     public function imports() {
         $importModel = new \App\Models\ContactImportModel();
-        $imports = $importModel->getImports(20);
+        
+        // Suporte a per_page (25, 50, 100, 200)
+        $perPage = (int) $this->request->getGet('per_page');
+        if (!in_array($perPage, [25, 50, 100, 200])) {
+            $perPage = 25; // Padrão
+        }
+        
+        $imports = $importModel->getImports($perPage);
         
         return view('contacts/imports', [
             'activeMenu' => 'contacts',

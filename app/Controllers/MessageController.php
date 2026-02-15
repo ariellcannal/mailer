@@ -25,7 +25,14 @@ class MessageController extends BaseController {
 
     public function index(): string {
         $model = new MessageModel();
-        $messages = $model->orderBy('created_at', 'DESC')->paginate(20);
+        
+        // Suporte a per_page (25, 50, 100, 200)
+        $perPage = (int) $this->request->getGet('per_page');
+        if (!in_array($perPage, [25, 50, 100, 200])) {
+            $perPage = 25; // Padrão
+        }
+        
+        $messages = $model->orderBy('created_at', 'DESC')->paginate($perPage);
 
         $sendModel = new MessageSendModel();
         $stats = $sendModel

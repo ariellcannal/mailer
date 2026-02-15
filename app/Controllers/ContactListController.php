@@ -211,7 +211,13 @@ class ContactListController extends BaseController
             'name' => (string) $this->request->getGet('name'),
         ];
 
-        $contacts = $contactModel->getContactsForList($id, $filters, 20);
+        // Suporte a per_page (25, 50, 100, 200)
+        $perPage = (int) $this->request->getGet('per_page');
+        if (!in_array($perPage, [25, 50, 100, 200])) {
+            $perPage = 25; // Padrão
+        }
+
+        $contacts = $contactModel->getContactsForList($id, $filters, $perPage);
         
         // Contar total de contatos (com filtros aplicados)
         $totalContacts = $contactModel->countContactsForList($id, $filters);

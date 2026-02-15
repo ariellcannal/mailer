@@ -7,7 +7,14 @@ use App\Models\MessageModel;
 class CampaignController extends BaseController {
     public function index() {
         $model = new CampaignModel();
-        $campaigns = $model->orderBy('created_at', 'DESC')->paginate(20);
+        
+        // Suporte a per_page (25, 50, 100, 200)
+        $perPage = (int) $this->request->getGet('per_page');
+        if (!in_array($perPage, [25, 50, 100, 200])) {
+            $perPage = 25; // Padrão
+        }
+        
+        $campaigns = $model->orderBy('created_at', 'DESC')->paginate($perPage);
         
         return view('campaigns/index', [
             'campaigns' => $campaigns,
