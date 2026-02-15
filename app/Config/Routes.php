@@ -66,6 +66,8 @@ $routes->group('contacts', function($routes) {
     $routes->post('import-process', 'ContactController::importProcess');
     $routes->get('imports', 'ContactController::imports');
     $routes->post('bulk-assign', 'ContactController::bulkAssignLists');
+    $routes->post('export-csv', 'ContactController::exportCSV');
+    $routes->post('bulk-delete-inactivate', 'ContactController::bulkDeleteInactivate');
 });
 
 // Contact Lists

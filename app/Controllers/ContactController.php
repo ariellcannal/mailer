@@ -382,4 +382,158 @@ class ContactController extends BaseController {
 
         return redirect()->back()->with('contacts_error', 'Erro ao excluir');
     }
+
+    /**
+     * Exporta contatos selecionados para CSV
+     *
+     * @return \CodeIgniter\HTTP\ResponseInterface
+     */
+    public function exportCSV()
+    {
+        $model = new ContactModel();
+
+        $contactIds = (array) $this->request->getPost('contacts');
+        $selectAll = (bool) $this->request->getPost('select_all');
+        $filters = (array) $this->request->getPost('filters');
+
+        if ($selectAll) {
+            $contactIds = $model->getAllContactIds($filters);
+        }
+
+        if (empty(array_filter($contactIds))) {
+            return redirect()->back()->with('contacts_error', 'Selecione ao menos um contato.');
+        }
+
+        // Buscar contatos
+        $contacts = $model->whereIn('id', $contactIds)->findAll();
+
+        if (empty($contacts)) {
+            return redirect()->back()->with('contacts_error', 'Nenhum contato encontrado.');
+        }
+
+        // Gerar CSV
+        $filename = 'contatos_' . date('Y-m-d_H-i-s') . '.csv';
+        $csv = fopen('php://output', 'w');
+
+        // Cabeçalhos HTTP para download
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        // Cabeçalho do CSV
+        fputcsv($csv, [
+            'ID',
+            'Email',
+            'Nome',
+            'Apelido',
+            'Score de Qualidade',
+            'Total de Aberturas',
+            'Total de Cliques',
+            'Última Abertura',
+            'Último Clique',
+            'Tempo Médio de Abertura (min)',
+            'Ativo',
+            'OptOut',
+            'Data OptOut',
+            'Bounced',
+            'Tipo de Bounce',
+            'Subtipo de Bounce',
+            'Data do Bounce',
+            'Criado em',
+            'Atualizado em'
+        ]);
+
+        // Dados
+        foreach ($contacts as $contact) {
+            fputcsv($csv, [
+                $contact['id'],
+                $contact['email'],
+                $contact['name'] ?? '',
+                $contact['nickname'] ?? '',
+                $contact['quality_score'] ?? '',
+                $contact['total_opens'] ?? 0,
+                $contact['total_clicks'] ?? 0,
+                $contact['last_open_date'] ?? '',
+                $contact['last_click_date'] ?? '',
+                $contact['avg_open_time'] ? round($contact['avg_open_time'] / 60, 1) : '',
+                $contact['is_active'] ? 'Sim' : 'Não',
+                $contact['opted_out'] ? 'Sim' : 'Não',
+                $contact['opted_out_at'] ?? '',
+                $contact['bounced'] ? 'Sim' : 'Não',
+                $contact['bounce_type'] ?? '',
+                $contact['bounce_subtype'] ?? '',
+                $contact['bounced_at'] ?? '',
+                $contact['created_at'] ?? '',
+                $contact['updated_at'] ?? ''
+            ]);
+        }
+
+        fclose($csv);
+        exit;
+    }
+
+    /**
+     * Exclui ou inativa contatos em massa
+     * Se o contato não está em message_sends, exclui
+     * Caso contrário, inativa
+     *
+     * @return \CodeIgniter\HTTP\RedirectResponse
+     */
+    public function bulkDeleteInactivate()
+    {
+        $model = new ContactModel();
+        $memberModel = new ContactListMemberModel();
+        $listModel = new ContactListModel();
+        $sendModel = new \App\Models\MessageSendModel();
+
+        $contactIds = (array) $this->request->getPost('contacts');
+        $selectAll = (bool) $this->request->getPost('select_all');
+        $filters = (array) $this->request->getPost('filters');
+
+        if ($selectAll) {
+            $contactIds = $model->getAllContactIds($filters);
+        }
+
+        if (empty(array_filter($contactIds))) {
+            return redirect()->back()->with('contacts_error', 'Selecione ao menos um contato.');
+        }
+
+        $deleted = 0;
+        $inactivated = 0;
+        $affectedListIds = [];
+
+        foreach ($contactIds as $contactId) {
+            // Verificar se contato tem envios
+            $hasSends = $sendModel->where('contact_id', $contactId)->countAllResults() > 0;
+
+            // Buscar listas do contato antes de excluir/inativar
+            $listIds = $memberModel->where('contact_id', $contactId)->findColumn('list_id') ?? [];
+            $affectedListIds = array_merge($affectedListIds, $listIds);
+
+            if ($hasSends) {
+                // Inativar
+                $model->update($contactId, ['is_active' => 0]);
+                $inactivated++;
+            } else {
+                // Excluir
+                $model->delete($contactId);
+                $deleted++;
+            }
+        }
+
+        // Atualizar contadores das listas afetadas
+        if (!empty($affectedListIds)) {
+            $affectedListIds = array_unique($affectedListIds);
+            $listModel->refreshCounters($affectedListIds);
+        }
+
+        $message = [];
+        if ($deleted > 0) {
+            $message[] = "$deleted contato(s) excluído(s)";
+        }
+        if ($inactivated > 0) {
+            $message[] = "$inactivated contato(s) inativado(s)";
+        }
+
+        return redirect()->to('/contacts')->with('contacts_success', implode(', ', $message) . '.');
+    }
 }

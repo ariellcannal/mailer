@@ -71,31 +71,47 @@
             </div>
         </form>
 
-        <?php if (!empty($lists)): ?>
-        <form id="bulkListsForm" action="<?= base_url('contacts/bulk-assign') ?>" method="POST" class="mb-3">
+        <!-- Toolbar de Ações em Massa -->
+        <form id="bulkActionsForm" method="POST" class="mb-3">
             <?= csrf_field() ?>
             <input type="hidden" name="select_all" id="selectAllFlag" value="0">
             <input type="hidden" name="filters[email]" value="<?= esc($filters['email']) ?>">
             <input type="hidden" name="filters[name]" value="<?= esc($filters['name']) ?>">
             <input type="hidden" name="filters[quality_score]" value="<?= esc($filters['quality_score']) ?>">
-            <div class="row g-2 align-items-end">
-                <div class="col-md-8">
-                    <label class="form-label">Adicionar selecionados às listas</label>
-                    <select name="lists[]" class="form-control" multiple data-placeholder="Selecione as listas">
-                        <?php foreach ($lists as $list): ?>
-                            <option value="<?= $list['id'] ?>"><?= esc($list['name']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
+            
+            <div class="border rounded p-3 bg-light">
+                <div class="row g-2 align-items-end">
+                    <div class="col-auto">
+                        <label class="form-label mb-0"><strong>Ação com Selecionados:</strong></label>
+                    </div>
+                    <div class="col-md-3">
+                        <select name="lists[]" id="bulkListsSelect" class="form-control" multiple data-placeholder="Adicionar à lista">
+                            <?php foreach ($lists as $list): ?>
+                                <option value="<?= $list['id'] ?>"><?= esc($list['name']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <button type="button" id="btnExportCSV" class="btn btn-outline-success" disabled>
+                            <i class="fas fa-file-csv"></i> Exportar CSV
+                        </button>
+                    </div>
+                    <div class="col-auto">
+                        <button type="button" id="btnDeleteInactivate" class="btn btn-outline-danger" disabled>
+                            <i class="fas fa-trash-alt"></i> Excluir ou Inativar
+                        </button>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" id="btnExecuteAction" class="btn btn-primary" disabled>
+                            <i class="fas fa-play"></i> Executar
+                        </button>
+                    </div>
                 </div>
-                <div class="col-md-4 d-flex gap-2">
-                    <button type="submit" class="btn btn-primary mt-4">
-                        <i class="fas fa-check"></i> Adicionar
-                    </button>
-                    <div class="mt-4 text-muted small">Selecione os contatos na tabela abaixo.</div>
+                <div class="mt-2">
+                    <small class="text-muted" id="selectedCountText">Nenhum contato selecionado</small>
                 </div>
             </div>
         </form>
-        <?php endif; ?>
 
         <div class="table-responsive">
             <div id="selectAllNotice" class="alert alert-info d-none">Deseja selecionar todos os <?= (int) $totalContacts ?> contatos? <a href="#" id="confirmSelectAll">Clique aqui</a>.</div>
@@ -128,7 +144,7 @@
                         <?php foreach ($contacts as $contact): ?>
                             <tr>
                                 <td class="text-center">
-                                    <input type="checkbox" name="contacts[]" value="<?= $contact['id'] ?>" form="bulkListsForm" class="form-check-input contact-checkbox">
+                                    <input type="checkbox" name="contacts[]" value="<?= $contact['id'] ?>" form="bulkActionsForm" class="form-check-input contact-checkbox">
                                 </td>
                                 <td><?= esc($contact['email']) ?></td>
                                 <td><?= esc($contact['name']) ?></td>
