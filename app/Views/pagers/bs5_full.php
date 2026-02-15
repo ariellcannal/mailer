@@ -15,9 +15,13 @@
         $nextPages[] = $i;
     }
     
-    // Construir URL com per_page
-    $currentUrl = current_url(true);
-    $queryParams = $_GET;
+    // Função helper para construir URL com número de página
+    function buildPageUrl($pager, $pageNum) {
+        $uri = current_url(true);
+        $query = $_GET;
+        $query['page'] = $pageNum;
+        return $uri->setQueryArray($query)->__toString();
+    }
     ?>
 
     <div class="d-flex justify-content-between align-items-center mt-3">
@@ -45,7 +49,7 @@
                 <!-- 3 páginas anteriores -->
                 <?php foreach ($previousPages as $page): ?>
                     <li class="page-item">
-                        <a class="page-link" href="<?= $pager->getPageURI($page) ?>"><?= $page ?></a>
+                        <a class="page-link" href="<?= buildPageUrl($pager, $page) ?>"><?= $page ?></a>
                     </li>
                 <?php endforeach; ?>
 
@@ -59,7 +63,7 @@
                 <!-- 3 páginas seguintes -->
                 <?php foreach ($nextPages as $page): ?>
                     <li class="page-item">
-                        <a class="page-link" href="<?= $pager->getPageURI($page) ?>"><?= $page ?></a>
+                        <a class="page-link" href="<?= buildPageUrl($pager, $page) ?>"><?= $page ?></a>
                     </li>
                 <?php endforeach; ?>
 
