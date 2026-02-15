@@ -24,10 +24,10 @@
     }
     ?>
 
-    <div class="d-flex justify-content-between align-items-center mt-3">
+    <div class="d-flex justify-content-end align-items-center mt-3">
         <!-- Navegação de páginas -->
         <nav aria-label="Navegação de página">
-            <ul class="pagination pagination-sm mb-0">
+            <ul class="pagination pagination-sm mb-0 me-1">
                 <!-- Primeira -->
                 <li class="page-item <?= $pager->hasPreviousPage() ? '' : 'disabled' ?>">
                     <?php if ($pager->hasPreviousPage()) : ?>
@@ -89,12 +89,11 @@
 
         <!-- Select de itens por página -->
         <div class="d-flex align-items-center gap-2">
-            <label class="mb-0 text-muted small">Itens por página:</label>
             <select id="perPageSelect" class="form-select form-select-sm" style="width: auto;" onchange="changePerPage(this.value)">
-                <option value="25" <?= $perPage == 25 ? 'selected' : '' ?>>25</option>
-                <option value="50" <?= $perPage == 50 ? 'selected' : '' ?>>50</option>
-                <option value="100" <?= $perPage == 100 ? 'selected' : '' ?>>100</option>
-                <option value="200" <?= $perPage == 200 ? 'selected' : '' ?>>200</option>
+                <option value="25" <?= $perPage == 25 ? 'selected' : '' ?>>25 itens por página</option>
+                <option value="50" <?= $perPage == 50 ? 'selected' : '' ?>>50 itens por página</option>
+                <option value="100" <?= $perPage == 100 ? 'selected' : '' ?>>100 itens por página</option>
+                <option value="200" <?= $perPage == 200 ? 'selected' : '' ?>>200 itens por página</option>
             </select>
         </div>
     </div>
