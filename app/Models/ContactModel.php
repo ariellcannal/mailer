@@ -406,28 +406,44 @@ class ContactModel extends Model
                 if (isset($existingContacts[$email])) {
                     $existing = $existingContacts[$email];
                     
+                    // Atualizar dados se fornecidos
+                    $updateData = [];
                     if (!empty($contact['name']) && $contact['name'] !== ($existing['name'] ?? '')) {
-                        $this->update((int) $existing['id'], [
-                            'name' => $contact['name'],
-                            'nickname' => $this->generateNickname($contact['name'], $email),
-                        ]);
+                        $updateData['name'] = $contact['name'];
+                        $updateData['nickname'] = $this->generateNickname($contact['name'], $email);
+                    }
+                    if (!empty($contact['nickname']) && $contact['nickname'] !== ($existing['nickname'] ?? '')) {
+                        $updateData['nickname'] = $contact['nickname'];
                     }
                     
+                    if (!empty($updateData)) {
+                        $this->update((int) $existing['id'], $updateData);
+                    }
+                    
+                    // Adicionar às listas se especificado
                     if (!empty($listIds)) {
                         $this->syncContactLists((int) $existing['id'], $listIds, $listMemberModel, $listModel);
+                        // Não contar como skipped se foi adicionado à lista
+                        $imported++;
+                    } else {
+                        // Só contar como skipped se não havia lista para adicionar
+                        $skipped++;
+                        $skippedDetails[] = 'Email já existente (sem lista): ' . $email;
                     }
                     
-                    $skipped++;
-                    $skippedDetails[] = 'Email já existente: ' . $email;
                     unset($contact);
                     continue;
                 }
                 
                 // Adicionar ao lote de inserção
+                $nickname = !empty($contact['nickname']) 
+                    ? $contact['nickname'] 
+                    : $this->generateNickname($contact['name'] ?? null, $email);
+                
                 $batchInsert[] = [
                     'email' => $email,
                     'name' => $contact['name'] ?? null,
-                    'nickname' => $this->generateNickname($contact['name'] ?? null, $email),
+                    'nickname' => $nickname,
                     'quality_score' => 3,
                     'is_active' => 1,
                     'created_at' => date('Y-m-d H:i:s'),

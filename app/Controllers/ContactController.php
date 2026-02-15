@@ -160,6 +160,7 @@ class ContactController extends BaseController {
         $listIds = (array) $this->request->getPost('lists');
         $emailColumn = $this->request->getPost('email_column');
         $nameColumn = $this->request->getPost('name_column');
+        $nicknameColumn = $this->request->getPost('nickname_column');
         $tempFile = $this->request->getPost('temp_file');
 
         try {
@@ -199,6 +200,7 @@ class ContactController extends BaseController {
                 'total_rows' => count($rows) - 1, // Excluir header
                 'email_column' => $emailColumn,
                 'name_column' => $nameColumn,
+                'nickname_column' => $nicknameColumn,
                 'list_ids' => !empty($listIds) ? json_encode($listIds) : null,
             ]);
 

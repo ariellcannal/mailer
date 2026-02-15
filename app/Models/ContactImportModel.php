@@ -30,6 +30,7 @@ class ContactImportModel extends Model
         'progress_percent',
         'email_column',
         'name_column',
+        'nickname_column',
         'list_ids',
         'error_message',
         'error_details',

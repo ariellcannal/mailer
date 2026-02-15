@@ -19,8 +19,8 @@
             <?php endforeach; ?>
 
             <div class="row g-3 mb-3">
-                <div class="col-md-6">
-                    <label class="form-label">Coluna de E-mail</label>
+                <div class="col-md-4">
+                    <label class="form-label">Coluna de E-mail <span class="text-danger">*</span></label>
                     <select name="email_column" class="form-control" required>
                         <option value="">Selecione</option>
                         <?php foreach ($headers as $index => $label): ?>
@@ -28,7 +28,7 @@
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label class="form-label">Coluna de Nome (opcional)</label>
                     <select name="name_column" class="form-control">
                         <option value="">Nenhuma</option>
@@ -36,6 +36,16 @@
                             <option value="<?= $index ?>"><?= esc($label ?: 'Coluna ' . ($index + 1)) ?></option>
                         <?php endforeach; ?>
                     </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Coluna de Apelido (opcional)</label>
+                    <select name="nickname_column" class="form-control">
+                        <option value="">Nenhuma</option>
+                        <?php foreach ($headers as $index => $label): ?>
+                            <option value="<?= $index ?>"><?= esc($label ?: 'Coluna ' . ($index + 1)) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <small class="form-text text-muted">Se não informado, será gerado automaticamente</small>
                 </div>
             </div>
 

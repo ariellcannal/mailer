@@ -96,6 +96,7 @@ class ProcessContactImports extends BaseCommand
                     $headers = array_map('trim', $rows[0]);
                     $emailIndex = (int) $import['email_column'];
                     $nameIndex = $import['name_column'] !== null ? (int) $import['name_column'] : null;
+                    $nicknameIndex = $import['nickname_column'] !== null ? (int) $import['nickname_column'] : null;
                     $listIds = !empty($import['list_ids']) ? json_decode($import['list_ids'], true) : [];
 
                     $contacts = [];
@@ -126,10 +127,14 @@ class ProcessContactImports extends BaseCommand
 
                         $name = $nameIndex !== null ? trim((string) ($row[$nameIndex] ?? '')) : null;
                         $formattedName = $this->formatNameUcFirst($name);
+                        
+                        $nickname = $nicknameIndex !== null ? trim((string) ($row[$nicknameIndex] ?? '')) : null;
+                        $formattedNickname = $this->formatNameUcFirst($nickname);
 
                         $contacts[] = [
                             'email' => $email,
                             'name' => $formattedName,
+                            'nickname' => $formattedNickname,
                         ];
 
                         unset($row);
