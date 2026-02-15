@@ -31,6 +31,7 @@ class MessageSendModel extends Model
         'last_click_at',
         'bounced_at',
         'bounce_type',
+        'bounce_subtype',
         'bounce_reason',
         'complained_at'
     ];

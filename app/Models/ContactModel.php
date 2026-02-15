@@ -37,6 +37,7 @@ class ContactModel extends Model
         'opted_out_at',
         'bounced',
         'bounce_type',
+        'bounce_subtype',
         'bounced_at',
     ];
 
