@@ -5,7 +5,7 @@
     ?>
 
     <nav aria-label="Navegação de página">
-        <ul class="pagination justify-content-center">
+        <ul class="pagination pagination-sm justify-content-end">
             <li class="page-item <?= $pager->hasPreviousPage() ? '' : 'disabled' ?>">
                 <?php if ($pager->hasPreviousPage()) : ?>
                     <a class="page-link" href="<?= $pager->getFirst() ?>">Primeira</a>
