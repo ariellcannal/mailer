@@ -13,6 +13,9 @@
 ## Em Andamento
 
 ## Corrigido Agora
+- [x] Contador de importados agora considera TODOS os contatos do batch (incluindo ignorados)
+
+## Corrigido Agora
 - [x] Erro SQL: Criado método insertBatchIgnore() usando Query Builder do CI4
 
 ## Concluídas Agora

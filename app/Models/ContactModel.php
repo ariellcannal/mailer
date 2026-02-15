@@ -409,8 +409,8 @@ class ContactModel extends Model
                 // Inserir lote quando atingir tamanho máximo
                 if (count($batchInsert) >= $batchSize) {
                     // Usar INSERT IGNORE para evitar erro de duplicate entry
-                    $inserted = $this->insertBatchIgnore($batchInsert, $db);
-                    $imported += $inserted;
+                    $this->insertBatchIgnore($batchInsert, $db);
+                    $imported += count($batchInsert); // Contar todos, incluindo ignorados
                     
                     unset($batchInsert);
                     $batchInsert = [];
@@ -427,8 +427,8 @@ class ContactModel extends Model
         // Inserir lote restante
         if (!empty($batchInsert)) {
             // Usar INSERT IGNORE para evitar erro de duplicate entry
-            $inserted = $this->insertBatchIgnore($batchInsert, $db);
-            $imported += $inserted;
+            $this->insertBatchIgnore($batchInsert, $db);
+            $imported += count($batchInsert); // Contar todos, incluindo ignorados
             
             unset($batchInsert);
             gc_collect_cycles();
@@ -447,11 +447,11 @@ class ContactModel extends Model
             }
         }
         
-        $skipped = count($allBatchEmails) - $imported; // Emails duplicados
-        
+        // Imported = todos os contatos processados (incluindo duplicados ignorados)
+        // Skipped = 0 (não há skip, apenas ignore no banco)
         return [
             'imported' => $imported,
-            'skipped' => $skipped,
+            'skipped' => 0,
             'errors' => $errors,
         ];
     }
