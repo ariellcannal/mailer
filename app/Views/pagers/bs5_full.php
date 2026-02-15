@@ -87,14 +87,17 @@
             </ul>
         </nav>
 
-        <!-- Select de itens por página -->
-        <div class="d-flex align-items-center gap-2">
-            <select id="perPageSelect" class="form-select form-select-sm" style="width: auto;" onchange="changePerPage(this.value)">
-                <option value="25" <?= $perPage == 25 ? 'selected' : '' ?>>25 itens por página</option>
-                <option value="50" <?= $perPage == 50 ? 'selected' : '' ?>>50 itens por página</option>
-                <option value="100" <?= $perPage == 100 ? 'selected' : '' ?>>100 itens por página</option>
-                <option value="200" <?= $perPage == 200 ? 'selected' : '' ?>>200 itens por página</option>
-            </select>
+        <!-- Button dropdown de itens por página -->
+        <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-list"></i> <?= $perPage ?> por página
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item <?= $perPage == 25 ? 'active' : '' ?>" href="#" onclick="changePerPage(25); return false;">25 por página</a></li>
+                <li><a class="dropdown-item <?= $perPage == 50 ? 'active' : '' ?>" href="#" onclick="changePerPage(50); return false;">50 por página</a></li>
+                <li><a class="dropdown-item <?= $perPage == 100 ? 'active' : '' ?>" href="#" onclick="changePerPage(100); return false;">100 por página</a></li>
+                <li><a class="dropdown-item <?= $perPage == 200 ? 'active' : '' ?>" href="#" onclick="changePerPage(200); return false;">200 por página</a></li>
+            </ul>
         </div>
     </div>
 

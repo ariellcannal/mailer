@@ -32,6 +32,7 @@
         
         // Habilitar/desabilitar botões
         const hasSelection = count > 0 || selectAllFlag;
+        document.getElementById('btnAddToList').disabled = !hasSelection;
         document.getElementById('btnExportCSV').disabled = !hasSelection;
         document.getElementById('btnDeleteInactivate').disabled = !hasSelection;
         
@@ -44,13 +45,18 @@
         currentAction = action;
         
         // Resetar visual de todos os botões
+        document.getElementById('btnAddToList').classList.remove('active', 'btn-primary');
+        document.getElementById('btnAddToList').classList.add('btn-outline-primary');
         document.getElementById('btnExportCSV').classList.remove('active', 'btn-success');
         document.getElementById('btnExportCSV').classList.add('btn-outline-success');
         document.getElementById('btnDeleteInactivate').classList.remove('active', 'btn-danger');
         document.getElementById('btnDeleteInactivate').classList.add('btn-outline-danger');
         
         // Destacar botão ativo
-        if (action === 'export_csv') {
+        if (action === 'add_lists') {
+            document.getElementById('btnAddToList').classList.add('active', 'btn-primary');
+            document.getElementById('btnAddToList').classList.remove('btn-outline-primary');
+        } else if (action === 'export_csv') {
             document.getElementById('btnExportCSV').classList.add('active', 'btn-success');
             document.getElementById('btnExportCSV').classList.remove('btn-outline-success');
         } else if (action === 'delete_inactivate') {
@@ -75,7 +81,7 @@
             const checked = masterCheckbox.checked;
             contactCheckboxes.forEach(function(box) { box.checked = checked; });
             flagInput.value = '0';
-            toggleSelectAllNotice(checked);
+            toggleSelectAllNotice(checked && contactCheckboxes.length > 0);
             updateToolbarState();
         });
 
@@ -96,6 +102,14 @@
                     flagInput.value = '0';
                     toggleSelectAllNotice(false);
                 }
+                
+                // Verificar se todos estão marcados
+                const allChecked = Array.from(contactCheckboxes).every(cb => cb.checked);
+                if (allChecked && contactCheckboxes.length > 0) {
+                    masterCheckbox.checked = true;
+                    toggleSelectAllNotice(true);
+                }
+                
                 updateToolbarState();
             });
         });
@@ -103,11 +117,25 @@
 
     function attachToolbarHandlers() {
         const form = document.getElementById('bulkActionsForm');
+        const btnAddToList = document.getElementById('btnAddToList');
         const btnExportCSV = document.getElementById('btnExportCSV');
         const btnDeleteInactivate = document.getElementById('btnDeleteInactivate');
-        const bulkListsSelect = document.getElementById('bulkListsSelect');
+        const listCheckboxes = document.querySelectorAll('input[name="lists[]"]');
         
         if (!form) return;
+        
+        // Dropdown de listas - ao marcar/desmarcar, define ação
+        listCheckboxes.forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                const anyChecked = Array.from(listCheckboxes).some(cb => cb.checked);
+                if (anyChecked) {
+                    setAction('add_lists');
+                } else if (currentAction === 'add_lists') {
+                    currentAction = null;
+                    updateToolbarState();
+                }
+            });
+        });
         
         // Botão Exportar CSV
         btnExportCSV.addEventListener('click', function() {
@@ -118,18 +146,6 @@
         btnDeleteInactivate.addEventListener('click', function() {
             setAction('delete_inactivate');
         });
-        
-        // Select de listas (Select2) - ao selecionar, define ação
-        if (bulkListsSelect) {
-            $(bulkListsSelect).on('change', function() {
-                if ($(this).val()?.length > 0) {
-                    setAction('add_lists');
-                } else if (currentAction === 'add_lists') {
-                    currentAction = null;
-                    updateToolbarState();
-                }
-            });
-        }
         
         // Submit do formulário
         form.addEventListener('submit', function(event) {
@@ -150,8 +166,8 @@
             
             // Definir action do formulário baseado na ação
             if (currentAction === 'add_lists') {
-                const selectedLists = $(bulkListsSelect).val();
-                if (!selectedLists || selectedLists.length === 0) {
+                const selectedLists = Array.from(listCheckboxes).filter(cb => cb.checked);
+                if (selectedLists.length === 0) {
                     alert('Selecione pelo menos uma lista');
                     return;
                 }

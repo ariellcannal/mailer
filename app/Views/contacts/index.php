@@ -84,12 +84,22 @@
                     <div class="col-auto">
                         <label class="form-label mb-0"><strong>Ação com Selecionados:</strong></label>
                     </div>
-                    <div class="col-md-3">
-                        <select name="lists[]" id="bulkListsSelect" class="form-control" multiple data-placeholder="Adicionar à lista">
-                            <?php foreach ($lists as $list): ?>
-                                <option value="<?= $list['id'] ?>"><?= esc($list['name']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                    <div class="col-auto">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="btnAddToList" data-bs-toggle="dropdown" aria-expanded="false" disabled>
+                                <i class="fas fa-list-ul"></i> Adicionar à lista
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="btnAddToList" style="max-height: 300px; overflow-y: auto;">
+                                <?php foreach ($lists as $list): ?>
+                                    <li>
+                                        <label class="dropdown-item">
+                                            <input type="checkbox" name="lists[]" value="<?= $list['id'] ?>" class="form-check-input me-2">
+                                            <?= esc($list['name']) ?>
+                                        </label>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
                     </div>
                     <div class="col-auto">
                         <button type="button" id="btnExportCSV" class="btn btn-outline-success" disabled>
