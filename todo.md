@@ -12,9 +12,15 @@
 
 ## Em Andamento
 
+## Concluídas Agora
+- [x] Auto-refresh a cada 10s em /contacts/imports quando há processo "Processando"
+- [x] Não renomear arquivo de importação (usa nome original, adiciona timestamp se conflito)
+- [x] Usar INSERT IGNORE no batch para evitar erro de duplicate entry
+- [x] Adicionar contatos às listas em massa ao final do batch (não um por um)
+
 ## Concluídas Recentemente
 - [x] Importação: Verificar duplicidade por email (adicionar à lista se existir)
-- [x] Importação: Adicionar campo "Apelido" no mapeamento
+- [x] Importação: Adicionar campo "Apelido" no mapeamento (backend pronto, view com problema)
 
 ## Pendentes (Conforme PLANO_ACAO_MAILER_FASES_RESTANTES.md)
 - [ ] Fase 2: Tabelas de envios e bounces em /contacts/view/

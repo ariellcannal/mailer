@@ -376,64 +376,17 @@ class ContactModel extends Model
     {
         $imported = 0;
         $skipped = 0;
-        $skippedDetails = [];
         $errors = [];
         $listIds = array_map('intval', array_unique(array_filter($listIds)));
-        
-        $listMemberModel = new ContactListMemberModel();
-        $listModel = new ContactListModel();
-        
-        // Buscar todos os emails existentes de uma vez
-        $emails = array_column($contacts, 'email');
-        $existingContacts = [];
-        
-        if (!empty($emails)) {
-            $existing = $this->whereIn('email', $emails)->findAll();
-            foreach ($existing as $contact) {
-                $existingContacts[$contact['email']] = $contact;
-            }
-        }
         
         $batchInsert = [];
         $batchSize = 500;
         $db = \Config\Database::connect();
+        $allBatchEmails = []; // Armazenar todos os emails inseridos para adicionar às listas ao final
         
         foreach ($contacts as $index => $contact) {
             try {
                 $email = $contact['email'];
-                
-                // Verifica se email já existe
-                if (isset($existingContacts[$email])) {
-                    $existing = $existingContacts[$email];
-                    
-                    // Atualizar dados se fornecidos
-                    $updateData = [];
-                    if (!empty($contact['name']) && $contact['name'] !== ($existing['name'] ?? '')) {
-                        $updateData['name'] = $contact['name'];
-                        $updateData['nickname'] = $this->generateNickname($contact['name'], $email);
-                    }
-                    if (!empty($contact['nickname']) && $contact['nickname'] !== ($existing['nickname'] ?? '')) {
-                        $updateData['nickname'] = $contact['nickname'];
-                    }
-                    
-                    if (!empty($updateData)) {
-                        $this->update((int) $existing['id'], $updateData);
-                    }
-                    
-                    // Adicionar às listas se especificado
-                    if (!empty($listIds)) {
-                        $this->syncContactLists((int) $existing['id'], $listIds, $listMemberModel, $listModel);
-                        // Não contar como skipped se foi adicionado à lista
-                        $imported++;
-                    } else {
-                        // Só contar como skipped se não havia lista para adicionar
-                        $skipped++;
-                        $skippedDetails[] = 'Email já existente (sem lista): ' . $email;
-                    }
-                    
-                    unset($contact);
-                    continue;
-                }
                 
                 // Adicionar ao lote de inserção
                 $nickname = !empty($contact['nickname']) 
@@ -450,21 +403,15 @@ class ContactModel extends Model
                     'updated_at' => date('Y-m-d H:i:s'),
                 ];
                 
+                $allBatchEmails[] = $email;
                 unset($contact);
                 
                 // Inserir lote quando atingir tamanho máximo
                 if (count($batchInsert) >= $batchSize) {
-                    $db->table($this->table)->insertBatch($batchInsert);
-                    $imported += count($batchInsert);
-                    
-                    // Vincular às listas se necessário
-                    if (!empty($listIds)) {
-                        $insertedEmails = array_column($batchInsert, 'email');
-                        $insertedContacts = $this->whereIn('email', $insertedEmails)->findAll();
-                        foreach ($insertedContacts as $insertedContact) {
-                            $this->syncContactLists((int) $insertedContact['id'], $listIds, $listMemberModel, $listModel);
-                        }
-                    }
+                    // Usar INSERT IGNORE para evitar erro de duplicate entry
+                    $builder = $db->table($this->table);
+                    $sql = $builder->insertBatch($batchInsert, false, true); // true = ignore duplicates
+                    $imported += $db->affectedRows();
                     
                     unset($batchInsert);
                     $batchInsert = [];
@@ -480,25 +427,33 @@ class ContactModel extends Model
         
         // Inserir lote restante
         if (!empty($batchInsert)) {
-            $db->table($this->table)->insertBatch($batchInsert);
-            $imported += count($batchInsert);
-            
-            if (!empty($listIds)) {
-                $insertedEmails = array_column($batchInsert, 'email');
-                $insertedContacts = $this->whereIn('email', $insertedEmails)->findAll();
-                foreach ($insertedContacts as $insertedContact) {
-                    $this->syncContactLists((int) $insertedContact['id'], $listIds, $listMemberModel, $listModel);
-                }
-            }
+            // Usar INSERT IGNORE para evitar erro de duplicate entry
+            $builder = $db->table($this->table);
+            $sql = $builder->insertBatch($batchInsert, false, true); // true = ignore duplicates
+            $imported += $db->affectedRows();
             
             unset($batchInsert);
             gc_collect_cycles();
         }
         
+        // Adicionar TODOS os contatos (novos + existentes) às listas em massa ao final
+        if (!empty($listIds) && !empty($allBatchEmails)) {
+            $listMemberModel = new ContactListMemberModel();
+            $listModel = new ContactListModel();
+            
+            // Buscar IDs de todos os contatos pelos emails
+            $allContacts = $this->whereIn('email', $allBatchEmails)->findAll();
+            
+            foreach ($allContacts as $contact) {
+                $this->syncContactLists((int) $contact['id'], $listIds, $listMemberModel, $listModel);
+            }
+        }
+        
+        $skipped = count($allBatchEmails) - $imported; // Emails duplicados
+        
         return [
             'imported' => $imported,
             'skipped' => $skipped,
-            'skipped_details' => $skippedDetails,
             'errors' => $errors,
         ];
     }

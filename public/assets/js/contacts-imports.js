@@ -17,10 +17,10 @@
         return false;
     }
 
-    // Auto-refresh a cada 5 segundos
+    // Auto-refresh a cada 10 segundos quando há processo "Processando"
     if (hasActiveImports()) {
         setTimeout(function() {
             location.reload();
-        }, 5000);
+        }, 10000); // 10 segundos
     }
 })();

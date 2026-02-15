@@ -235,8 +235,18 @@ class ContactController extends BaseController {
             throw new \RuntimeException('Arquivo inválido.');
         }
 
-        $tempPath = $destination . DIRECTORY_SEPARATOR . uniqid('contacts_', true) . '.' . $file->getClientExtension();
-        $file->move($destination, basename($tempPath));
+        // Usar nome original do arquivo sem renomear
+        $originalName = $file->getClientName();
+        $tempPath = $destination . DIRECTORY_SEPARATOR . $originalName;
+        
+        // Se arquivo já existe, adicionar timestamp para evitar conflito
+        if (file_exists($tempPath)) {
+            $info = pathinfo($originalName);
+            $originalName = $info['filename'] . '_' . time() . '.' . $info['extension'];
+            $tempPath = $destination . DIRECTORY_SEPARATOR . $originalName;
+        }
+        
+        $file->move($destination, $originalName);
 
         return $tempPath;
     }
