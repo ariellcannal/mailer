@@ -12,6 +12,9 @@
 
 ## Em Andamento
 
+## Corrigido Agora
+- [x] Erro SQL: Criado método insertBatchIgnore() usando Query Builder do CI4
+
 ## Concluídas Agora
 - [x] Auto-refresh a cada 10s em /contacts/imports quando há processo "Processando"
 - [x] Não renomear arquivo de importação (usa nome original, adiciona timestamp se conflito)

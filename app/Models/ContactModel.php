@@ -409,9 +409,8 @@ class ContactModel extends Model
                 // Inserir lote quando atingir tamanho máximo
                 if (count($batchInsert) >= $batchSize) {
                     // Usar INSERT IGNORE para evitar erro de duplicate entry
-                    $builder = $db->table($this->table);
-                    $sql = $builder->insertBatch($batchInsert, false, true); // true = ignore duplicates
-                    $imported += $db->affectedRows();
+                    $inserted = $this->insertBatchIgnore($batchInsert, $db);
+                    $imported += $inserted;
                     
                     unset($batchInsert);
                     $batchInsert = [];
@@ -428,9 +427,8 @@ class ContactModel extends Model
         // Inserir lote restante
         if (!empty($batchInsert)) {
             // Usar INSERT IGNORE para evitar erro de duplicate entry
-            $builder = $db->table($this->table);
-            $sql = $builder->insertBatch($batchInsert, false, true); // true = ignore duplicates
-            $imported += $db->affectedRows();
+            $inserted = $this->insertBatchIgnore($batchInsert, $db);
+            $imported += $inserted;
             
             unset($batchInsert);
             gc_collect_cycles();
@@ -456,6 +454,44 @@ class ContactModel extends Model
             'skipped' => $skipped,
             'errors' => $errors,
         ];
+    }
+    
+    /**
+     * Insere lote de contatos usando INSERT IGNORE para evitar erro de duplicate entry
+     * 
+     * @param array $data Array de dados para inserir
+     * @param \CodeIgniter\Database\BaseConnection $db Conexão do banco
+     * @return int Número de linhas inseridas
+     */
+    protected function insertBatchIgnore(array $data, $db): int
+    {
+        if (empty($data)) {
+            return 0;
+        }
+        
+        // Obter colunas do primeiro registro
+        $columns = array_keys($data[0]);
+        $columnsList = implode(', ', array_map(function($col) use ($db) {
+            return $db->escapeIdentifiers($col);
+        }, $columns));
+        
+        // Construir valores
+        $values = [];
+        foreach ($data as $row) {
+            $rowValues = [];
+            foreach ($columns as $col) {
+                $rowValues[] = $db->escape($row[$col]);
+            }
+            $values[] = '(' . implode(', ', $rowValues) . ')';
+        }
+        
+        $valuesList = implode(', ', $values);
+        
+        // Executar INSERT IGNORE
+        $sql = "INSERT IGNORE INTO {$this->table} ({$columnsList}) VALUES {$valuesList}";
+        $db->query($sql);
+        
+        return $db->affectedRows();
     }
     
     /**
