@@ -25,7 +25,7 @@ class AddAwsMessageIdToMessageSends extends Migration
 
         // Criar índice para buscas rápidas por aws_message_id
         $this->db->query("
-            CREATE INDEX IF NOT EXISTS idx_aws_message_id 
+            CREATE INDEX idx_aws_message_id 
             ON message_sends (aws_message_id)
         ");
 
@@ -35,7 +35,7 @@ class AddAwsMessageIdToMessageSends extends Migration
     public function down(): void
     {
         // Remover índice
-        $this->db->query("DROP INDEX IF EXISTS idx_aws_message_id ON message_sends");
+        $this->db->query("DROP INDEX idx_aws_message_id ON message_sends");
 
         // Remover coluna
         $this->forge->dropColumn('message_sends', 'aws_message_id');
