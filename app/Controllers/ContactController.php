@@ -405,16 +405,15 @@ class ContactController extends BaseController {
     {
         $model = new ContactModel();
 
-        $contactIds = (array) $this->request->getPost('contacts');
         $selectAll = $this->request->getPost('select_all') === '1';
         $filters = (array) $this->request->getPost('filters');
         
-        // Filtrar IDs vazios
-        $contactIds = array_filter($contactIds);
-        
-        // Se select_all E não há IDs específicos, buscar todos com filtros
-        if ($selectAll && empty($contactIds)) {
+        // Se select_all, buscar TODOS os contatos do filtro
+        if ($selectAll) {
             $contactIds = $model->getAllContactIds($filters);
+        } else {
+            // Caso contrário, usar apenas os IDs dos checkboxes
+            $contactIds = array_filter((array) $this->request->getPost('contacts'));
         }
 
         if (empty(array_filter($contactIds))) {
@@ -502,16 +501,15 @@ class ContactController extends BaseController {
         $listModel = new ContactListModel();
         $sendModel = new \App\Models\MessageSendModel();
 
-        $contactIds = (array) $this->request->getPost('contacts');
         $selectAll = $this->request->getPost('select_all') === '1';
         $filters = (array) $this->request->getPost('filters');
         
-        // Filtrar IDs vazios
-        $contactIds = array_filter($contactIds);
-        
-        // Se select_all E não há IDs específicos, buscar todos com filtros
-        if ($selectAll && empty($contactIds)) {
+        // Se select_all, buscar TODOS os contatos do filtro
+        if ($selectAll) {
             $contactIds = $model->getAllContactIds($filters);
+        } else {
+            // Caso contrário, usar apenas os IDs dos checkboxes
+            $contactIds = array_filter((array) $this->request->getPost('contacts'));
         }
 
         if (empty(array_filter($contactIds))) {
