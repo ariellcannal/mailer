@@ -562,32 +562,32 @@
 		});
 	}
 
-        function removeImageSizeAttributes(html) {
-                if (!html) {
-                        return '';
-                }
+	function removeImageSizeAttributes(html) {
+		if (!html) {
+			return '';
+		}
 
-                const parser = new DOMParser();
-                const documentFragment = parser.parseFromString(html, 'text/html');
+		const parser = new DOMParser();
+		const documentFragment = parser.parseFromString(html, 'text/html');
 
-                documentFragment.querySelectorAll('img').forEach((image) => {
-                        image.removeAttribute('width');
-                        image.removeAttribute('height');
-                });
+		documentFragment.querySelectorAll('img').forEach((image) => {
+			image.removeAttribute('width');
+			image.removeAttribute('height');
+		});
 
-                return documentFragment.body.innerHTML;
-        }
+		return documentFragment.body.innerHTML;
+	}
 
-        function renderEditorPreview(targetId = 'editorPreviewContent') {
-                const previewElement = document.getElementById(targetId);
-                if (!previewElement) {
-                        return;
-                }
-                const content = typeof window.getRichEditorData === 'function' ? window.getRichEditorData() : null;
-                const sanitized = removeImageSizeAttributes(content || '');
+	function renderEditorPreview(targetId = 'editorPreviewContent') {
+		const previewElement = document.getElementById(targetId);
+		if (!previewElement) {
+			return;
+		}
+		const content = typeof window.getRichEditorData === 'function' ? window.getRichEditorData() : null;
+		const sanitized = removeImageSizeAttributes(content || '');
 
-                previewElement.innerHTML = sanitized || '<p class="text-muted">Nenhum conteúdo para pré-visualizar.</p>';
-        }
+		previewElement.innerHTML = sanitized || '<p class="text-muted">Nenhum conteúdo para pré-visualizar.</p>';
+	}
 
 	window.renderEditorPreview = renderEditorPreview;
 
@@ -597,6 +597,7 @@
 
 			ClassicEditor
 				.create(element, {
+					fullPage: true,
 					licenseKey: settings.licence,
 					language: 'pt-br',
 					plugins: editorPlugins,
@@ -728,7 +729,7 @@
 							'imageTextAlternative',
 							'|',
 							'resizeImage:200', 'resizeImage:500'
-						], 
+						],
 						resizeUnit: "px",
 						resizeOptions: [
 							{ name: 'resizeImage:200', value: '200', icon: 'small', label: '200px' },
@@ -774,7 +775,14 @@
 						preserveEmptyBlocksInEditingView: true,
 						allow: [
 							{
-								name: /^(div|table|tbody|tr|td|span|h1|h2|h3|p|a)$/,
+								// Permite as tags estruturais de e-mail
+								name: /^(html|head|body|style|meta|link)$/,
+								attributes: true,
+								classes: true,
+								styles: true
+							},
+							{
+								name: /^(div|table|tbody|tr|td|span|h1|h2|h3|p|a|img|strong|br|center)$/,
 								attributes: true,
 								classes: true,
 								styles: true
@@ -783,7 +791,8 @@
 								name: 'img',
 								attributes: ['src', 'alt', 'class', 'style']
 							}
-						]
+						],
+						disallow: [] // Garante que nada seja explicitamente proibido
 					},
 					style: {
 						definitions: [
