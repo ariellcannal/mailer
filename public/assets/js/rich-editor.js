@@ -309,8 +309,82 @@
 			this.editor.plugins.get('FileRepository').createUploadAdapter = (loader) => {
 				return new CustomUploadAdapter(loader);
 			};
+		}
+	}
 
+	/**
+	 * Plugin para preservar tags HTML estruturais (<html>, <head>, <body>, <style>)
+	 * que o CKEditor remove por padrão.
+	 */
+	class PreserveFullHtmlPlugin extends Plugin {
+		static get pluginName() { return 'PreserveFullHtmlPlugin'; }
 
+		init() {
+			const editor = this.editor;
+			const originalGetData = editor.getData.bind(editor);
+			const originalSetData = editor.setData.bind(editor);
+			
+			let preservedWrapper = { html: '', head: '', body: '', style: '', closing: '' };
+
+			// Sobrescreve setData para extrair e preservar tags estruturais
+			editor.setData = function(data) {
+				if (typeof data === 'string') {
+					// Extrai e preserva as tags estruturais
+					const htmlMatch = data.match(/<html[^>]*>/i);
+					const headMatch = data.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+					const bodyOpenMatch = data.match(/<body[^>]*>/i);
+					const bodyCloseMatch = data.match(/<\/body>/i);
+					const htmlCloseMatch = data.match(/<\/html>/i);
+					
+					if (htmlMatch || headMatch || bodyOpenMatch) {
+						preservedWrapper = {
+							html: htmlMatch ? htmlMatch[0] : '',
+							head: headMatch ? headMatch[0] + headMatch[1] + '</head>' : '',
+							body: bodyOpenMatch ? bodyOpenMatch[0] : '',
+							closing: (bodyCloseMatch ? '</body>' : '') + (htmlCloseMatch ? '</html>' : '')
+						};
+						
+						// Remove tags estruturais do conteúdo antes de passar para o editor
+						data = data.replace(/<\/?html[^>]*>/gi, '');
+						data = data.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '');
+						data = data.replace(/<\/?body[^>]*>/gi, '');
+					}
+				}
+				
+				return originalSetData.call(this, data);
+			};
+
+			// Sobrescreve getData para restaurar tags estruturais
+			editor.getData = function(options) {
+				let content = originalGetData.call(this, options);
+				
+				// Se temos tags preservadas, reconstrói o HTML completo
+				if (preservedWrapper.html || preservedWrapper.head || preservedWrapper.body) {
+					let fullHtml = '';
+					
+					if (preservedWrapper.html) {
+						fullHtml += preservedWrapper.html + '\n';
+					}
+					
+					if (preservedWrapper.head) {
+						fullHtml += preservedWrapper.head + '\n';
+					}
+					
+					if (preservedWrapper.body) {
+						fullHtml += preservedWrapper.body + '\n';
+					}
+					
+					fullHtml += content;
+					
+					if (preservedWrapper.closing) {
+						fullHtml += '\n' + preservedWrapper.closing;
+					}
+					
+					return fullHtml;
+				}
+				
+				return content;
+			};
 		}
 	}
 
@@ -601,11 +675,12 @@
 					licenseKey: settings.licence,
 					language: 'pt-br',
 					plugins: editorPlugins,
-					extraPlugins: [
-						TemplatesPlugin,
-						TagsPlugin,
-						CustomUploadAdapterPlugin
-					],
+				extraPlugins: [
+					PreserveFullHtmlPlugin,
+					TemplatesPlugin,
+					TagsPlugin,
+					CustomUploadAdapterPlugin
+				],
 					menuBar: {
 						isVisible: true
 					},

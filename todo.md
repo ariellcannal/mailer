@@ -3,6 +3,7 @@
 ## Em Andamento
 
 ## Concluídas Recentemente
+- [x] Plugin PreserveFullHtmlPlugin criado para preservar tags <html>, <head>, <body>, <style>
 - [x] CKEditor configurado para aceitar TODOS os atributos HTML necessários para emails
 - [x] Auto-refresh a cada 10s em /contacts/imports quando há processo "Processando"
 - [x] Não renomear arquivo de importação (usa nome original, adiciona timestamp se conflito)
