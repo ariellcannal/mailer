@@ -572,6 +572,94 @@
 		}
 	}
 
+	/**
+	 * Plugin para importar Google Fonts.
+	 */
+	class GoogleFontsPlugin extends Plugin {
+		static get pluginName() { return 'GoogleFontsPlugin'; }
+
+		init() {
+			const editor = this.editor;
+			
+			// Inicializa array de fontes importadas
+			if (!window.importedGoogleFonts) {
+				window.importedGoogleFonts = [];
+			}
+
+			editor.ui.componentFactory.add('GoogleFonts', (locale) => {
+				const button = new ButtonView(locale);
+
+				button.set({
+					label: 'Google Fonts',
+					icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M10.187 17H5.773c-.637 0-1.092-.138-1.364-.415-.273-.277-.409-.718-.409-1.323V4.738c0-.617.14-1.062.419-1.332.279-.27.73-.406 1.354-.406h4.68c.69 0 1.288.041 1.793.124.506.083.96.242 1.36.478.341.197.644.447.906.75a3.262 3.262 0 0 1 .808 2.162c0 1.401-.722 2.426-2.167 3.075C15.05 10.175 16 11.315 16 13.01a3.756 3.756 0 0 1-2.296 3.504 6.1 6.1 0 0 1-1.517.377c-.571.073-1.238.11-2 .11zm-.217-6.217H7v4.087h3.069c1.977 0 2.965-.69 2.965-2.072 0-.707-.256-1.22-.768-1.537-.512-.319-1.277-.478-2.296-.478zM7 5.13v3.619h2.606c.729 0 1.292-.067 1.69-.2a1.6 1.6 0 0 0 .91-.765c.165-.267.247-.566.247-.897 0-.707-.26-1.176-.778-1.409-.519-.232-1.31-.348-2.375-.348H7z"/></svg>',
+					tooltip: 'Importar Google Font',
+					withText: false
+				});
+
+				button.on('execute', () => this.openGoogleFontsModal(editor));
+				return button;
+			});
+		}
+
+		openGoogleFontsModal(editor) {
+			const { modal, close } = createModal('Importar Google Font', `
+				<div class="mb-3">
+					<label class="form-label">Nome da Fonte</label>
+					<input type="text" class="form-control" id="google-font-name" placeholder="Ex: Roboto, Open Sans, Montserrat">
+					<small class="form-text text-muted">Digite o nome exato da fonte do Google Fonts</small>
+				</div>
+				<div class="mb-3">
+					<label class="form-label">Pesos (opcional)</label>
+					<input type="text" class="form-control" id="google-font-weights" placeholder="Ex: 400,700" value="400,700">
+					<small class="form-text text-muted">Separe múltiplos pesos por vírgula</small>
+				</div>
+				<div class="alert alert-info">
+					<strong>Dica:</strong> Visite <a href="https://fonts.google.com" target="_blank">Google Fonts</a> para encontrar fontes.
+				</div>
+			`);
+
+			modal.find('.ck-modal-confirm').on('click', () => {
+				const fontName = modal.find('#google-font-name').val().trim();
+				const weights = modal.find('#google-font-weights').val().trim() || '400,700';
+
+				if (!fontName) {
+					alert('Por favor, digite o nome da fonte.');
+					return;
+				}
+
+				// Constrói URL do Google Fonts
+				const fontUrl = `https://fonts.googleapis.com/css2?family=${
+					fontName.replace(/\s+/g, '+')}
+					:wght@${weights}&display=swap`;
+
+				// Adiciona à lista de fontes importadas
+				const fontData = { name: fontName, url: fontUrl, weights };
+				
+				// Verifica se já foi importada
+				const exists = window.importedGoogleFonts.some(f => f.name === fontName);
+				if (!exists) {
+					window.importedGoogleFonts.push(fontData);
+					
+					// Adiciona fonte ao dropdown de fontes do CKEditor
+					const fontFamilyConfig = editor.config.get('fontFamily');
+					if (fontFamilyConfig && fontFamilyConfig.options) {
+						// Adiciona fonte se ainda não estiver na lista
+						const fontOption = `${fontName}, sans-serif`;
+						if (!fontFamilyConfig.options.includes(fontOption)) {
+							fontFamilyConfig.options.push(fontOption);
+						}
+					}
+					
+					alert(`Fonte "${fontName}" importada com sucesso! Agora você pode selecioná-la no dropdown "Fonte".`);
+				} else {
+					alert(`Fonte "${fontName}" já foi importada anteriormente.`);
+				}
+
+				close();
+			});
+		}
+	}
+
 	function createModal(title, bodyHtml) {
 		const modalId = `ck-modal-${Date.now()}`;
 		const $modal = $(`
@@ -679,6 +767,7 @@
 					PreserveFullHtmlPlugin,
 					TemplatesPlugin,
 					TagsPlugin,
+					GoogleFontsPlugin,
 					CustomUploadAdapterPlugin
 				],
 					menuBar: {
@@ -694,8 +783,8 @@
 							//'textPartLanguage',
 							'fullscreen',
 							'|',
-							'Templates', 'Tags',
-							'|',
+						'Templates', 'Tags', 'GoogleFonts',
+						'|',
 							'fontSize',
 							'fontFamily',
 							'fontColor',
@@ -922,5 +1011,36 @@
 		});
 	}
 
+	/**
+	 * Atualiza o preview do email no iframe.
+	 */
+	function updateEmailPreview() {
+		const previewFrame = document.getElementById('emailPreviewFrame');
+		if (!previewFrame) return;
+		
+		// Obtém HTML do editor
+		const html = window.getRichEditorData();
+		
+		// Obtém fontes Google importadas (se houver)
+		const googleFonts = window.importedGoogleFonts || [];
+		
+		// Processa HTML para email
+		const processedHtml = window.processEmailHtml ? window.processEmailHtml(html, googleFonts) : html;
+		
+		// Atualiza iframe
+		const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+		iframeDoc.open();
+		iframeDoc.write(processedHtml);
+		iframeDoc.close();
+	}
+	
+	// Atualiza preview quando a aba Preview é clicada
+	$(document).on('shown.bs.tab', '#preview-tab', function() {
+		updateEmailPreview();
+	});
+	
+	// Exporta função globalmente
+	window.updateEmailPreview = updateEmailPreview;
+	
 	$(document).ready(initEditors);
 })(jQuery);

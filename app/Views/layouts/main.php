@@ -163,6 +163,7 @@
 	<script src="<?= base_url('assets/js/layout.js') ?>" defer></script>
 	<script src="<?= base_url('assets/js/message-edit.js') ?>"></script>
 	<script src="<?= base_url('assets/js/rich-editor.js').'?v='.time() ?>" defer></script>
+	<script src="<?= base_url('assets/js/format-html.js').'?v='.time() ?>" defer></script>
 	<script src="<?= base_url('assets/js/messages-form.js') ?>" defer></script>
 	<script src="<?= base_url('assets/js/contacts-form.js') ?>" defer></script>
 	<script src="<?= base_url('assets/js/contacts-index.js') ?>" defer></script>

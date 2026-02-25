@@ -3,6 +3,11 @@
 ## Em Andamento
 
 ## Concluídas Recentemente
+- [x] Função formatHtml() implementada para processar HTML antes de salvar/preview
+- [x] Plugin GoogleFontsPlugin criado para importar fontes do Google
+- [x] Abas "Create" e "Preview" criadas com renderização em iframe
+- [x] Ajustes automáticos de HTML para clientes antigos implementados
+- [x] Conversão automática de CSS para inline styles implementada
 - [x] Plugin PreserveFullHtmlPlugin criado para preservar tags <html>, <head>, <body>, <style>
 - [x] CKEditor configurado para aceitar TODOS os atributos HTML necessários para emails
 - [x] Auto-refresh a cada 10s em /contacts/imports quando há processo "Processando"
