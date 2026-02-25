@@ -775,21 +775,11 @@
 						preserveEmptyBlocksInEditingView: true,
 						allow: [
 							{
-								// Permite as tags estruturais de e-mail
-								name: /^(html|head|body|style|meta|link)$/,
+								// Permite TODAS as tags HTML comuns em emails
+								name: /.*/,
 								attributes: true,
 								classes: true,
 								styles: true
-							},
-							{
-								name: /^(div|table|tbody|tr|td|span|h1|h2|h3|p|a|img|strong|br|center)$/,
-								attributes: true,
-								classes: true,
-								styles: true
-							},
-							{
-								name: 'img',
-								attributes: ['src', 'alt', 'class', 'style']
 							}
 						],
 						disallow: [] // Garante que nada seja explicitamente proibido
