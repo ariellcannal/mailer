@@ -662,6 +662,7 @@
 
 	/**
 	 * Plugin para selecionar cor de fundo do email.
+	 * Usa o mesmo padrão do FontColor (ColorUI).
 	 */
 	class BackgroundColorPlugin extends Plugin {
 		static get pluginName() { return 'BackgroundColorPlugin'; }
@@ -674,34 +675,22 @@
 				window.emailBackgroundColor = '#ffffff';
 			}
 
+			// Usar o mesmo padrão de ColorUI do FontColor
 			editor.ui.componentFactory.add('BackgroundColor', (locale) => {
-				const dropdown = createDropdown(locale);
+				const colorPickerView = new CKEDITOR.ColorPickerView(locale);
+				const dropdownView = createDropdown(locale);
 				
-				// Cores predefinidas
-				const colors = [
-					{ color: '#ffffff', label: 'Branco' },
-					{ color: '#f5f5f5', label: 'Cinza muito claro' },
-					{ color: '#e8e8e8', label: 'Cinza claro' },
-					{ color: '#f0f0f0', label: 'Cinza off-white' },
-					{ color: '#fafafa', label: 'Cinza quase branco' },
-					{ color: '#fffacd', label: 'Amarelo claro' },
-					{ color: '#fff8dc', label: 'Cornsilk' },
-					{ color: '#ffe4e1', label: 'Rosa muito claro' },
-					{ color: '#f0ffff', label: 'Azul muito claro' },
-					{ color: '#e6f2ff', label: 'Azul claro' }
-				];
-
-				dropdown.buttonView.set({
+				dropdownView.buttonView.set({
 					label: 'Cor de Fundo',
-					icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><rect x="2" y="2" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="3" width="14" height="14" fill="#ffffff" stroke="currentColor" stroke-width="0.5"/></svg>',
-					tooltip: 'Selecionar cor de fundo do email',
+					icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><rect x="2" y="2" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="3" width="14" height="14" fill="' + window.emailBackgroundColor + '" stroke="currentColor" stroke-width="0.5"/></svg>',
+					tooltip: 'Cor de fundo do email',
 					withText: false
 				});
 
 				const items = new Collection();
 				
-				// Adicionar cores predefinidas
-				for (const colorOption of colors) {
+				// Adicionar cores predefinidas (DEFAULT_HEX_COLORS)
+				for (const colorOption of DEFAULT_HEX_COLORS) {
 					items.add({
 						type: 'button',
 						model: new UIModel({
@@ -711,54 +700,28 @@
 						})
 					});
 				}
-				
-				// Adicionar separador
-				items.add({ type: 'separator' });
-				
-				// Adicionar opção de cor customizada
-				items.add({
-					type: 'button',
-					model: new UIModel({
-						label: 'Cor Personalizada...',
-						withText: true,
-						commandParam: 'custom'
-					})
-				});
 
-				addListToDropdown(dropdown, items);
+				addListToDropdown(dropdownView, items);
 
-				this.listenTo(dropdown, 'execute', evt => {
+				this.listenTo(dropdownView, 'execute', evt => {
 					const color = evt.source.commandParam;
 					
-					if (color === 'custom') {
-						this.openColorPicker(editor);
-					} else {
-						window.emailBackgroundColor = color;
-						window.updateEmailPreview();
+					window.emailBackgroundColor = color;
+					
+					// Atualizar BG do editor
+					const editorElement = editor.ui.view.element;
+					if (editorElement) {
+						editorElement.style.backgroundColor = color;
 					}
+					
+					// Atualizar BG do preview
+					window.updateEmailPreview();
+					
+					// Atualizar ícone do botão
+					dropdownView.buttonView.icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><rect x="2" y="2" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="3" width="14" height="14" fill="' + color + '" stroke="currentColor" stroke-width="0.5"/></svg>';
 				});
 
-				return dropdown;
-			});
-		}
-
-		openColorPicker(editor) {
-			const { modal, close } = createModal('Cor de Fundo Personalizada', `
-				<div class="mb-3">
-					<label class="form-label">Selecione a cor</label>
-					<input type="color" class="form-control form-control-color" id="bg-color-picker" value="${window.emailBackgroundColor}" style="height: 50px;">
-				</div>
-			`);
-
-			modal.find('.ck-modal-confirm').on('click', () => {
-				const color = modal.find('#bg-color-picker').val();
-				
-				if (color) {
-					window.emailBackgroundColor = color;
-					window.updateEmailPreview();
-				}
-
-				close();
+				return dropdownView;
 			});
 		}
 	}
