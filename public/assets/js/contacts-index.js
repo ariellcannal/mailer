@@ -17,17 +17,20 @@
     function updateToolbarState() {
         const contactCheckboxes = document.querySelectorAll('input.contact-checkbox:checked');
         const count = contactCheckboxes.length;
-        const selectAllFlag = document.getElementById('selectAllFlag').value === '1';
+        const selectAllFlagElement = document.getElementById('selectAllFlag');
+        const selectAllFlag = selectAllFlagElement ? selectAllFlagElement.value === '1' : false;
         
         // Atualizar texto de contagem
         const selectedCountText = document.getElementById('selectedCountText');
-        if (selectAllFlag) {
-            const totalContacts = parseInt(document.getElementById('selectAllNotice')?.textContent.match(/\d+/)?.[0] || '0');
-            selectedCountText.textContent = `Todos os ${totalContacts} contatos selecionados`;
-        } else if (count > 0) {
-            selectedCountText.textContent = `${count} contato(s) selecionado(s)`;
-        } else {
-            selectedCountText.textContent = 'Nenhum contato selecionado';
+        if (selectedCountText) {
+            if (selectAllFlag) {
+                const totalContacts = parseInt(document.getElementById('selectAllNotice')?.textContent.match(/\d+/)?.[0] || '0');
+                selectedCountText.textContent = `Todos os ${totalContacts} contatos selecionados`;
+            } else if (count > 0) {
+                selectedCountText.textContent = `${count} contato(s) selecionado(s)`;
+            } else {
+                selectedCountText.textContent = 'Nenhum contato selecionado';
+            }
         }
         
         // Habilitar/desabilitar botões
