@@ -675,28 +675,78 @@
 			}
 
 			editor.ui.componentFactory.add('BackgroundColor', (locale) => {
-				const button = new ButtonView(locale);
+				const dropdown = createDropdown(locale);
+				
+				// Cores predefinidas
+				const colors = [
+					{ color: '#ffffff', label: 'Branco' },
+					{ color: '#f5f5f5', label: 'Cinza muito claro' },
+					{ color: '#e8e8e8', label: 'Cinza claro' },
+					{ color: '#f0f0f0', label: 'Cinza off-white' },
+					{ color: '#fafafa', label: 'Cinza quase branco' },
+					{ color: '#fffacd', label: 'Amarelo claro' },
+					{ color: '#fff8dc', label: 'Cornsilk' },
+					{ color: '#ffe4e1', label: 'Rosa muito claro' },
+					{ color: '#f0ffff', label: 'Azul muito claro' },
+					{ color: '#e6f2ff', label: 'Azul claro' }
+				];
 
-				button.set({
+				dropdown.buttonView.set({
 					label: 'Cor de Fundo',
 					icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><rect x="2" y="2" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="3" width="14" height="14" fill="#ffffff" stroke="currentColor" stroke-width="0.5"/></svg>',
 					tooltip: 'Selecionar cor de fundo do email',
 					withText: false
 				});
 
-				button.on('execute', () => this.openBackgroundColorModal(editor));
-				return button;
+				const items = new Collection();
+				
+				// Adicionar cores predefinidas
+				for (const colorOption of colors) {
+					items.add({
+						type: 'button',
+						model: new UIModel({
+							label: colorOption.label,
+							withText: true,
+							commandParam: colorOption.color
+						})
+					});
+				}
+				
+				// Adicionar separador
+				items.add({ type: 'separator' });
+				
+				// Adicionar opção de cor customizada
+				items.add({
+					type: 'button',
+					model: new UIModel({
+						label: 'Cor Personalizada...',
+						withText: true,
+						commandParam: 'custom'
+					})
+				});
+
+				addListToDropdown(dropdown, items);
+
+				this.listenTo(dropdown, 'execute', evt => {
+					const color = evt.source.commandParam;
+					
+					if (color === 'custom') {
+						this.openColorPicker(editor);
+					} else {
+						window.emailBackgroundColor = color;
+						window.updateEmailPreview();
+					}
+				});
+
+				return dropdown;
 			});
 		}
 
-		openBackgroundColorModal(editor) {
-			const { modal, close } = createModal('Cor de Fundo do Email', `
+		openColorPicker(editor) {
+			const { modal, close } = createModal('Cor de Fundo Personalizada', `
 				<div class="mb-3">
-					<label class="form-label">Selecione a cor de fundo</label>
+					<label class="form-label">Selecione a cor</label>
 					<input type="color" class="form-control form-control-color" id="bg-color-picker" value="${window.emailBackgroundColor}" style="height: 50px;">
-				</div>
-				<div class="alert alert-info">
-					<strong>Dica:</strong> Esta cor será aplicada ao fundo do body do email na pré-visualização e ao salvar.
 				</div>
 			`);
 
@@ -705,7 +755,7 @@
 				
 				if (color) {
 					window.emailBackgroundColor = color;
-					alert('Cor de fundo alterada para ' + color);
+					window.updateEmailPreview();
 				}
 
 				close();
