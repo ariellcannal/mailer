@@ -660,6 +660,59 @@
 		}
 	}
 
+	/**
+	 * Plugin para selecionar cor de fundo do email.
+	 */
+	class BackgroundColorPlugin extends Plugin {
+		static get pluginName() { return 'BackgroundColorPlugin'; }
+
+		init() {
+			const editor = this.editor;
+			
+			// Inicializa cor de fundo padrão
+			if (!window.emailBackgroundColor) {
+				window.emailBackgroundColor = '#ffffff';
+			}
+
+			editor.ui.componentFactory.add('BackgroundColor', (locale) => {
+				const button = new ButtonView(locale);
+
+				button.set({
+					label: 'Cor de Fundo',
+					icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><rect x="2" y="2" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="3" width="14" height="14" fill="#ffffff" stroke="currentColor" stroke-width="0.5"/></svg>',
+					tooltip: 'Selecionar cor de fundo do email',
+					withText: false
+				});
+
+				button.on('execute', () => this.openBackgroundColorModal(editor));
+				return button;
+			});
+		}
+
+		openBackgroundColorModal(editor) {
+			const { modal, close } = createModal('Cor de Fundo do Email', `
+				<div class="mb-3">
+					<label class="form-label">Selecione a cor de fundo</label>
+					<input type="color" class="form-control form-control-color" id="bg-color-picker" value="${window.emailBackgroundColor}" style="height: 50px;">
+				</div>
+				<div class="alert alert-info">
+					<strong>Dica:</strong> Esta cor será aplicada ao fundo do body do email na pré-visualização e ao salvar.
+				</div>
+			`);
+
+			modal.find('.ck-modal-confirm').on('click', () => {
+				const color = modal.find('#bg-color-picker').val();
+				
+				if (color) {
+					window.emailBackgroundColor = color;
+					alert('Cor de fundo alterada para ' + color);
+				}
+
+				close();
+			});
+		}
+	}
+
 	function createModal(title, bodyHtml) {
 		const modalId = `ck-modal-${Date.now()}`;
 		const $modal = $(`
@@ -768,6 +821,7 @@
 					TemplatesPlugin,
 					TagsPlugin,
 					GoogleFontsPlugin,
+					BackgroundColorPlugin,
 					CustomUploadAdapterPlugin
 				],
 					menuBar: {
@@ -783,8 +837,8 @@
 							//'textPartLanguage',
 							'fullscreen',
 							'|',
-						'Templates', 'Tags', 'GoogleFonts',
-						'|',
+					'Templates', 'Tags', 'GoogleFonts', 'BackgroundColor',
+					'|',
 							'fontSize',
 							'fontFamily',
 							'fontColor',
@@ -1001,6 +1055,23 @@
 					enforceEditorHeight(editor, settings.height);
 
 					window.renderEditorPreview = renderEditorPreview;
+
+					// Aplicar estilos inline ao sair do modo fonte
+					const sourceEditing = editor.plugins.get('SourceEditing');
+					if (sourceEditing) {
+						sourceEditing.on('change:isSourceEditingMode', (evt, propertyName, newValue) => {
+							// Quando sai do modo fonte (newValue = false)
+							if (!newValue) {
+								setTimeout(() => {
+									const html = editor.getData();
+									if (html && window.inlineStyles && window.adjustForOldEmailClients) {
+										const processedHtml = window.adjustForOldEmailClients(window.inlineStyles(html));
+										editor.setData(processedHtml);
+									}
+								}, 100);
+							}
+						});
+					}
 
 					editorReadyDeferred.resolveReady(editor);
 				})
