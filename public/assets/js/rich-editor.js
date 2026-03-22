@@ -739,57 +739,6 @@
 		}
 	}
 
-			// Usar o mesmo padrão de ColorUI do FontColor
-			editor.ui.componentFactory.add('BackgroundColor', (locale) => {
-				const colorPickerView = new CKEDITOR.ColorPickerView(locale);
-				const dropdownView = createDropdown(locale);
-				
-				dropdownView.buttonView.set({
-					label: 'Cor de Fundo',
-					icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><rect x="2" y="2" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="3" width="14" height="14" fill="' + window.emailBackgroundColor + '" stroke="currentColor" stroke-width="0.5"/></svg>',
-					tooltip: 'Cor de fundo do email',
-					withText: false
-				});
-
-				const items = new Collection();
-				
-				// Adicionar cores predefinidas (DEFAULT_HEX_COLORS)
-				for (const colorOption of DEFAULT_HEX_COLORS) {
-					items.add({
-						type: 'button',
-						model: new UIModel({
-							label: colorOption.label,
-							withText: true,
-							commandParam: colorOption.color
-						})
-					});
-				}
-
-				addListToDropdown(dropdownView, items);
-
-				this.listenTo(dropdownView, 'execute', evt => {
-					const color = evt.source.commandParam;
-					
-					window.emailBackgroundColor = color;
-					
-					// Atualizar BG do editor
-					const editorElement = editor.ui.view.element;
-					if (editorElement) {
-						editorElement.style.backgroundColor = color;
-					}
-					
-					// Atualizar BG do preview
-					window.updateEmailPreview();
-					
-					// Atualizar ícone do botão
-					dropdownView.buttonView.icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><rect x="2" y="2" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="3" width="14" height="14" fill="' + color + '" stroke="currentColor" stroke-width="0.5"/></svg>';
-				});
-
-				return dropdownView;
-			});
-		}
-	}
-
 	function createModal(title, bodyHtml) {
 		const modalId = `ck-modal-${Date.now()}`;
 		const $modal = $(`

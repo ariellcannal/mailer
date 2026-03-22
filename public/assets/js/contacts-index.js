@@ -35,13 +35,15 @@
         
         // Habilitar/desabilitar botões
         const hasSelection = count > 0 || selectAllFlag;
-        document.getElementById('btnAddToList').disabled = !hasSelection;
-        document.getElementById('btnExportCSV').disabled = !hasSelection;
-        document.getElementById('btnDeleteInactivate').disabled = !hasSelection;
-        
-        // Botão Executar só fica habilitado se tiver ação selecionada
+        const btnAddToList = document.getElementById('btnAddToList');
+        const btnExportCSV = document.getElementById('btnExportCSV');
+        const btnDeleteInactivate = document.getElementById('btnDeleteInactivate');
         const btnExecute = document.getElementById('btnExecuteAction');
-        btnExecute.disabled = !hasSelection || !currentAction;
+        
+        if (btnAddToList) btnAddToList.disabled = !hasSelection;
+        if (btnExportCSV) btnExportCSV.disabled = !hasSelection;
+        if (btnDeleteInactivate) btnDeleteInactivate.disabled = !hasSelection;
+        if (btnExecute) btnExecute.disabled = !hasSelection || !currentAction;
     }
 
     function setAction(action) {
