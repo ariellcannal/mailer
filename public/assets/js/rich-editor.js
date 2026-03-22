@@ -664,16 +664,80 @@
 	 * Plugin para selecionar cor de fundo do email.
 	 * Usa o mesmo padrão do FontColor (ColorUI).
 	 */
+	/**
+	 * Plugin para selecionar cor de fundo do email.
+	 * Detecta cor no HTML ao colar no modo código.
+	 */
 	class BackgroundColorPlugin extends Plugin {
 		static get pluginName() { return 'BackgroundColorPlugin'; }
 
 		init() {
 			const editor = this.editor;
-			
-			// Inicializa cor de fundo padrão
+			const { commands } = editor;
+
 			if (!window.emailBackgroundColor) {
 				window.emailBackgroundColor = '#ffffff';
 			}
+
+			commands.add('setBackgroundColor', {
+				execute: (color) => {
+					window.emailBackgroundColor = color;
+					const editingView = editor.editing.view;
+					const editableElement = editingView.document.getRoot();
+					if (editableElement) {
+						editingView.change(writer => {
+							writer.setStyle('background-color', color, editableElement);
+						});
+					}
+					window.updateEmailPreview();
+				}
+			});
+
+			editor.ui.componentFactory.add('BackgroundColor', (locale) => {
+				const dropdownView = createDropdown(locale);
+				const colorPickerView = new CKEDITOR.ColorPickerView(locale);
+				colorPickerView.set({
+					colors: DEFAULT_HEX_COLORS.map(c => c.color),
+					columns: 5
+				});
+				dropdownView.buttonView.set({
+					label: 'Cor de Fundo',
+					icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><rect x="2" y="2" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="3" width="14" height="14" fill="' + window.emailBackgroundColor + '"  stroke="currentColor" stroke-width="0.5"/></svg>',
+					tooltip: 'Cor de fundo do email',
+					withText: false
+				});
+				dropdownView.panelView.children.add(colorPickerView);
+				this.listenTo(colorPickerView, 'execute', evt => {
+					const color = evt.source.value;
+					commands.execute('setBackgroundColor', color);
+					dropdownView.isOpen = false;
+				});
+				return dropdownView;
+			});
+
+			const sourceEditing = editor.plugins.get('SourceEditing');
+			if (sourceEditing) {
+				sourceEditing.on('change:isSourceEditingMode', (evt, propertyName, newValue) => {
+					if (!newValue) {
+						setTimeout(() => {
+							const html = editor.getData();
+							const bodyMatch = html.match(/<body[^>]*style="[^"]*background-color:[[:space:]]*([^;]+);[^"]*"/i);
+							const styleMatch = html.match(/body[[:space:]]*{[[:space:]]*[^}]*background-color:[[:space:]]*([^;]+);/i);
+							if (bodyMatch && bodyMatch[1]) {
+								const color = bodyMatch[1].trim();
+								window.emailBackgroundColor = color;
+								commands.execute('setBackgroundColor', color);
+							} else if (styleMatch && styleMatch[1]) {
+								const color = styleMatch[1].trim();
+								window.emailBackgroundColor = color;
+								commands.execute('setBackgroundColor', color);
+							}
+						}, 100);
+					}
+				});
+			}
+		}
+	}
 
 			// Usar o mesmo padrão de ColorUI do FontColor
 			editor.ui.componentFactory.add('BackgroundColor', (locale) => {
