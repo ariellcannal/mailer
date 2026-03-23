@@ -198,8 +198,6 @@ function inlineStyles(html) {
 			bodyStyle = styleMatch[1];
 		}
 	}
-	console.log("inlineStyles - bodyStyle:", bodyStyle);
-	console.log("inlineStyles - bodyMatch:", bodyMatch ? bodyMatch[0] : null);
 	
 	// Cria um parser DOM
 	const parser = new DOMParser();
@@ -295,7 +293,6 @@ function adjustForOldEmailClients(html) {
  * @returns {string} HTML processado e pronto para email
  */
 function processEmailHtml(html, googleFonts = []) {
-	console.log('processEmailHtml - HTML entrada:', html.substring(0, 200));
 	
 	// 1. Adiciona Google Fonts ao <head> se houver
 	if (googleFonts && googleFonts.length > 0) {

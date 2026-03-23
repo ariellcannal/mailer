@@ -787,7 +787,6 @@
 			// Comando para definir cor de fundo
 			commands.add('setBackgroundColor', {
 				execute: (color) => {
-					console.log('setBackgroundColor execute chamado com:', color);
 					if (!color) {
 						// Remover cor de fundo
 						window.emailBackgroundColor = '#ffffff';
@@ -800,13 +799,10 @@
 							editor.ui.view.editable.element.style.backgroundColor = '#ffffff';
 						}
 					} else {
-						console.log('Aplicando cor:', color);
 						// Definir cor de fundo
 						window.emailBackgroundColor = color;
 						const html = editor.getData();
-						console.log('HTML antes de aplicar:', html.substring(0, 150));
 						const updatedHtml = this.applyBackgroundColorToHtml(html, color);
-						console.log('HTML depois de aplicar:', updatedHtml.substring(0, 150));
 						editor.setData(updatedHtml);
 						
 						// Aplicar cor no editor visualmente
@@ -816,9 +812,7 @@
 					}
 					
 					// Atualiza preview
-					console.log('window.updateEmailPreview:', typeof window.updateEmailPreview);
 					if (window.updateEmailPreview) {
-						console.log('Chamando updateEmailPreview');
 						window.updateEmailPreview();
 					}
 				}
@@ -896,7 +890,6 @@
 							colorBtn.title = color;
 									colorBtn.addEventListener('click', (e) => {
 										e.preventDefault();
-										console.log('Cor selecionada:', color);
 										commands.execute('setBackgroundColor', color);
 										// Sincronizar input com cor selecionada
 										if (dropdown.panelView.element.querySelector('.ck-color-input')) {
@@ -938,7 +931,6 @@
 						confirmBtn.addEventListener('click', (e) => {
 							e.preventDefault();
 							const color = colorInput.value;
-							console.log('Executando setBackgroundColor com cor:', color);
 							commands.execute('setBackgroundColor', color);
 						// Atualizar ícone SVG do botão
 						const svg = dropdown.buttonView.element.querySelector('svg');
@@ -1468,12 +1460,10 @@
 		
 		// Obtém HTML do editor
 		let html = window.getRichEditorData();
-		console.log("updateEmailPreview - HTML do editor:", html.substring(0, 200));
 		
 		// Restaura background-color se foi definida
 		if (window.emailBackgroundColor && window.emailBackgroundColor !== '#ffffff') {
 			html = html.replace(/(<body[^>]*)(>)/i, `$1 style="background-color: ${window.emailBackgroundColor};"$2`);
-			console.log("updateEmailPreview - HTML com background restaurado:", html.substring(0, 200));
 		}
 		
 		// Obtém fontes Google importadas (se houver)
@@ -1481,7 +1471,6 @@
 		
 		// Processa HTML para email
 		const processedHtml = window.processEmailHtml ? window.processEmailHtml(html, googleFonts) : html;
-		console.log("updateEmailPreview - HTML processado:", processedHtml.substring(0, 200));
 		
 		// Atualiza iframe
 		const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
