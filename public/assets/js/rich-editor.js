@@ -101,6 +101,7 @@
 		BalloonToolbar,
 		BlockToolbar,
 
+		Command,
 		Plugin,
 		createDropdown,
 		Collection,
@@ -788,40 +789,44 @@
 			}
 
 			// Comando para definir cor de fundo
-			const bgColorCommand = {
-				execute: (color) => {
-					if (!color) {
-						// Remover cor de fundo
-						window.emailBackgroundColor = '#ffffff';
-						const html = editor.getData();
-						const updatedHtml = this.removeBackgroundColorFromHtml(html);
-						editor.setData(updatedHtml);
+			class SetBackgroundColorCommand extends Command {
+				execute(color) {
+					try {
+						if (!color) {
+							// Remover cor de fundo
+							window.emailBackgroundColor = '#ffffff';
+							const html = editor.getData();
+							const updatedHtml = this.editor.plugins.get('CANNALBackgroundColorCKPlugin').removeBackgroundColorFromHtml(html);
+							editor.setData(updatedHtml);
 
-						// Remover cor do editor visualmente
-						if (editor.ui.view.editable && editor.ui.view.editable.element) {
-							editor.ui.view.editable.element.style.backgroundColor = '#ffffff';
+							// Remover cor do editor visualmente
+							if (editor.ui.view.editable && editor.ui.view.editable.element) {
+								editor.ui.view.editable.element.style.backgroundColor = '#ffffff';
+							}
+						} else {
+							// Definir cor de fundo
+							window.emailBackgroundColor = color;
+							const html = editor.getData();
+							const updatedHtml = this.editor.plugins.get('CANNALBackgroundColorCKPlugin').applyBackgroundColorToHtml(html, color);
+							editor.setData(updatedHtml);
+
+							// Aplicar cor no editor visualmente
+							if (editor.ui.view.editable && editor.ui.view.editable.element) {
+								editor.ui.view.editable.element.style.backgroundColor = color;
+							}
 						}
-					} else {
-						// Definir cor de fundo
-						window.emailBackgroundColor = color;
-						const html = editor.getData();
-						const updatedHtml = this.applyBackgroundColorToHtml(html, color);
-						editor.setData(updatedHtml);
 
-						// Aplicar cor no editor visualmente
-						if (editor.ui.view.editable && editor.ui.view.editable.element) {
-							editor.ui.view.editable.element.style.backgroundColor = color;
+						// Atualiza preview
+						if (window.updateEmailPreview) {
+							window.updateEmailPreview();
 						}
-					}
-
-					// Atualiza preview
-					if (window.updateEmailPreview) {
-						window.updateEmailPreview();
+					} catch (e) {
+						console.error('Erro ao executar SetBackgroundColorCommand:', e);
 					}
 				}
-			};
+			}
 
-			commands.add('setBackgroundColor', bgColorCommand);
+			commands.add('setBackgroundColor', new SetBackgroundColorCommand(editor));
 
 			// Adiciona botão à toolbar com mesma UI do FontColor
 			editor.ui.componentFactory.add('BackgroundColor', (locale) => {
