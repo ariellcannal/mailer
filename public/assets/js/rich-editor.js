@@ -811,74 +811,62 @@
 				// Cores predefinidas (mesmas do FontColor)
 				const bgColors = DEFAULT_HEX_COLORS.map(c => c.color);
 				
-				// Criar color picker customizado com HTML
-				const colorPickerHtml = `
-					<div class="ck-color-picker" style="padding: 10px; background: #fff;">
-						<div style="margin-bottom: 10px;">
-							<button class="ck-button ck-button-remove" style="width: 100%; padding: 8px; background: #f0f0f0; border: 1px solid #ccc; cursor: pointer; border-radius: 3px;">
-								🗑️ Remover cor
-							</button>
-						</div>
-						<div class="ck-color-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 10px;">
-							${bgColors.map(color => `
-								<button class="ck-color-button" data-color="${color}" style="width: 30px; height: 30px; background: ${color}; border: 2px solid #ccc; cursor: pointer; border-radius: 3px;" title="${color}"></button>
-							`).join('')}
-						</div>
-						<div style="margin-top: 10px;">
-							<label style="display: block; font-size: 12px; margin-bottom: 5px;">Cor customizada:</label>
-							<input type="color" class="ck-color-input" value="${window.emailBackgroundColor}" style="width: 100%; height: 40px; cursor: pointer; border: 1px solid #ccc; border-radius: 3px;">
-						</div>
-					</div>
-				`;
+				// Criar color picker customizado com HTML simples
+				const colorPickerDiv = document.createElement('div');
+				colorPickerDiv.className = 'ck-color-picker';
+				colorPickerDiv.style.cssText = 'padding: 10px; background: #fff;';
 
-				// Criar view customizado
-				const colorPickerView = new View(locale);
-				colorPickerView.setTemplate({
-					tag: 'div',
-					children: [{
-						tag: 'div',
-						html: colorPickerHtml
-					}]
+				// Botão remover cor
+				const removeBtn = document.createElement('button');
+				removeBtn.className = 'ck-button-remove';
+				removeBtn.textContent = '🗑️ Remover cor';
+				removeBtn.style.cssText = 'width: 100%; padding: 8px; background: #f0f0f0; border: 1px solid #ccc; cursor: pointer; border-radius: 3px; margin-bottom: 10px;';
+				removeBtn.addEventListener('click', (e) => {
+					e.preventDefault();
+					commands.execute('setBackgroundColor', null);
+					dropdown.isOpen = false;
 				});
+				colorPickerDiv.appendChild(removeBtn);
 
-				// Adiciona ao dropdown
-				dropdown.panelView.children.add(colorPickerView);
-
-				// Listener para botões de cor
-				this.listenTo(colorPickerView, 'render', () => {
-					const element = colorPickerView.element;
-					if (!element) return;
-
-					// Botões de cor predefinida
-					element.querySelectorAll('.ck-color-button').forEach(btn => {
-						btn.addEventListener('click', (e) => {
-							e.preventDefault();
-							const color = btn.dataset.color;
-							commands.execute('setBackgroundColor', color);
-							dropdown.isOpen = false;
-						});
+				// Grid de cores
+				const colorGrid = document.createElement('div');
+				colorGrid.className = 'ck-color-grid';
+				colorGrid.style.cssText = 'display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 10px;';
+				bgColors.forEach(color => {
+					const colorBtn = document.createElement('button');
+					colorBtn.className = 'ck-color-button';
+					colorBtn.dataset.color = color;
+					colorBtn.style.cssText = `width: 30px; height: 30px; background: ${color}; border: 2px solid #ccc; cursor: pointer; border-radius: 3px;`;
+					colorBtn.title = color;
+					colorBtn.addEventListener('click', (e) => {
+						e.preventDefault();
+						commands.execute('setBackgroundColor', color);
+						dropdown.isOpen = false;
 					});
-
-					// Botão remover cor
-					const removeBtn = element.querySelector('.ck-button-remove');
-					if (removeBtn) {
-						removeBtn.addEventListener('click', (e) => {
-							e.preventDefault();
-							commands.execute('setBackgroundColor', null);
-							dropdown.isOpen = false;
-						});
-					}
-
-					// Input de cor customizada
-					const colorInput = element.querySelector('.ck-color-input');
-					if (colorInput) {
-						colorInput.addEventListener('change', (e) => {
-							const color = e.target.value;
-							commands.execute('setBackgroundColor', color);
-							dropdown.isOpen = false;
-						});
-					}
+					colorGrid.appendChild(colorBtn);
 				});
+				colorPickerDiv.appendChild(colorGrid);
+
+				// Input de cor customizada
+				const colorInputLabel = document.createElement('label');
+				colorInputLabel.textContent = 'Cor customizada:';
+				colorInputLabel.style.cssText = 'display: block; font-size: 12px; margin-bottom: 5px;';
+				colorPickerDiv.appendChild(colorInputLabel);
+
+				const colorInput = document.createElement('input');
+				colorInput.type = 'color';
+				colorInput.className = 'ck-color-input';
+				colorInput.value = window.emailBackgroundColor;
+				colorInput.style.cssText = 'width: 100%; height: 40px; cursor: pointer; border: 1px solid #ccc; border-radius: 3px;';
+				colorInput.addEventListener('change', (e) => {
+					const color = e.target.value;
+					commands.execute('setBackgroundColor', color);
+					dropdown.isOpen = false;
+				});
+				colorPickerDiv.appendChild(colorInput);
+
+				// Adiciona ao dropdown (sem usar View)
+				dropdown.panelView.element.appendChild(colorPickerDiv);
 
 				return dropdown;
 			});
