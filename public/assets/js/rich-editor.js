@@ -786,6 +786,11 @@
 
 			// Comando para definir cor de fundo
 			const bgColorCommand = {
+				isEnabled: true,
+				isToggleable: false,
+				forceDisabled: (state) => {
+					// Implementar desabilitação corretamente
+				},
 				execute: (color) => {
 					if (!color) {
 						// Remover cor de fundo
