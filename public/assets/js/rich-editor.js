@@ -1188,11 +1188,10 @@
 					},
 					toolbar: {
 						items: [
-							'undo',
-							'redo',
-							'|',
-							'sourceEditing',
-							'showBlocks',
+						'undo',
+						'redo',
+						'|',
+						'showBlocks',
 							'fullscreen',
 							'|',
 							'Templates', 'Tags', 'BackgroundColor', 'importGoogleFont',
