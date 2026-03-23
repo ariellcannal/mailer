@@ -42,7 +42,6 @@ const MessageEdit = {
      * Inicializa o controle de edição
      */
     init: function(editPermissions) {
-        console.log('MessageEdit.init() chamado', editPermissions);
         this.editPermissions = editPermissions || {};
         
         // Aplicar bloqueios de campos
@@ -65,7 +64,6 @@ const MessageEdit = {
      */
     applyFieldLocks: function() {
         const editMode = this.editPermissions.edit_mode;
-        console.log('Aplicando bloqueios, modo:', editMode);
         
         if (editMode === 'resend_only') {
             // Bloquear todos os campos exceto reenvios
@@ -115,7 +113,6 @@ const MessageEdit = {
      * Inicializa date pickers com Tempus Dominus
      */
     initDatePickers: function() {
-        console.log('Inicializando date pickers...');
         const self = this;
         
         // Data mínima: agora + 10 minutos
@@ -125,13 +122,11 @@ const MessageEdit = {
         // Configurar date picker para primeiro envio
         const scheduledAtInput = document.getElementById('scheduled_at');
         if (scheduledAtInput && !scheduledAtInput.disabled) {
-            console.log('Inicializando Tempus Dominus para #scheduled_at');
             try {
                 const config = { ...this.tempusDominusConfig };
                 config.restrictions.minDate = minDate;
                 
                 new tempusDominus.TempusDominus(scheduledAtInput, config);
-                console.log('Tempus Dominus inicializado com sucesso para #scheduled_at');
             } catch (e) {
                 console.error('Erro ao inicializar Tempus Dominus:', e);
             }
@@ -140,13 +135,11 @@ const MessageEdit = {
         // Configurar date pickers para reenvios
         document.querySelectorAll('[id^="resend_scheduled_"]').forEach(function(input) {
             if (!input.disabled) {
-                console.log('Inicializando Tempus Dominus para', input.id);
                 try {
                     const config = { ...self.tempusDominusConfig };
                     config.restrictions.minDate = minDate;
                     
                     new tempusDominus.TempusDominus(input, config);
-                    console.log('Tempus Dominus inicializado com sucesso para', input.id);
                 } catch (e) {
                     console.error('Erro ao inicializar Tempus Dominus para', input.id, e);
                 }
@@ -326,6 +319,3 @@ const MessageEdit = {
 
 // Exportar para uso global
 window.MessageEdit = MessageEdit;
-
-// Log para debug
-console.log('message-edit.js carregado com sucesso');

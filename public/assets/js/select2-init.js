@@ -7,18 +7,15 @@
 
     // Aguardar DOM e bibliotecas estarem prontas
     $(document).ready(function() {
-        console.log('Inicializando Select2...');
 
         // Verificar se Select2 está disponível
         if (typeof $.fn.select2 === 'undefined') {
-            console.error('Select2 não está disponível!');
             return;
         }
 
         // 1. CNAE Select (Receita Federal) - Com AJAX
         const cnaesSelect = $('#cnaes_select');
         if (cnaesSelect.length) {
-            console.log('Inicializando CNAE select com AJAX...');
             cnaesSelect.select2({
                 theme: 'bootstrap-5',
                 language: 'pt-BR',
@@ -42,7 +39,6 @@
         // 2. Selects Padrão
         $('select').not('#cnaes_select').each(function() {
             const $select = $(this);
-			console.log('Inicializando select:', $select.attr('id') || $select.attr('name'));
 
             // Pular se já foi inicializado
             if ($select.hasClass('select2-hidden-accessible')) {
@@ -65,7 +61,5 @@
 
             $select.select2(config);
         });
-
-        console.log('Select2 inicializado com sucesso!');
     });
 })();

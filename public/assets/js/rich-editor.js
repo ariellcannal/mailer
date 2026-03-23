@@ -1275,9 +1275,7 @@
 							{ model: 'heading5', view: 'h6', title: 'Heading 5', class: 'ck-heading_heading5' }
 						]
 					},
-					fontFamily: {
-						supportAllValues: true
-					},
+					fontFamily: {},
 					fontSize: {
 						options: [10, 12, 14, 'default', 18, 20, 22],
 						supportAllValues: true
