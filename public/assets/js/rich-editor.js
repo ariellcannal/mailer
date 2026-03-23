@@ -782,6 +782,11 @@
 						const html = editor.getData();
 						const updatedHtml = this.removeBackgroundColorFromHtml(html);
 						editor.setData(updatedHtml);
+						
+						// Remover cor do editor visualmente
+						if (editor.ui.view.editable && editor.ui.view.editable.element) {
+							editor.ui.view.editable.element.style.backgroundColor = '#ffffff';
+						}
 					} else {
 						console.log('Aplicando cor:', color);
 						// Definir cor de fundo
@@ -791,6 +796,11 @@
 						const updatedHtml = this.applyBackgroundColorToHtml(html, color);
 						console.log('HTML depois de aplicar:', updatedHtml.substring(0, 150));
 						editor.setData(updatedHtml);
+						
+						// Aplicar cor no editor visualmente
+						if (editor.ui.view.editable && editor.ui.view.editable.element) {
+							editor.ui.view.editable.element.style.backgroundColor = color;
+						}
 					}
 					
 					// Atualiza preview
