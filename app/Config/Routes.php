@@ -117,6 +117,11 @@ $routes->group('receita', function($routes) {
     $routes->post('adicionarEmpresasALista', 'ReceitaController::adicionarEmpresasALista'); // Adicionar empresas à lista
 });
 
+// API
+$routes->group('api', function($routes) {
+    $routes->get('google-fonts/search', 'ApiController::googleFontsSearch');
+});
+
 // Gerenciador de arquivos
 $routes->group('files', function($routes) {
     $routes->get('list', 'FileManagerController::list');
