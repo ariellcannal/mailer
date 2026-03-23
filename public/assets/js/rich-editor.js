@@ -118,8 +118,7 @@
 		submitHandler,
 		normalizeColorOptions,
 		removeButtonEnablement,
-		ColorGridView,
-		ColorInputView
+		ColorGridView
 	} = CKEDITOR;
 
 	const editorPlugins = [
@@ -819,15 +818,8 @@
 					removeButtonLabel: 'Remover cor'
 				});
 
-				// Cria color input view para seletor customizado
-				const colorInputView = new ColorInputView(locale, {
-					value: window.emailBackgroundColor,
-					format: 'hex'
-				});
-
-				// Adiciona grid e input ao dropdown
+				// Adiciona grid ao dropdown
 				dropdown.panelView.children.add(colorGridView);
-				dropdown.panelView.children.add(colorInputView);
 
 				// Listener para grid de cores
 				this.listenTo(colorGridView, 'execute', evt => {
@@ -839,13 +831,6 @@
 				// Listener para remover cor
 				this.listenTo(colorGridView, 'execute:removeColor', () => {
 					commands.execute('setBackgroundColor', null);
-					dropdown.isOpen = false;
-				});
-
-				// Listener para color input (seletor de cor)
-				this.listenTo(colorInputView, 'execute', evt => {
-					const color = evt.source.value;
-					commands.execute('setBackgroundColor', color);
 					dropdown.isOpen = false;
 				});
 
