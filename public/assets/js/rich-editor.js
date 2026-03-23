@@ -558,11 +558,15 @@
 			const sourceEditing = editor.plugins.get('SourceEditing');
 			if (sourceEditing) {
 				sourceEditing.on('change:isSourceEditingMode', (evt, propertyName, newValue) => {
-					if (!newValue) { // Saindo do modo fonte
-						setTimeout(() => {
-							const html = editor.getData();
-							this.detectGoogleFontsInHtml(html);
-						}, 100);
+					try {
+						if (!newValue) { // Saindo do modo fonte
+							setTimeout(() => {
+								const html = editor.getData();
+								this.detectGoogleFontsInHtml(html);
+							}, 100);
+						}
+					} catch (e) {
+						// Ignorar erros ao sair do modo fonte
 					}
 				});
 			}
@@ -785,8 +789,6 @@
 
 			// Comando para definir cor de fundo
 			const bgColorCommand = {
-				isEnabled: true,
-				isToggleable: false,
 				execute: (color) => {
 					if (!color) {
 						// Remover cor de fundo
@@ -984,29 +986,33 @@
 			const sourceEditing = editor.plugins.get('SourceEditing');
 			if (sourceEditing) {
 				sourceEditing.on('change:isSourceEditingMode', (evt, propertyName, newValue) => {
-					if (!newValue) { // Saindo do modo fonte
-						setTimeout(() => {
-							const html = editor.getData();
+					try {
+						if (!newValue) { // Saindo do modo fonte
+							setTimeout(() => {
+								const html = editor.getData();
 
-							// Detectar cor inline na body
-							const bodyMatch = html.match(/<body[^>]*style="[^"]*background-color:\s*([^;]+);[^"]*"/i);
-							if (bodyMatch && bodyMatch[1]) {
-								const color = bodyMatch[1].trim();
-								window.emailBackgroundColor = color;
-								// Restaurar visualmente
-								editor.ui.view.editable.element.style.backgroundColor = color;
-								return;
-							}
+								// Detectar cor inline na body
+								const bodyMatch = html.match(/<body[^>]*style="[^"]*background-color:\s*([^;]+);[^"]*"/i);
+								if (bodyMatch && bodyMatch[1]) {
+									const color = bodyMatch[1].trim();
+									window.emailBackgroundColor = color;
+									// Restaurar visualmente
+									editor.ui.view.editable.element.style.backgroundColor = color;
+									return;
+								}
 
-							// Detectar cor em <style>
-							const styleMatch = html.match(/body\s*{\s*[^}]*background-color:\s*([^;]+);/i);
-							if (styleMatch && styleMatch[1]) {
-								const color = styleMatch[1].trim();
-								window.emailBackgroundColor = color;
-								// Restaurar visualmente
-								editor.ui.view.editable.element.style.backgroundColor = color;
-							}
-						}, 100);
+								// Detectar cor em <style>
+								const styleMatch = html.match(/body\s*{\s*[^}]*background-color:\s*([^;]+);/i);
+								if (styleMatch && styleMatch[1]) {
+									const color = styleMatch[1].trim();
+									window.emailBackgroundColor = color;
+									// Restaurar visualmente
+									editor.ui.view.editable.element.style.backgroundColor = color;
+								}
+							}, 100);
+						}
+					} catch (e) {
+						// Ignorar erros ao sair do modo fonte
 					}
 				});
 			}
