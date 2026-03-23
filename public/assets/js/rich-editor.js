@@ -1438,6 +1438,15 @@
 						});
 					}
 
+					// Restaurar background-color quando foco volta ao editor
+					editor.ui.focusTracker.on("change:isFocused", (evt, propertyName, isFocused) => {
+						if (isFocused && window.emailBackgroundColor && window.emailBackgroundColor !== "#ffffff") {
+							if (editor.ui.view.editable && editor.ui.view.editable.element) {
+								editor.ui.view.editable.element.style.backgroundColor = window.emailBackgroundColor;
+							}
+						}
+					});
+
 					editorReadyDeferred.resolveReady(editor);
 				})
 				.catch((error) => {
