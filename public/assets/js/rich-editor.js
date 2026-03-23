@@ -801,29 +801,8 @@
 			class SetBackgroundColorCommand extends Command {
 				execute(color) {
 					try {
-						if (!color) {
-							// Remover cor de fundo
-							window.emailBackgroundColor = '#ffffff';
-							const html = editor.getData();
-							const updatedHtml = this.editor.plugins.get('CANNALBackgroundColorCKPlugin').removeBackgroundColorFromHtml(html);
-							editor.setData(updatedHtml);
-
-							// Remover cor do editor visualmente
-							if (editor.ui.view.editable && editor.ui.view.editable.element) {
-								editor.ui.view.editable.element.style.backgroundColor = '#ffffff';
-							}
-						} else {
-							// Definir cor de fundo
-							window.emailBackgroundColor = color;
-							const html = editor.getData();
-							const updatedHtml = this.editor.plugins.get('CANNALBackgroundColorCKPlugin').applyBackgroundColorToHtml(html, color);
-							editor.setData(updatedHtml);
-
-							// Aplicar cor no editor visualmente
-							if (editor.ui.view.editable && editor.ui.view.editable.element) {
-								editor.ui.view.editable.element.style.backgroundColor = color;
-							}
-						}
+						// Atualizar background color
+						window.updateBackground(color || '#ffffff');
 
 						// Atualiza preview
 						if (window.updateEmailPreview) {
@@ -1014,59 +993,7 @@
 
 		}
 
-		/**
-		 * Aplica cor de fundo ao HTML
-		 */
-		applyBackgroundColorToHtml(html, color) {
-			if (!html) return html;
 
-			// Se não tem <body>, cria uma
-			if (!html.includes('<body')) {
-				return html.replace(/<\/head>/i, `</head>\n<body style="background-color: ${color};">\n${html}\n</body>`);
-			}
-
-			// Se tem <body>, atualiza o style
-			const bodyRegex = /(<body[^>]*)style="([^"]*)"/i;
-			if (bodyRegex.test(html)) {
-				return html.replace(bodyRegex, (match, tag, style) => {
-					// Remove background-color anterior
-					const newStyle = style.replace(/background-color:\s*[^;]+;?\s*/i, '');
-					return `${tag}style="${newStyle}background-color: ${color};"`;
-				});
-			} else {
-				// Adiciona style com background-color
-				return html.replace(/(<body[^>]*)(>)/i, `$1 style="background-color: ${color};"$2`);
-			}
-		}
-
-		/**
-		 * Remove cor de fundo do HTML
-		 */
-		removeBackgroundColorFromHtml(html) {
-			if (!html) return html;
-
-			// Remove background-color do style da tag body
-			html = html.replace(/(<body[^>]*)style="([^"]*background-color:\s*[^;]+;[^"]*)"/i, (match, tag, style) => {
-				const newStyle = style.replace(/background-color:\s*[^;]+;?\s*/i, '').trim();
-				if (newStyle) {
-					return `${tag}style="${newStyle}"`;
-				} else {
-					return tag;
-				}
-			});
-
-			// Remove background-color do <style>
-			html = html.replace(/body\s*{\s*([^}]*background-color:\s*[^;]+;[^}]*)}/i, (match, content) => {
-				const newContent = content.replace(/background-color:\s*[^;]+;?\s*/i, '').trim();
-				if (newContent) {
-					return `body { ${newContent} }`;
-				} else {
-					return 'body { }';
-				}
-			});
-
-			return html;
-		}
 	}
 
 	function createModal(title, bodyHtml) {
@@ -1412,30 +1339,7 @@
 
 						window.renderEditorPreview = renderEditorPreview;
 
-						// Aplicar estilos inline ao sair do modo fonte
-						try {
-							const sourceEditing = editor.plugins.get('SourceEditing');
-							if (sourceEditing) {
-								sourceEditing.on('change:isSourceEditingMode', (evt, propertyName, newValue) => {
-									try {
-										// Quando sai do modo fonte (newValue = false)
-										if (!newValue) {
-											setTimeout(() => {
-												const html = editor.getData();
-												if (html && window.inlineStyles && window.adjustForOldEmailClients) {
-													const processedHtml = window.adjustForOldEmailClients(window.inlineStyles(html));
-													editor.setData(processedHtml);
-												}
-											}, 100);
-										}
-									} catch (e) {
-										// Ignorar erros ao sair do modo fonte
-									}
-								});
-							}
-						} catch (e) {
-							// Ignorar erros de sourceEditing
-						}
+						// Listener de SourceEditing já foi adicionado no plugin CANNALBackgroundColorCKPlugin
 
 
 						// Restaurar background-color continuamente
@@ -1480,7 +1384,7 @@
 		const googleFonts = window.importedGoogleFonts || [];
 
 		// Processa HTML para email
-		const processedHtml = window.processEmailHtml ? window.processEmailHtml(html, googleFonts) : html;
+		const processedHtml = window.renderHTML(html, googleFonts);
 
 		// Atualiza iframe
 		const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
