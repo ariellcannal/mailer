@@ -690,28 +690,28 @@
 				window.importedGoogleFonts.push(fontData);
 
 				// Adiciona fonte ao dropdown de fontes do CKEditor
-				const fontFamilyPlugin = editor.plugins.get('FontFamily');
-				if (fontFamilyPlugin) {
-					const fontFamilyCommand = editor.commands.get('fontFamily');
-					if (fontFamilyCommand) {
-						const fontOption = `${fontName}, sans-serif`;
-						// Atualiza a lista de opções do comando
-						const currentOptions = fontFamilyCommand._options || [];
-						if (!currentOptions.includes(fontOption)) {
-							currentOptions.push(fontOption);
-							fontFamilyCommand._options = currentOptions;
-						}
-					}
-				}
+				// Comentado: Acesso a _options causa erro em algumas versões do CKEditor
+				// const fontFamilyPlugin = editor.plugins.get('FontFamily');
+				// if (fontFamilyPlugin) {
+				//	const fontFamilyCommand = editor.commands.get('fontFamily');
+				//	if (fontFamilyCommand) {
+				//		const fontOption = `${fontName}, sans-serif`;
+				//		const currentOptions = fontFamilyCommand._options || [];
+				//		if (!currentOptions.includes(fontOption)) {
+				//			currentOptions.push(fontOption);
+				//			fontFamilyCommand._options = currentOptions;
+				//		}
+				//	}
+				// }
 
 				// Também atualiza a config para futuras referências
-				const fontFamilyConfig = editor.config.get('fontFamily');
-				if (fontFamilyConfig && fontFamilyConfig.options) {
-					const fontOption = `${fontName}, sans-serif`;
-					if (!fontFamilyConfig.options.includes(fontOption)) {
-						fontFamilyConfig.options.push(fontOption);
-					}
-				}
+				// const fontFamilyConfig = editor.config.get('fontFamily');
+				// if (fontFamilyConfig && fontFamilyConfig.options) {
+				//	const fontOption = `${fontName}, sans-serif`;
+				//	if (!fontFamilyConfig.options.includes(fontOption)) {
+				//		fontFamilyConfig.options.push(fontOption);
+				//	}
+				// }
 
 				// Atualiza preview
 				if (window.updateEmailPreview) {
