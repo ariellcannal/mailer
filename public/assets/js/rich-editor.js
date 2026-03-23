@@ -815,6 +815,9 @@
 			// Adiciona botão à toolbar com mesma UI do FontColor
 			editor.ui.componentFactory.add('BackgroundColor', (locale) => {
 				const dropdown = createDropdown(locale);
+				
+				// Armazenar referência ao dropdown para atualizar ícone
+				window.bgColorDropdown = dropdown;
 
 				dropdown.buttonView.set({
 					label: 'Cor de Fundo',
@@ -847,6 +850,10 @@
 							if (dropdown.panelView.element.querySelector('.ck-color-input')) {
 								dropdown.panelView.element.querySelector('.ck-color-input').value = '#ffffff';
 							}
+							// Remover cor do ícone do botão
+							if (dropdown.buttonView.element) {
+								dropdown.buttonView.element.style.backgroundColor = '';
+							}
 							dropdown.isOpen = false;
 						});
 						colorPickerDiv.appendChild(removeBtn);
@@ -861,16 +868,20 @@
 							colorBtn.dataset.color = color;
 							colorBtn.style.cssText = `width: 30px; height: 30px; background: ${color}; border: 2px solid #ccc; cursor: pointer; border-radius: 3px;`;
 							colorBtn.title = color;
-							colorBtn.addEventListener('click', (e) => {
-								e.preventDefault();
-								console.log('Cor selecionada:', color);
-								commands.execute('setBackgroundColor', color);
-								// Sincronizar input com cor selecionada
-								if (dropdown.panelView.element.querySelector('.ck-color-input')) {
-									dropdown.panelView.element.querySelector('.ck-color-input').value = color;
-								}
-								dropdown.isOpen = false;
-							});
+									colorBtn.addEventListener('click', (e) => {
+										e.preventDefault();
+										console.log('Cor selecionada:', color);
+										commands.execute('setBackgroundColor', color);
+										// Sincronizar input com cor selecionada
+										if (dropdown.panelView.element.querySelector('.ck-color-input')) {
+											dropdown.panelView.element.querySelector('.ck-color-input').value = color;
+										}
+										// Atualizar ícone do botão
+										if (dropdown.buttonView.element) {
+											dropdown.buttonView.element.style.backgroundColor = color;
+										}
+										dropdown.isOpen = false;
+									});
 							colorGrid.appendChild(colorBtn);
 						});
 						colorPickerDiv.appendChild(colorGrid);
@@ -899,8 +910,12 @@
 							const color = colorInput.value;
 							console.log('Executando setBackgroundColor com cor:', color);
 							commands.execute('setBackgroundColor', color);
+							// Atualizar ícone do botão
+							if (dropdown.buttonView.element) {
+								dropdown.buttonView.element.style.backgroundColor = color;
+							}
 							dropdown.isOpen = false;
-						});
+						});}
 						colorInputContainer.appendChild(confirmBtn);
 						colorPickerDiv.appendChild(colorInputContainer);
 
@@ -911,6 +926,13 @@
 
 				return dropdown;
 			});
+
+		// Restaurar cor quando editor ganha foco
+		editor.ui.view.editable.element.addEventListener('focus', () => {
+			if (window.emailBackgroundColor && window.emailBackgroundColor !== '#ffffff') {
+				editor.ui.view.editable.element.style.backgroundColor = window.emailBackgroundColor;
+			}
+		});
 
 		// Detectar cor de fundo ao sair do modo "Fonte" (SourceEditing)
 		const sourceEditing = editor.plugins.get('SourceEditing');
@@ -925,6 +947,8 @@
 						if (bodyMatch && bodyMatch[1]) {
 							const color = bodyMatch[1].trim();
 							window.emailBackgroundColor = color;
+							// Restaurar visualmente
+							editor.ui.view.editable.element.style.backgroundColor = color;
 							return;
 						}
 						
@@ -933,6 +957,8 @@
 						if (styleMatch && styleMatch[1]) {
 							const color = styleMatch[1].trim();
 							window.emailBackgroundColor = color;
+							// Restaurar visualmente
+							editor.ui.view.editable.element.style.backgroundColor = color;
 						}
 					}, 100);
 				}
