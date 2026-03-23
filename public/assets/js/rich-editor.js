@@ -106,7 +106,8 @@
 		Collection,
 		UIModel,
 		addListToDropdown,
-		ButtonView
+		ButtonView,
+		ColorPickerView
 	} = CKEDITOR;
 
 	const editorPlugins = [
