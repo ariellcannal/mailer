@@ -1008,12 +1008,16 @@
 		// Desabilitar botão no modo "Fonte"
 		if (sourceEditing) {
 			sourceEditing.on('change:isSourceEditingMode', (evt, propertyName, newValue) => {
-				const bgColorButton = editor.ui.view.toolbar.children.find(item => 
-					item.buttonView && item.buttonView.label === 'Cor de Fundo'
-				);
-				
-				if (bgColorButton) {
-					bgColorButton.isEnabled = !newValue;
+				try {
+					const bgColorButton = editor.ui.view.toolbar.children.find(item => 
+						item.buttonView && item.buttonView.label === 'Cor de Fundo'
+					);
+					
+					if (bgColorButton && bgColorButton.buttonView) {
+						bgColorButton.buttonView.isEnabled = !newValue;
+					}
+				} catch (e) {
+					// Ignorar erro ao desabilitar botão
 				}
 			});
 		}
