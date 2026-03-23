@@ -162,7 +162,6 @@
 
 	<script src="<?= base_url('assets/js/layout.js') ?>" defer></script>
 	<script src="<?= base_url('assets/js/message-edit.js') ?>"></script>
-	<script src="<?= base_url('assets/js/background-color-plugin.js').'?v='.time() ?>" defer></script>
 	<script src="<?= base_url('assets/js/google-fonts-plugin.js').'?v='.time() ?>" defer></script>
 	<script src="<?= base_url('assets/js/rich-editor.js').'?v='.time() ?>" defer></script>
 	<script src="<?= base_url('assets/js/format-html.js').'?v='.time() ?>" defer></script>
