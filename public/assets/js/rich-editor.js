@@ -534,9 +534,17 @@
 			}
 
 			// Adiciona comando para importar Google Font
-			editor.commands.add('importGoogleFont', {
-				execute: () => this.openGoogleFontsModal(editor)
-			});
+			class ImportGoogleFontCommand extends Command {
+				execute() {
+					try {
+						this.editor.plugins.get('CANNALGoogleFontsCKPlugin').openGoogleFontsModal(editor);
+					} catch (e) {
+						console.error('Erro ao executar ImportGoogleFontCommand:', e);
+					}
+				}
+			}
+
+			editor.commands.add('importGoogleFont', new ImportGoogleFontCommand(editor));
 
 			// Adiciona botão à toolbar
 			editor.ui.componentFactory.add('importGoogleFont', (locale) => {
