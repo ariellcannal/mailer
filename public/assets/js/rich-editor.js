@@ -850,10 +850,14 @@
 							if (dropdown.panelView.element.querySelector('.ck-color-input')) {
 								dropdown.panelView.element.querySelector('.ck-color-input').value = '#ffffff';
 							}
-							// Remover cor do ícone do botão
-							if (dropdown.buttonView.element) {
-								dropdown.buttonView.element.style.backgroundColor = '';
-							}
+						// Remover cor do ícone SVG do botão
+						const svg = dropdown.buttonView.element.querySelector('svg');
+						if (svg) {
+							// Restaurar cor original do SVG (cinza)
+							svg.querySelectorAll('path, rect, circle').forEach(el => {
+								el.setAttribute('fill', '#333');
+							});
+						}
 							dropdown.isOpen = false;
 						});
 						colorPickerDiv.appendChild(removeBtn);
@@ -876,9 +880,13 @@
 										if (dropdown.panelView.element.querySelector('.ck-color-input')) {
 											dropdown.panelView.element.querySelector('.ck-color-input').value = color;
 										}
-										// Atualizar ícone do botão
-										if (dropdown.buttonView.element) {
-											dropdown.buttonView.element.style.backgroundColor = color;
+										// Atualizar ícone SVG do botão
+										const svg = dropdown.buttonView.element.querySelector('svg');
+										if (svg) {
+											// Mudar cor de todos os paths/rects do SVG
+											svg.querySelectorAll('path, rect, circle').forEach(el => {
+												el.setAttribute('fill', color);
+											});
 										}
 										dropdown.isOpen = false;
 									});
@@ -910,11 +918,14 @@
 							const color = colorInput.value;
 							console.log('Executando setBackgroundColor com cor:', color);
 							commands.execute('setBackgroundColor', color);
-							// Atualizar ícone do botão
-							if (dropdown.buttonView.element) {
-								dropdown.buttonView.element.style.backgroundColor = color;
-							}
-							dropdown.isOpen = false;
+						// Atualizar ícone SVG do botão
+						const svg = dropdown.buttonView.element.querySelector('svg');
+						if (svg) {
+							svg.querySelectorAll('path, rect, circle').forEach(el => {
+								el.setAttribute('fill', color);
+							});
+						}
+						dropdown.isOpen = false;
 						});
 						colorInputContainer.appendChild(confirmBtn);
 						colorPickerDiv.appendChild(colorInputContainer);
