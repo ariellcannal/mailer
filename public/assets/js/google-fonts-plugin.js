@@ -1,4 +1,5 @@
 /**
+ * OBSOLETO
  * GoogleFontsPlugin para CKEditor 5
  * Permite importar fontes do Google Fonts via modal AJAX
  * Adiciona ao menu Formato > Fonte

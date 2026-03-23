@@ -13,12 +13,12 @@ $htmlContent = $htmlContent ?? old('html_content');
 	<ul class="nav nav-tabs" id="editorTabs" role="tablist">
 		<li class="nav-item" role="presentation">
 			<button class="nav-link active" id="create-tab" data-bs-toggle="tab" data-bs-target="#create-panel" type="button" role="tab" aria-controls="create-panel" aria-selected="true">
-				<i class="bi bi-pencil-square"></i> Create
+				<i class="bi bi-pencil-square"></i> Edição
 			</button>
 		</li>
 		<li class="nav-item" role="presentation">
 			<button class="nav-link" id="preview-tab" data-bs-toggle="tab" data-bs-target="#preview-panel" type="button" role="tab" aria-controls="preview-panel" aria-selected="false">
-				<i class="bi bi-eye"></i> Preview
+				<i class="bi bi-eye"></i> Visualização
 			</button>
 		</li>
 	</ul>

@@ -279,7 +279,7 @@
 	 * @param {File} file Arquivo que será enviado.
 	 * @returns {Promise<{default: string}>} Retorno com a URL da imagem enviada.
 	 */
-	class CustomUploadAdapter {
+	class CANNALCustomUploadAdapter {
 		constructor(loader, uploadUrl) {
 			this.loader = loader;
 			this.uploadUrl = settings.fileUploadUrl;
@@ -315,12 +315,12 @@
 		}
 	}
 
-	class CustomUploadAdapterPlugin extends Plugin {
-		static get pluginName() { return 'CustomUploadAdapterPlugin'; }
+	class CANNALCustomUploadCKPlugin extends Plugin {
+		static get pluginName() { return 'CANNALCustomUploadCKPlugin'; }
 
 		init() {
 			this.editor.plugins.get('FileRepository').createUploadAdapter = (loader) => {
-				return new CustomUploadAdapter(loader);
+				return new CANNALCustomUploadAdapter(loader);
 			};
 		}
 	}
@@ -345,7 +345,7 @@
 			const originalGetData = editor.getData.bind(editor);
 			editor.getData = function() {
 				let html = originalGetData();
-				
+
 				// Garante que temos <html>, <head>, <body>
 				if (!html.includes('<html')) {
 					html = `<!DOCTYPE html>
@@ -356,14 +356,14 @@
 <body>${html}</body>
 </html>`;
 				}
-				
+
 				return html;
 			};
 		}
 	}
 
-	class TemplatesPlugin extends Plugin {
-		static get pluginName() { return 'TemplatesPlugin'; }
+	class CANNALTemplatesCKPlugin extends Plugin {
+		static get pluginName() { return 'CANNALTemplatesCKPlugin'; }
 
 		init() {
 			const editor = this.editor;
@@ -429,7 +429,7 @@
 						modal.find('.template-item').on('click', function() {
 							const templateId = $(this).data('template');
 							const selectedTemplate = response.templates.find(t => t.id === templateId);
-							
+
 							if (selectedTemplate && selectedTemplate.html_content) {
 								const selectedHtml = selectedTemplate.html_content;
 								insertHtml(editor, selectedHtml);
@@ -450,8 +450,8 @@
 		}
 	}
 
-	class TagsPlugin extends Plugin {
-		static get pluginName() { return 'TagsPlugin'; }
+	class CANNALTagsCKPlugin extends Plugin {
+		static get pluginName() { return 'CANNALTagsCKPlugin'; }
 
 		init() {
 			const editor = this.editor;
@@ -516,12 +516,12 @@
 	}
 
 	/**
-	 * GoogleFontsPluginImproved para CKEditor 5
+	 * CANNALGoogleFontsCKPlugin para CKEditor 5
 	 * Permite importar fontes do Google Fonts via modal AJAX
 	 */
-	class GoogleFontsPluginImproved extends Plugin {
+	class CANNALGoogleFontsCKPlugin extends Plugin {
 		static get pluginName() {
-			return 'GoogleFontsPluginImproved';
+			return 'CANNALGoogleFontsCKPlugin';
 		}
 
 		init() {
@@ -542,10 +542,9 @@
 				const button = new ButtonView(locale);
 
 				button.set({
-					label: 'Importar Google Font',
 					tooltip: 'Importar fonte do Google Fonts',
 					withText: true,
-					icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M10.187 17H5.773c-.637 0-1.092-.138-1.364-.415-.273-.277-.409-.718-.409-1.323V4.738c0-.617.14-1.062.419-1.332.279-.27.73-.406 1.354-.406h4.68c.69 0 1.288.041 1.793.124.506.083.96.242 1.36.478.341.197.644.447.906.75a3.262 3.262 0 0 1 .808 2.162c0 1.401-.722 2.426-2.167 3.075C15.05 10.175 16 11.315 16 13.01a3.756 3.756 0 0 1-2.296 3.504 6.1 6.1 0 0 1-1.517.377c-.571.073-1.238.11-2 .11zm-.217-6.217H7v4.087h3.069c1.977 0 2.965-.69 2.965-2.072 0-.707-.256-1.22-.768-1.537-.512-.319-1.277-.478-2.296-.478zM7 5.13v3.619h2.606c.729 0 1.292-.067 1.69-.2a1.6 1.6 0 0 0 .91-.765c.165-.267.247-.566.247-.897 0-.707-.26-1.176-.778-1.409-.519-.232-1.31-.348-2.375-.348H7z"/></svg>'
+					icon: '<svg viewBox="0 0 48 48" id="b" xmlns="http://www.w3.org/2000/svg" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><defs><style>.c{fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;}</style></defs><path class="c" d="m31.6814,34.8868c-1.9155,1.29-4.3586,2.0718-7.2514,2.0718-5.59,0-10.3395-3.7723-12.04-8.8541v-.0195c-.43-1.29-.6841-2.6582-.6841-4.085s.2541-2.795.6841-4.085c1.7005-5.0818,6.45-8.8541,12.04-8.8541,3.1664,0,5.9809,1.0945,8.2286,3.2055l6.1568-6.1568c-3.7332-3.4791-8.5805-5.6095-14.3855-5.6095-8.4045,0-15.6559,4.8277-19.1936,11.8641-1.4659,2.8927-2.3064,6.1568-2.3064,9.6359s.8405,6.7432,2.3064,9.6359v.0195c3.5377,7.0168,10.7891,11.8445,19.1936,11.8445,5.805,0,10.6718-1.9155,14.2291-5.1991,4.0655-3.7527,6.4109-9.2645,6.4109-15.8123,0-1.5245-.1368-2.9905-.3909-4.3977h-20.2491v8.3264h11.5709c-.5082,2.6777-2.0327,4.945-4.3195,6.4695h0Z"></path></g></svg>'
 				});
 
 				button.on('execute', () => {
@@ -754,13 +753,13 @@
 	}
 
 	/**
-	 * BackgroundColorPlugin para CKEditor 5
+	 * CANNALBackgroundColorCKPlugin para CKEditor 5
 	 * Permite selecionar cor de fundo do email (aplicada via CSS inline na tag body)
 	 * Funciona exatamente como FontColor
 	 */
-	class BackgroundColorPlugin extends Plugin {
+	class CANNALBackgroundColorCKPlugin extends Plugin {
 		static get pluginName() {
-			return 'BackgroundColorPlugin';
+			return 'CANNALBackgroundColorCKPlugin';
 		}
 
 		init() {
@@ -770,7 +769,7 @@
 			// Inicializa cor de fundo padrão
 			if (!window.emailBackgroundColor) {
 				window.emailBackgroundColor = '#ffffff';
-				
+
 				// Tentar detectar cor do HTML existente
 				const html = editor.getData();
 				const bodyMatch = html.match(/<body[^>]*style="[^"]*background-color:\s*([^;]+);[^"]*"/i);
@@ -788,9 +787,6 @@
 			const bgColorCommand = {
 				isEnabled: true,
 				isToggleable: false,
-				forceDisabled: (state) => {
-					// Implementar desabilitação corretamente
-				},
 				execute: (color) => {
 					if (!color) {
 						// Remover cor de fundo
@@ -798,7 +794,7 @@
 						const html = editor.getData();
 						const updatedHtml = this.removeBackgroundColorFromHtml(html);
 						editor.setData(updatedHtml);
-						
+
 						// Remover cor do editor visualmente
 						if (editor.ui.view.editable && editor.ui.view.editable.element) {
 							editor.ui.view.editable.element.style.backgroundColor = '#ffffff';
@@ -809,211 +805,211 @@
 						const html = editor.getData();
 						const updatedHtml = this.applyBackgroundColorToHtml(html, color);
 						editor.setData(updatedHtml);
-						
+
 						// Aplicar cor no editor visualmente
 						if (editor.ui.view.editable && editor.ui.view.editable.element) {
 							editor.ui.view.editable.element.style.backgroundColor = color;
 						}
 					}
-					
+
 					// Atualiza preview
 					if (window.updateEmailPreview) {
 						window.updateEmailPreview();
 					}
 				}
 			};
-			
+
 			commands.add('setBackgroundColor', bgColorCommand);
 
 			// Adiciona botão à toolbar com mesma UI do FontColor
 			editor.ui.componentFactory.add('BackgroundColor', (locale) => {
 				try {
 					const dropdown = createDropdown(locale);
-					
+
 					// Armazenar referência ao dropdown para atualizar ícone
 					window.bgColorDropdown = dropdown;
 
 					dropdown.buttonView.set({
-					label: 'Cor de Fundo',
-					tooltip: 'Cor de fundo do email',
-					withText: false,
-					icon: icons.bgColor,
-					isToggleable: true
-				});
-				
-				// Inicializar ícone com cor atual
-				if (window.emailBackgroundColor && window.emailBackgroundColor !== '#ffffff') {
-					const svg = dropdown.buttonView.element.querySelector('svg');
-					if (svg) {
-						svg.querySelectorAll('path, rect, circle').forEach(el => {
-							el.setAttribute('fill', window.emailBackgroundColor);
-						});
-					}
-				}
-
-				// Cores predefinidas (mesmas do FontColor)
-				const bgColors = DEFAULT_HEX_COLORS.map(c => c.color);
-
-				// Listener para quando o dropdown é aberto (elemento renderizado)
-				this.listenTo(dropdown, 'change:isOpen', (evt, propertyName, isOpen) => {
-					if (isOpen && !dropdown.panelView.element.querySelector('.ck-color-picker')) {
-						// Criar color picker customizado com HTML simples
-						const colorPickerDiv = document.createElement('div');
-						colorPickerDiv.className = 'ck-color-picker';
-						colorPickerDiv.style.cssText = 'padding: 10px; background: #fff;';
-
-						// Botão remover cor
-						const removeBtn = document.createElement('button');
-						removeBtn.className = 'ck-button-remove';
-						removeBtn.textContent = '🗑️ Remover cor';
-						removeBtn.style.cssText = 'width: 100%; padding: 8px; background: #f0f0f0; border: 1px solid #ccc; cursor: pointer; border-radius: 3px; margin-bottom: 10px;';
-						removeBtn.addEventListener('click', (e) => {
-							e.preventDefault();
-							commands.execute('setBackgroundColor', null);
-							// Sincronizar input com cor removida
-							if (dropdown.panelView.element.querySelector('.ck-color-input')) {
-								dropdown.panelView.element.querySelector('.ck-color-input').value = '#ffffff';
-							}
-				// Remover cor do ícone SVG do botão
-				const svg = dropdown.buttonView.element.querySelector('svg');
-				if (svg) {
-					// Restaurar cor original do SVG (branco)
-					svg.querySelectorAll('path, rect, circle').forEach(el => {
-						el.setAttribute('fill', '#ffffff');
+						label: 'Cor de Fundo',
+						tooltip: 'Cor de fundo do email',
+						withText: false,
+						icon: icons.bgColor,
+						isToggleable: true
 					});
-				}
-							dropdown.isOpen = false;
-						});
-						colorPickerDiv.appendChild(removeBtn);
 
-						// Grid de cores
-						const colorGrid = document.createElement('div');
-						colorGrid.className = 'ck-color-grid';
-						colorGrid.style.cssText = 'display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 10px;';
-						bgColors.forEach(color => {
-							const colorBtn = document.createElement('button');
-							colorBtn.className = 'ck-color-button';
-							colorBtn.dataset.color = color;
-							colorBtn.style.cssText = `width: 30px; height: 30px; background: ${color}; border: 2px solid #ccc; cursor: pointer; border-radius: 3px;`;
-							colorBtn.title = color;
-									colorBtn.addEventListener('click', (e) => {
-										e.preventDefault();
-										commands.execute('setBackgroundColor', color);
-										// Sincronizar input com cor selecionada
-										if (dropdown.panelView.element.querySelector('.ck-color-input')) {
-											dropdown.panelView.element.querySelector('.ck-color-input').value = color;
-										}
-										// Atualizar ícone SVG do botão
-										const svg = dropdown.buttonView.element.querySelector('svg');
-										if (svg) {
-											// Mudar cor de todos os paths/rects do SVG
-											svg.querySelectorAll('path, rect, circle').forEach(el => {
-												el.setAttribute('fill', color);
-											});
-										}
-										dropdown.isOpen = false;
-									});
-							colorGrid.appendChild(colorBtn);
-						});
-						colorPickerDiv.appendChild(colorGrid);
-
-						// Input de cor customizada
-						const colorInputLabel = document.createElement('label');
-						colorInputLabel.textContent = 'Cor customizada:';
-						colorInputLabel.style.cssText = 'display: block; font-size: 12px; margin-bottom: 5px;';
-						colorPickerDiv.appendChild(colorInputLabel);
-
-						const colorInputContainer = document.createElement('div');
-						colorInputContainer.style.cssText = 'display: flex; gap: 5px;';
-
-						const colorInput = document.createElement('input');
-						colorInput.type = 'color';
-						colorInput.className = 'ck-color-input';
-						colorInput.value = window.emailBackgroundColor;
-						colorInput.style.cssText = 'flex: 1; height: 40px; cursor: pointer; border: 1px solid #ccc; border-radius: 3px;';
-						colorInputContainer.appendChild(colorInput);
-
-						const confirmBtn = document.createElement('button');
-						confirmBtn.textContent = 'OK';
-						confirmBtn.style.cssText = 'padding: 8px 16px; background: #007bff; color: #fff; border: none; cursor: pointer; border-radius: 3px;';
-						confirmBtn.addEventListener('click', (e) => {
-							e.preventDefault();
-							const color = colorInput.value;
-							commands.execute('setBackgroundColor', color);
-						// Atualizar ícone SVG do botão
+					// Inicializar ícone com cor atual
+					if (window.emailBackgroundColor && window.emailBackgroundColor !== '#ffffff') {
 						const svg = dropdown.buttonView.element.querySelector('svg');
 						if (svg) {
 							svg.querySelectorAll('path, rect, circle').forEach(el => {
-								el.setAttribute('fill', color);
+								el.setAttribute('fill', window.emailBackgroundColor);
 							});
 						}
-						dropdown.isOpen = false;
-						});
-						colorInputContainer.appendChild(confirmBtn);
-						colorPickerDiv.appendChild(colorInputContainer);
+					}
 
-					// Adiciona ao dropdown
-					dropdown.panelView.element.appendChild(colorPickerDiv);
-				}
-				});
+					// Cores predefinidas (mesmas do FontColor)
+					const bgColors = DEFAULT_HEX_COLORS.map(c => c.color);
 
-				return dropdown;
+					// Listener para quando o dropdown é aberto (elemento renderizado)
+					this.listenTo(dropdown, 'change:isOpen', (evt, propertyName, isOpen) => {
+						if (isOpen && !dropdown.panelView.element.querySelector('.ck-color-picker')) {
+							// Criar color picker customizado com HTML simples
+							const colorPickerDiv = document.createElement('div');
+							colorPickerDiv.className = 'ck-color-picker';
+							colorPickerDiv.style.cssText = 'padding: 10px; background: #fff;';
+
+							// Botão remover cor
+							const removeBtn = document.createElement('button');
+							removeBtn.className = 'ck-button-remove';
+							removeBtn.textContent = '🗑️ Remover cor';
+							removeBtn.style.cssText = 'width: 100%; padding: 8px; background: #f0f0f0; border: 1px solid #ccc; cursor: pointer; border-radius: 3px; margin-bottom: 10px;';
+							removeBtn.addEventListener('click', (e) => {
+								e.preventDefault();
+								commands.execute('setBackgroundColor', null);
+								// Sincronizar input com cor removida
+								if (dropdown.panelView.element.querySelector('.ck-color-input')) {
+									dropdown.panelView.element.querySelector('.ck-color-input').value = '#ffffff';
+								}
+								// Remover cor do ícone SVG do botão
+								const svg = dropdown.buttonView.element.querySelector('svg');
+								if (svg) {
+									// Restaurar cor original do SVG (branco)
+									svg.querySelectorAll('path, rect, circle').forEach(el => {
+										el.setAttribute('fill', '#ffffff');
+									});
+								}
+								dropdown.isOpen = false;
+							});
+							colorPickerDiv.appendChild(removeBtn);
+
+							// Grid de cores
+							const colorGrid = document.createElement('div');
+							colorGrid.className = 'ck-color-grid';
+							colorGrid.style.cssText = 'display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 10px;';
+							bgColors.forEach(color => {
+								const colorBtn = document.createElement('button');
+								colorBtn.className = 'ck-color-button';
+								colorBtn.dataset.color = color;
+								colorBtn.style.cssText = `width: 30px; height: 30px; background: ${color}; border: 2px solid #ccc; cursor: pointer; border-radius: 3px;`;
+								colorBtn.title = color;
+								colorBtn.addEventListener('click', (e) => {
+									e.preventDefault();
+									commands.execute('setBackgroundColor', color);
+									// Sincronizar input com cor selecionada
+									if (dropdown.panelView.element.querySelector('.ck-color-input')) {
+										dropdown.panelView.element.querySelector('.ck-color-input').value = color;
+									}
+									// Atualizar ícone SVG do botão
+									const svg = dropdown.buttonView.element.querySelector('svg');
+									if (svg) {
+										// Mudar cor de todos os paths/rects do SVG
+										svg.querySelectorAll('path, rect, circle').forEach(el => {
+											el.setAttribute('fill', color);
+										});
+									}
+									dropdown.isOpen = false;
+								});
+								colorGrid.appendChild(colorBtn);
+							});
+							colorPickerDiv.appendChild(colorGrid);
+
+							// Input de cor customizada
+							const colorInputLabel = document.createElement('label');
+							colorInputLabel.textContent = 'Cor customizada:';
+							colorInputLabel.style.cssText = 'display: block; font-size: 12px; margin-bottom: 5px;';
+							colorPickerDiv.appendChild(colorInputLabel);
+
+							const colorInputContainer = document.createElement('div');
+							colorInputContainer.style.cssText = 'display: flex; gap: 5px;';
+
+							const colorInput = document.createElement('input');
+							colorInput.type = 'color';
+							colorInput.className = 'ck-color-input';
+							colorInput.value = window.emailBackgroundColor;
+							colorInput.style.cssText = 'flex: 1; height: 40px; cursor: pointer; border: 1px solid #ccc; border-radius: 3px;';
+							colorInputContainer.appendChild(colorInput);
+
+							const confirmBtn = document.createElement('button');
+							confirmBtn.textContent = 'OK';
+							confirmBtn.style.cssText = 'padding: 8px 16px; background: #007bff; color: #fff; border: none; cursor: pointer; border-radius: 3px;';
+							confirmBtn.addEventListener('click', (e) => {
+								e.preventDefault();
+								const color = colorInput.value;
+								commands.execute('setBackgroundColor', color);
+								// Atualizar ícone SVG do botão
+								const svg = dropdown.buttonView.element.querySelector('svg');
+								if (svg) {
+									svg.querySelectorAll('path, rect, circle').forEach(el => {
+										el.setAttribute('fill', color);
+									});
+								}
+								dropdown.isOpen = false;
+							});
+							colorInputContainer.appendChild(confirmBtn);
+							colorPickerDiv.appendChild(colorInputContainer);
+
+							// Adiciona ao dropdown
+							dropdown.panelView.element.appendChild(colorPickerDiv);
+						}
+					});
+
+					return dropdown;
 				} catch (e) {
 					// Retornar dropdown vazio se houver erro
 					return createDropdown(locale);
 				}
 			});
 
-		// Restaurar cor quando editor ganha foco (após renderização)
-		if (editor.ui.view.editable && editor.ui.view.editable.element) {
-			editor.ui.view.editable.element.addEventListener('focus', () => {
-				if (window.emailBackgroundColor && window.emailBackgroundColor !== '#ffffff') {
-					editor.ui.view.editable.element.style.backgroundColor = window.emailBackgroundColor;
-				}
-			});
-		} else {
-			// Se ainda não foi renderizado, aguardar
-			setTimeout(() => {
-				if (editor.ui.view.editable && editor.ui.view.editable.element) {
-					editor.ui.view.editable.element.addEventListener('focus', () => {
-						if (window.emailBackgroundColor && window.emailBackgroundColor !== '#ffffff') {
-							editor.ui.view.editable.element.style.backgroundColor = window.emailBackgroundColor;
-						}
-					});
-				}
-			}, 100);
-		}
+			// Restaurar cor quando editor ganha foco (após renderização)
+			if (editor.ui.view.editable && editor.ui.view.editable.element) {
+				editor.ui.view.editable.element.addEventListener('focus', () => {
+					if (window.emailBackgroundColor && window.emailBackgroundColor !== '#ffffff') {
+						editor.ui.view.editable.element.style.backgroundColor = window.emailBackgroundColor;
+					}
+				});
+			} else {
+				// Se ainda não foi renderizado, aguardar
+				setTimeout(() => {
+					if (editor.ui.view.editable && editor.ui.view.editable.element) {
+						editor.ui.view.editable.element.addEventListener('focus', () => {
+							if (window.emailBackgroundColor && window.emailBackgroundColor !== '#ffffff') {
+								editor.ui.view.editable.element.style.backgroundColor = window.emailBackgroundColor;
+							}
+						});
+					}
+				}, 100);
+			}
 
-		// Detectar cor de fundo ao sair do modo "Fonte" (SourceEditing)
-		const sourceEditing = editor.plugins.get('SourceEditing');
-		if (sourceEditing) {
-			sourceEditing.on('change:isSourceEditingMode', (evt, propertyName, newValue) => {
-				if (!newValue) { // Saindo do modo fonte
-					setTimeout(() => {
-						const html = editor.getData();
-						
-						// Detectar cor inline na body
-						const bodyMatch = html.match(/<body[^>]*style="[^"]*background-color:\s*([^;]+);[^"]*"/i);
-						if (bodyMatch && bodyMatch[1]) {
-							const color = bodyMatch[1].trim();
-							window.emailBackgroundColor = color;
-							// Restaurar visualmente
-							editor.ui.view.editable.element.style.backgroundColor = color;
-							return;
-						}
-						
-						// Detectar cor em <style>
-						const styleMatch = html.match(/body\s*{\s*[^}]*background-color:\s*([^;]+);/i);
-						if (styleMatch && styleMatch[1]) {
-							const color = styleMatch[1].trim();
-							window.emailBackgroundColor = color;
-							// Restaurar visualmente
-							editor.ui.view.editable.element.style.backgroundColor = color;
-						}
-					}, 100);
-				}
-			});
-		}
+			// Detectar cor de fundo ao sair do modo "Fonte" (SourceEditing)
+			const sourceEditing = editor.plugins.get('SourceEditing');
+			if (sourceEditing) {
+				sourceEditing.on('change:isSourceEditingMode', (evt, propertyName, newValue) => {
+					if (!newValue) { // Saindo do modo fonte
+						setTimeout(() => {
+							const html = editor.getData();
+
+							// Detectar cor inline na body
+							const bodyMatch = html.match(/<body[^>]*style="[^"]*background-color:\s*([^;]+);[^"]*"/i);
+							if (bodyMatch && bodyMatch[1]) {
+								const color = bodyMatch[1].trim();
+								window.emailBackgroundColor = color;
+								// Restaurar visualmente
+								editor.ui.view.editable.element.style.backgroundColor = color;
+								return;
+							}
+
+							// Detectar cor em <style>
+							const styleMatch = html.match(/body\s*{\s*[^}]*background-color:\s*([^;]+);/i);
+							if (styleMatch && styleMatch[1]) {
+								const color = styleMatch[1].trim();
+								window.emailBackgroundColor = color;
+								// Restaurar visualmente
+								editor.ui.view.editable.element.style.backgroundColor = color;
+							}
+						}, 100);
+					}
+				});
+			}
 
 		}
 
@@ -1165,299 +1161,300 @@
 
 	window.renderEditorPreview = renderEditorPreview;
 
-		function initEditors() {
-			$('#richEditor').each(function() {
-				const element = this;
+	function initEditors() {
+		$('#richEditor').each(function() {
+			const element = this;
 
-				try {
-					ClassicEditor
-						.create(element, {
-					fullPage: true,
-					licenseKey: settings.licence,
-					language: 'pt-br',
-					plugins: editorPlugins,
-					extraPlugins: [
-						PreserveFullHtmlPlugin,
-						TemplatesPlugin,
-						TagsPlugin,
-						GoogleFontsPluginImproved,
-						BackgroundColorPlugin,
-						CustomUploadAdapterPlugin
-					],
-					menuBar: {
-						isVisible: true
-					},
-					toolbar: {
-						items: [
-						'undo',
-						'redo',
-						'|',
-						'sourceEditing',
-						'showBlocks',
-							'fullscreen',
-							'|',
-							'Templates', 'Tags', 'BackgroundColor', 'importGoogleFont',
-							'|',
-						'fontSize',
-						'fontFamily',
-						'fontColor',
+			try {
+				ClassicEditor
+					.create(element, {
+						fullPage: true,
+						licenseKey: settings.licence,
+						language: 'pt-br',
+						plugins: editorPlugins,
+						extraPlugins: [
+							PreserveFullHtmlPlugin,
+							CANNALTemplatesCKPlugin,
+							CANNALTagsCKPlugin,
+							CANNALGoogleFontsCKPlugin,
+							CANNALBackgroundColorCKPlugin,
+							CANNALCustomUploadCKPlugin
+						],
+						menuBar: {
+							isVisible: true
+						},
+						toolbar: {
+							items: [
+								'undo',
+								'redo',
+								'|',
+								'sourceEditing',
+								'showBlocks',
+								'fullscreen',
+								'|',
+								'Templates', 'Tags', 'BackgroundColor',
+								'|',
+								'importGoogleFont',
+								'fontSize',
+								'fontFamily',
+								'fontColor',
+								'fontBackgroundColor',
+								'|',
+								'bold',
+								'italic',
+								'underline',
+								'strikethrough',
+								'subscript',
+								'superscript',
+								'|',
+								'emoji',
+								'horizontalLine',
+								'link',
+								'insertImage',
+								'mediaEmbed',
+								'insertTable',
+								'highlight',
+								'blockQuote',
+								'|',
+								'alignment',
+								'|',
+								'bulletedList',
+								'numberedList',
+								'todoList',
+								'outdent',
+								'indent',
+								'|',
+								'heading',
+								'style',
+							],
+
+							shouldNotGroupWhenFull: true
+						},
+						balloonToolbar: ['bold', 'italic', '|', 'link', '|', 'bulletedList', 'numberedList'],
+						blockToolbar: [
+							'fontSize',
+							'fontColor',
 							'fontBackgroundColor',
 							'|',
 							'bold',
 							'italic',
-							'underline',
-							'strikethrough',
-							'subscript',
-							'superscript',
 							'|',
-							'emoji',
-							'horizontalLine',
 							'link',
-							'insertImage',
-							'mediaEmbed',
 							'insertTable',
-							'highlight',
-							'blockQuote',
-							'|',
-							'alignment',
 							'|',
 							'bulletedList',
 							'numberedList',
-							'todoList',
 							'outdent',
-							'indent',
-							'|',
-							'heading',
-							'style',
+							'indent'
 						],
-
-						shouldNotGroupWhenFull: true
-					},
-					balloonToolbar: ['bold', 'italic', '|', 'link', '|', 'bulletedList', 'numberedList'],
-					blockToolbar: [
-						'fontSize',
-						'fontColor',
-						'fontBackgroundColor',
-						'|',
-						'bold',
-						'italic',
-						'|',
-						'link',
-						'insertTable',
-						'|',
-						'bulletedList',
-						'numberedList',
-						'outdent',
-						'indent'
-					],
-					fullscreen: {
-						onEnterCallback: container =>
-							container.classList.add(
-								'editor-container',
-								'editor-container_classic-editor',
-								'editor-container_include-style',
-								'editor-container_include-block-toolbar',
-								'editor-container_include-fullscreen',
-								'main-container'
-							)
-					},
-					title: {
-						// No placeholder for the title.
-						placeholder: undefined
-					},
-					placeholder: undefined,
-					heading: {
-						options: [
-							{ model: 'paragraph', title: 'Paragraph', class: 'ck-heading_paragraph' },
-							{ model: 'heading1', view: 'h2', title: 'Heading 1', class: 'ck-heading_heading1' },
-							{ model: 'heading2', view: 'h3', title: 'Heading 2', class: 'ck-heading_heading2' },
-							{ model: 'heading3', view: 'h4', title: 'Heading 3', class: 'ck-heading_heading3' },
-							{ model: 'heading4', view: 'h5', title: 'Heading 4', class: 'ck-heading_heading4' },
-							{ model: 'heading5', view: 'h6', title: 'Heading 5', class: 'ck-heading_heading5' }
-						]
-					},
-					fontSize: {
-						options: [10, 12, 14, 'default', 18, 20, 22],
-						supportAllValues: true
-					},
-					fontColor: {
-						colorPicker: {
-							format: 'hex'
+						fullscreen: {
+							onEnterCallback: container =>
+								container.classList.add(
+									'editor-container',
+									'editor-container_classic-editor',
+									'editor-container_include-style',
+									'editor-container_include-block-toolbar',
+									'editor-container_include-fullscreen',
+									'main-container'
+								)
 						},
-						colors: DEFAULT_HEX_COLORS
-					},
-					fontBackgroundColor: {
-						colorPicker: {
-							format: 'hex'
+						title: {
+							// No placeholder for the title.
+							placeholder: undefined
 						},
-						colors: DEFAULT_HEX_COLORS
-					},
-					image: {
-						toolbar: [
-							'imageStyle:inline',
-							'imageStyle:block',
-							'imageStyle:side',
-							'|',
-							'toggleImageCaption',
-							'imageTextAlternative',
-							'|',
-							'resizeImage:200', 'resizeImage:500'
-						],
-						resizeUnit: "px",
-						resizeOptions: [
-							{ name: 'resizeImage:200', value: '200', icon: 'small', label: '200px' },
-							{ name: 'resizeImage:500', value: '500', icon: 'medium', label: '500px' }
-						],
-						upload: {
-							types: ['jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'svg+xml']
+						placeholder: undefined,
+						heading: {
+							options: [
+								{ model: 'paragraph', title: 'Paragraph', class: 'ck-heading_paragraph' },
+								{ model: 'heading1', view: 'h2', title: 'Heading 1', class: 'ck-heading_heading1' },
+								{ model: 'heading2', view: 'h3', title: 'Heading 2', class: 'ck-heading_heading2' },
+								{ model: 'heading3', view: 'h4', title: 'Heading 3', class: 'ck-heading_heading3' },
+								{ model: 'heading4', view: 'h5', title: 'Heading 4', class: 'ck-heading_heading4' },
+								{ model: 'heading5', view: 'h6', title: 'Heading 5', class: 'ck-heading_heading5' }
+							]
 						},
-						insert: {
-							integrations: ['upload', 'url']
-						}
-					},
-					link: {
-						addTargetToExternalLinks: true,
-						defaultProtocol: 'https://'
-					},
-					list: {
-						properties: {
-							styles: true,
-							startIndex: true,
-							reversed: false
-						}
-					},
-					table: {
-						contentToolbar: [
-							'tableColumn',
-							'tableRow',
-							'mergeTableCells',
-							'tableProperties',
-							'tableCellProperties',
-							'toggleTableCaption'
-						],
-						tableCellProperties: {
-							borderColors: DEFAULT_HEX_COLORS,
-							backgroundColors: DEFAULT_HEX_COLORS
+						fontSize: {
+							options: [10, 12, 14, 'default', 18, 20, 22],
+							supportAllValues: true
 						},
-						tableProperties: {
-							borderColors: DEFAULT_HEX_COLORS,
-							backgroundColors: DEFAULT_HEX_COLORS
-						}
-					},
-					htmlSupport: {
-						preserveEmptyBlocksInEditingView: true,
-						allow: [
-							{
-								// Permite TODAS as tags HTML comuns em emails
-								name: /.*/,
-								attributes: true,
-								classes: true,
-								styles: true
+						fontColor: {
+							colorPicker: {
+								format: 'hex'
+							},
+							colors: DEFAULT_HEX_COLORS
+						},
+						fontBackgroundColor: {
+							colorPicker: {
+								format: 'hex'
+							},
+							colors: DEFAULT_HEX_COLORS
+						},
+						image: {
+							toolbar: [
+								'imageStyle:inline',
+								'imageStyle:block',
+								'imageStyle:side',
+								'|',
+								'toggleImageCaption',
+								'imageTextAlternative',
+								'|',
+								'resizeImage:200', 'resizeImage:500'
+							],
+							resizeUnit: "px",
+							resizeOptions: [
+								{ name: 'resizeImage:200', value: '200', icon: 'small', label: '200px' },
+								{ name: 'resizeImage:500', value: '500', icon: 'medium', label: '500px' }
+							],
+							upload: {
+								types: ['jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'svg+xml']
+							},
+							insert: {
+								integrations: ['upload', 'url']
 							}
-						],
-						disallow: [] // Garante que nada seja explicitamente proibido
-					},
-					style: {
-						definitions: [
-							{ name: 'Button (green)', element: 'a', classes: ['button', 'button--green'] },
-							{ name: 'Button (black)', element: 'a', classes: ['button', 'button--black'] }, {
-								name: 'Article category',
-								element: 'h3',
-								classes: ['category']
-							},
-							{
-								name: 'Title',
-								element: 'h2',
-								classes: ['document-title']
-							},
-							{
-								name: 'Subtitle',
-								element: 'h3',
-								classes: ['document-subtitle']
-							},
-							{
-								name: 'Info box',
-								element: 'p',
-								classes: ['info-box']
-							},
-							{
-								name: 'CTA Link Primary',
-								element: 'a',
-								classes: ['button', 'button--green']
-							},
-							{
-								name: 'CTA Link Secondary',
-								element: 'a',
-								classes: ['button', 'button--black']
-							},
-							{
-								name: 'Marker',
-								element: 'span',
-								classes: ['marker']
-							},
-							{
-								name: 'Spoiler',
-								element: 'span',
-								classes: ['spoiler']
+						},
+						link: {
+							addTargetToExternalLinks: true,
+							defaultProtocol: 'https://'
+						},
+						list: {
+							properties: {
+								styles: true,
+								startIndex: true,
+								reversed: false
 							}
-						]
-					}
-				})
-				.then((editor) => {
-					editorInstance = editor;
-					window.editor = editor;
-
-					enforceEditorHeight(editor, settings.height);
-
-					window.renderEditorPreview = renderEditorPreview;
-
-					// Aplicar estilos inline ao sair do modo fonte
-					try {
-						const sourceEditing = editor.plugins.get('SourceEditing');
-						if (sourceEditing) {
-						sourceEditing.on('change:isSourceEditingMode', (evt, propertyName, newValue) => {
-							try {
-								// Quando sai do modo fonte (newValue = false)
-								if (!newValue) {
-									setTimeout(() => {
-										const html = editor.getData();
-										if (html && window.inlineStyles && window.adjustForOldEmailClients) {
-											const processedHtml = window.adjustForOldEmailClients(window.inlineStyles(html));
-											editor.setData(processedHtml);
-										}
-									}, 100);
+						},
+						table: {
+							contentToolbar: [
+								'tableColumn',
+								'tableRow',
+								'mergeTableCells',
+								'tableProperties',
+								'tableCellProperties',
+								'toggleTableCaption'
+							],
+							tableCellProperties: {
+								borderColors: DEFAULT_HEX_COLORS,
+								backgroundColors: DEFAULT_HEX_COLORS
+							},
+							tableProperties: {
+								borderColors: DEFAULT_HEX_COLORS,
+								backgroundColors: DEFAULT_HEX_COLORS
+							}
+						},
+						htmlSupport: {
+							preserveEmptyBlocksInEditingView: true,
+							allow: [
+								{
+									// Permite TODAS as tags HTML comuns em emails
+									name: /.*/,
+									attributes: true,
+									classes: true,
+									styles: true
 								}
-							} catch (e) {
-								// Ignorar erros ao sair do modo fonte
-							}
-						});
-					}
-				} catch (e) {
-					// Ignorar erros de sourceEditing
-				}
-
-
-					// Restaurar background-color continuamente
-					setInterval(() => {
-						if (window.emailBackgroundColor && window.emailBackgroundColor !== "#ffffff") {
-							const editableElement = editor.ui.view.editable.element;
-							if (editableElement && editableElement.style.backgroundColor !== window.emailBackgroundColor) {
-								editableElement.style.backgroundColor = window.emailBackgroundColor;
-							}
+							],
+							disallow: [] // Garante que nada seja explicitamente proibido
+						},
+						style: {
+							definitions: [
+								{ name: 'Button (green)', element: 'a', classes: ['button', 'button--green'] },
+								{ name: 'Button (black)', element: 'a', classes: ['button', 'button--black'] }, {
+									name: 'Article category',
+									element: 'h3',
+									classes: ['category']
+								},
+								{
+									name: 'Title',
+									element: 'h2',
+									classes: ['document-title']
+								},
+								{
+									name: 'Subtitle',
+									element: 'h3',
+									classes: ['document-subtitle']
+								},
+								{
+									name: 'Info box',
+									element: 'p',
+									classes: ['info-box']
+								},
+								{
+									name: 'CTA Link Primary',
+									element: 'a',
+									classes: ['button', 'button--green']
+								},
+								{
+									name: 'CTA Link Secondary',
+									element: 'a',
+									classes: ['button', 'button--black']
+								},
+								{
+									name: 'Marker',
+									element: 'span',
+									classes: ['marker']
+								},
+								{
+									name: 'Spoiler',
+									element: 'span',
+									classes: ['spoiler']
+								}
+							]
 						}
-					}, 500);
+					})
+					.then((editor) => {
+						editorInstance = editor;
+						window.editor = editor;
 
-					editorReadyDeferred.resolveReady(editor);
-				})
-				.catch((error) => {
-					console.error('Erro ao inicializar CKEditor:', error);
-					editorReadyDeferred.resolveReady(null);
-				});
+						enforceEditorHeight(editor, settings.height);
+
+						window.renderEditorPreview = renderEditorPreview;
+
+						// Aplicar estilos inline ao sair do modo fonte
+						try {
+							const sourceEditing = editor.plugins.get('SourceEditing');
+							if (sourceEditing) {
+								sourceEditing.on('change:isSourceEditingMode', (evt, propertyName, newValue) => {
+									try {
+										// Quando sai do modo fonte (newValue = false)
+										if (!newValue) {
+											setTimeout(() => {
+												const html = editor.getData();
+												if (html && window.inlineStyles && window.adjustForOldEmailClients) {
+													const processedHtml = window.adjustForOldEmailClients(window.inlineStyles(html));
+													editor.setData(processedHtml);
+												}
+											}, 100);
+										}
+									} catch (e) {
+										// Ignorar erros ao sair do modo fonte
+									}
+								});
+							}
+						} catch (e) {
+							// Ignorar erros de sourceEditing
+						}
+
+
+						// Restaurar background-color continuamente
+						setInterval(() => {
+							if (window.emailBackgroundColor && window.emailBackgroundColor !== "#ffffff") {
+								const editableElement = editor.ui.view.editable.element;
+								if (editableElement && editableElement.style.backgroundColor !== window.emailBackgroundColor) {
+									editableElement.style.backgroundColor = window.emailBackgroundColor;
+								}
+							}
+						}, 500);
+
+						editorReadyDeferred.resolveReady(editor);
+					})
+					.catch((error) => {
+						console.error('Erro ao inicializar CKEditor:', error);
+						editorReadyDeferred.resolveReady(null);
+					});
 			} catch (e) {
 				console.error('Erro ao criar CKEditor:', e);
 				editorReadyDeferred.resolveReady(null);
 			}
-			});
+		});
 	}
 
 	/**
@@ -1466,35 +1463,35 @@
 	function updateEmailPreview() {
 		const previewFrame = document.getElementById('emailPreviewFrame');
 		if (!previewFrame) return;
-		
+
 		// Obtém HTML do editor
 		let html = window.getRichEditorData();
-		
+
 		// Restaura background-color se foi definida
 		if (window.emailBackgroundColor && window.emailBackgroundColor !== '#ffffff') {
 			html = html.replace(/(<body[^>]*)(>)/i, `$1 style="background-color: ${window.emailBackgroundColor};"$2`);
 		}
-		
+
 		// Obtém fontes Google importadas (se houver)
 		const googleFonts = window.importedGoogleFonts || [];
-		
+
 		// Processa HTML para email
 		const processedHtml = window.processEmailHtml ? window.processEmailHtml(html, googleFonts) : html;
-		
+
 		// Atualiza iframe
 		const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
 		iframeDoc.open();
 		iframeDoc.write(processedHtml);
 		iframeDoc.close();
 	}
-	
+
 	// Atualiza preview quando a aba Preview é clicada
 	$(document).on('shown.bs.tab', '#preview-tab', function() {
 		updateEmailPreview();
 	});
-	
+
 	// Exporta função globalmente
 	window.updateEmailPreview = updateEmailPreview;
-	
+
 	$(document).ready(initEditors);
 })(jQuery);

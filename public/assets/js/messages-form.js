@@ -72,10 +72,6 @@
 			$(this).toggleClass('active', elementStep === step);
 			$(this).toggleClass('completed', elementStep < step);
 		});
-
-		if (step === 3 && typeof window.renderEditorPreview === 'function') {
-			window.renderEditorPreview('previewPane');
-		}
 	}
 
 	function validateCurrentStep() {
@@ -145,10 +141,6 @@
 
 		$.when(persistStep()).done(function(payload) {
 			if (!payload.success) return;
-
-			if (currentStep === 2 && typeof window.renderEditorPreview === 'function') {
-				window.renderEditorPreview('previewPane');
-			}
 
 			currentStep = Math.min(maxStep, currentStep + 1);
 
