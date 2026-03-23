@@ -295,6 +295,8 @@ function adjustForOldEmailClients(html) {
  * @returns {string} HTML processado e pronto para email
  */
 function processEmailHtml(html, googleFonts = []) {
+	console.log('processEmailHtml - HTML entrada:', html.substring(0, 200));
+	
 	// 1. Adiciona Google Fonts ao <head> se houver
 	if (googleFonts && googleFonts.length > 0) {
 		const fontLinks = googleFonts
