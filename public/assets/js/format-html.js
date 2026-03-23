@@ -189,9 +189,17 @@ function isPreformattedBlockLine(line, isPreviousLinePreFormatted) {
  */
 function inlineStyles(html) {
 	// Preserva o style da body antes de processar
-	const bodyStyleMatch = html.match(/<body[^>]*style="([^"]*)"[^>]*>/i);
-	const bodyStyle = bodyStyleMatch ? bodyStyleMatch[1] : null;
+	// Tenta encontrar style na tag body (com ou sem outros atributos)
+	let bodyStyle = null;
+	const bodyMatch = html.match(/<body[^>]*>/i);
+	if (bodyMatch) {
+		const styleMatch = bodyMatch[0].match(/style="([^"]*)"/);
+		if (styleMatch) {
+			bodyStyle = styleMatch[1];
+		}
+	}
 	console.log("inlineStyles - bodyStyle:", bodyStyle);
+	console.log("inlineStyles - bodyMatch:", bodyMatch ? bodyMatch[0] : null);
 	
 	// Cria um parser DOM
 	const parser = new DOMParser();
