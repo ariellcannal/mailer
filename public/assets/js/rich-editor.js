@@ -811,27 +811,73 @@
 				// Cores predefinidas (mesmas do FontColor)
 				const bgColors = DEFAULT_HEX_COLORS.map(c => c.color);
 				
-				// Cria color grid view (igual ao FontColor)
-				const colorGridView = new ColorGridView(locale, {
-					colors: bgColors,
-					columns: 5,
-					removeButtonLabel: 'Remover cor'
+				// Criar color picker customizado com HTML
+				const colorPickerHtml = `
+					<div class="ck-color-picker" style="padding: 10px; background: #fff;">
+						<div style="margin-bottom: 10px;">
+							<button class="ck-button ck-button-remove" style="width: 100%; padding: 8px; background: #f0f0f0; border: 1px solid #ccc; cursor: pointer; border-radius: 3px;">
+								🗑️ Remover cor
+							</button>
+						</div>
+						<div class="ck-color-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 10px;">
+							${bgColors.map(color => `
+								<button class="ck-color-button" data-color="${color}" style="width: 30px; height: 30px; background: ${color}; border: 2px solid #ccc; cursor: pointer; border-radius: 3px;" title="${color}"></button>
+							`).join('')}
+						</div>
+						<div style="margin-top: 10px;">
+							<label style="display: block; font-size: 12px; margin-bottom: 5px;">Cor customizada:</label>
+							<input type="color" class="ck-color-input" value="${window.emailBackgroundColor}" style="width: 100%; height: 40px; cursor: pointer; border: 1px solid #ccc; border-radius: 3px;">
+						</div>
+					</div>
+				`;
+
+				// Criar view customizado
+				const colorPickerView = new View(locale);
+				colorPickerView.setTemplate({
+					tag: 'div',
+					children: [{
+						tag: 'div',
+						html: colorPickerHtml
+					}]
 				});
 
-				// Adiciona grid ao dropdown
-				dropdown.panelView.children.add(colorGridView);
+				// Adiciona ao dropdown
+				dropdown.panelView.children.add(colorPickerView);
 
-				// Listener para grid de cores
-				this.listenTo(colorGridView, 'execute', evt => {
-					const color = evt.source.value;
-					commands.execute('setBackgroundColor', color);
-					dropdown.isOpen = false;
-				});
+				// Listener para botões de cor
+				this.listenTo(colorPickerView, 'render', () => {
+					const element = colorPickerView.element;
+					if (!element) return;
 
-				// Listener para remover cor
-				this.listenTo(colorGridView, 'execute:removeColor', () => {
-					commands.execute('setBackgroundColor', null);
-					dropdown.isOpen = false;
+					// Botões de cor predefinida
+					element.querySelectorAll('.ck-color-button').forEach(btn => {
+						btn.addEventListener('click', (e) => {
+							e.preventDefault();
+							const color = btn.dataset.color;
+							commands.execute('setBackgroundColor', color);
+							dropdown.isOpen = false;
+						});
+					});
+
+					// Botão remover cor
+					const removeBtn = element.querySelector('.ck-button-remove');
+					if (removeBtn) {
+						removeBtn.addEventListener('click', (e) => {
+							e.preventDefault();
+							commands.execute('setBackgroundColor', null);
+							dropdown.isOpen = false;
+						});
+					}
+
+					// Input de cor customizada
+					const colorInput = element.querySelector('.ck-color-input');
+					if (colorInput) {
+						colorInput.addEventListener('change', (e) => {
+							const color = e.target.value;
+							commands.execute('setBackgroundColor', color);
+							dropdown.isOpen = false;
+						});
+					}
 				});
 
 				return dropdown;
