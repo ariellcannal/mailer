@@ -1404,7 +1404,8 @@
 					try {
 						const sourceEditing = editor.plugins.get('SourceEditing');
 						if (sourceEditing) {
-							sourceEditing.on('change:isSourceEditingMode', (evt, propertyName, newValue) => {
+						sourceEditing.on('change:isSourceEditingMode', (evt, propertyName, newValue) => {
+							try {
 								// Quando sai do modo fonte (newValue = false)
 								if (!newValue) {
 									setTimeout(() => {
@@ -1415,11 +1416,14 @@
 										}
 									}, 100);
 								}
-							});
-						}
-					} catch (e) {
-						// Ignorar erros de sourceEditing
+							} catch (e) {
+								// Ignorar erros ao sair do modo fonte
+							}
+						});
 					}
+				} catch (e) {
+					// Ignorar erros de sourceEditing
+				}
 
 
 					// Restaurar background-color continuamente
