@@ -822,12 +822,13 @@
 
 			// Adiciona botão à toolbar com mesma UI do FontColor
 			editor.ui.componentFactory.add('BackgroundColor', (locale) => {
-				const dropdown = createDropdown(locale);
-				
-				// Armazenar referência ao dropdown para atualizar ícone
-				window.bgColorDropdown = dropdown;
+				try {
+					const dropdown = createDropdown(locale);
+					
+					// Armazenar referência ao dropdown para atualizar ícone
+					window.bgColorDropdown = dropdown;
 
-				dropdown.buttonView.set({
+					dropdown.buttonView.set({
 					label: 'Cor de Fundo',
 					tooltip: 'Cor de fundo do email',
 					withText: false,
@@ -946,12 +947,16 @@
 						colorInputContainer.appendChild(confirmBtn);
 						colorPickerDiv.appendChild(colorInputContainer);
 
-						// Adiciona ao dropdown
-						dropdown.panelView.element.appendChild(colorPickerDiv);
-					}
+					// Adiciona ao dropdown
+					dropdown.panelView.element.appendChild(colorPickerDiv);
+				}
 				});
 
 				return dropdown;
+				} catch (e) {
+					// Retornar dropdown vazio se houver erro
+					return createDropdown(locale);
+				}
 			});
 
 		// Restaurar cor quando editor ganha foco (após renderização)
