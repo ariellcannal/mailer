@@ -1189,6 +1189,7 @@
 							'Templates', 'Tags', 'BackgroundColor', 'importGoogleFont',
 							'|',
 						'fontSize',
+						'fontFamily',
 						'fontColor',
 							'fontBackgroundColor',
 							'|',
