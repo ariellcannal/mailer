@@ -1191,6 +1191,7 @@
 						'undo',
 						'redo',
 						'|',
+						'sourceEditing',
 						'showBlocks',
 							'fullscreen',
 							'|',
@@ -1409,20 +1410,24 @@
 					window.renderEditorPreview = renderEditorPreview;
 
 					// Aplicar estilos inline ao sair do modo fonte
-					const sourceEditing = editor.plugins.get('SourceEditing');
-					if (sourceEditing) {
-						sourceEditing.on('change:isSourceEditingMode', (evt, propertyName, newValue) => {
-							// Quando sai do modo fonte (newValue = false)
-							if (!newValue) {
-								setTimeout(() => {
-									const html = editor.getData();
-									if (html && window.inlineStyles && window.adjustForOldEmailClients) {
-										const processedHtml = window.adjustForOldEmailClients(window.inlineStyles(html));
-										editor.setData(processedHtml);
-									}
-								}, 100);
-							}
-						});
+					try {
+						const sourceEditing = editor.plugins.get('SourceEditing');
+						if (sourceEditing) {
+							sourceEditing.on('change:isSourceEditingMode', (evt, propertyName, newValue) => {
+								// Quando sai do modo fonte (newValue = false)
+								if (!newValue) {
+									setTimeout(() => {
+										const html = editor.getData();
+										if (html && window.inlineStyles && window.adjustForOldEmailClients) {
+											const processedHtml = window.adjustForOldEmailClients(window.inlineStyles(html));
+											editor.setData(processedHtml);
+										}
+									}, 100);
+								}
+							});
+						}
+					} catch (e) {
+						// Ignorar erros de sourceEditing
 					}
 
 
