@@ -1155,12 +1155,13 @@
 
 	window.renderEditorPreview = renderEditorPreview;
 
-	function initEditors() {
-		$('#richEditor').each(function() {
-			const element = this;
+		function initEditors() {
+			$('#richEditor').each(function() {
+				const element = this;
 
-			ClassicEditor
-				.create(element, {
+				try {
+					ClassicEditor
+						.create(element, {
 					fullPage: true,
 					licenseKey: settings.licence,
 					language: 'pt-br',
@@ -1437,7 +1438,11 @@
 					console.error('Erro ao inicializar CKEditor:', error);
 					editorReadyDeferred.resolveReady(null);
 				});
-		});
+			} catch (e) {
+				console.error('Erro ao criar CKEditor:', e);
+				editorReadyDeferred.resolveReady(null);
+			}
+			});
 	}
 
 	/**
