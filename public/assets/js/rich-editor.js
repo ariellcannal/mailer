@@ -1440,7 +1440,6 @@
 							}
 						}
 					}, 500);
-					}
 
 					editorReadyDeferred.resolveReady(editor);
 				})
