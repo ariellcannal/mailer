@@ -1456,12 +1456,14 @@
 		
 		// Obtém HTML do editor
 		const html = window.getRichEditorData();
+		console.log("updateEmailPreview - HTML do editor:", html.substring(0, 200));
 		
 		// Obtém fontes Google importadas (se houver)
 		const googleFonts = window.importedGoogleFonts || [];
 		
 		// Processa HTML para email
 		const processedHtml = window.processEmailHtml ? window.processEmailHtml(html, googleFonts) : html;
+		console.log("updateEmailPreview - HTML processado:", processedHtml.substring(0, 200));
 		
 		// Atualiza iframe
 		const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
