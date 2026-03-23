@@ -1439,15 +1439,15 @@
 					}
 
 
-					// Restaurar background-color quando foco volta ao editor
-					const editableElement = editor.ui.view.editable.element;
-					if (editableElement) {
-						editableElement.addEventListener("focus", () => {
-							console.log("Editor recebeu foco, restaurando cor:", window.emailBackgroundColor);
-							if (window.emailBackgroundColor && window.emailBackgroundColor !== "#ffffff") {
+					// Restaurar background-color continuamente
+					setInterval(() => {
+						if (window.emailBackgroundColor && window.emailBackgroundColor !== "#ffffff") {
+							const editableElement = editor.ui.view.editable.element;
+							if (editableElement && editableElement.style.backgroundColor !== window.emailBackgroundColor) {
 								editableElement.style.backgroundColor = window.emailBackgroundColor;
 							}
-						});
+						}
+					}, 500);
 					}
 
 					editorReadyDeferred.resolveReady(editor);
