@@ -770,6 +770,18 @@
 			// Inicializa cor de fundo padrão
 			if (!window.emailBackgroundColor) {
 				window.emailBackgroundColor = '#ffffff';
+				
+				// Tentar detectar cor do HTML existente
+				const html = editor.getData();
+				const bodyMatch = html.match(/<body[^>]*style="[^"]*background-color:\s*([^;]+);[^"]*"/i);
+				if (bodyMatch && bodyMatch[1]) {
+					window.emailBackgroundColor = bodyMatch[1].trim();
+				} else {
+					const styleMatch = html.match(/body\s*{\s*[^}]*background-color:\s*([^;]+);/i);
+					if (styleMatch && styleMatch[1]) {
+						window.emailBackgroundColor = styleMatch[1].trim();
+					}
+				}
 			}
 
 			// Comando para definir cor de fundo
