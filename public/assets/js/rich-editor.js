@@ -845,16 +845,16 @@
 							colorBtn.dataset.color = color;
 							colorBtn.style.cssText = `width: 30px; height: 30px; background: ${color}; border: 2px solid #ccc; cursor: pointer; border-radius: 3px;`;
 							colorBtn.title = color;
-										colorBtn.addEventListener('click', (e) => {
-											e.preventDefault();
-											console.log('Cor selecionada:', color);
-											commands.execute('setBackgroundColor', color);
-											// Sincronizar input com cor selecionada
-											if (dropdown.panelView.element.querySelector('.ck-color-input')) {
-												dropdown.panelView.element.querySelector('.ck-color-input').value = color;
-											}
-											dropdown.isOpen = false;
-										});
+							colorBtn.addEventListener('click', (e) => {
+								e.preventDefault();
+								console.log('Cor selecionada:', color);
+								commands.execute('setBackgroundColor', color);
+								// Sincronizar input com cor selecionada
+								if (dropdown.panelView.element.querySelector('.ck-color-input')) {
+									dropdown.panelView.element.querySelector('.ck-color-input').value = color;
+								}
+								dropdown.isOpen = false;
+							});
 							colorGrid.appendChild(colorBtn);
 						});
 						colorPickerDiv.appendChild(colorGrid);
