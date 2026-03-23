@@ -797,34 +797,53 @@
 				}
 			});
 
-			// Adiciona botão à toolbar usando ColorPickerView (igual FontColor)
+			// Adiciona botão à toolbar com mesma UI do FontColor
 			editor.ui.componentFactory.add('BackgroundColor', (locale) => {
 				const dropdown = createDropdown(locale);
 
 				dropdown.buttonView.set({
 					label: 'Cor de Fundo',
 					tooltip: 'Cor de fundo do email',
-					withText: true,
+					withText: false,
 					icon: icons.bgColor,
 					isToggleable: true
 				});
 
-				// Cria color picker view
-				const colorPickerView = new ColorPickerView(locale);
+				// Cores predefinidas (mesmas do FontColor)
+				const bgColors = DEFAULT_HEX_COLORS.map(c => c.color);
 				
-				// Cores predefinidas
-				const bgColors = DEFAULT_HEX_COLORS;
-				
-				colorPickerView.set({
-					colors: bgColors.map(c => c.color),
-					columns: 5
+				// Cria color grid view (igual ao FontColor)
+				const colorGridView = new ColorGridView(locale, {
+					colors: bgColors,
+					columns: 5,
+					removeButtonLabel: 'Remover cor'
 				});
 
-				// Adiciona color picker ao dropdown
-				dropdown.panelView.children.add(colorPickerView);
+				// Cria color input view para seletor customizado
+				const colorInputView = new ColorInputView(locale, {
+					value: window.emailBackgroundColor,
+					format: 'hex'
+				});
 
-				// Listener para quando cor é selecionada
-				this.listenTo(colorPickerView, 'execute', evt => {
+				// Adiciona grid e input ao dropdown
+				dropdown.panelView.children.add(colorGridView);
+				dropdown.panelView.children.add(colorInputView);
+
+				// Listener para grid de cores
+				this.listenTo(colorGridView, 'execute', evt => {
+					const color = evt.source.value;
+					commands.execute('setBackgroundColor', color);
+					dropdown.isOpen = false;
+				});
+
+				// Listener para remover cor
+				this.listenTo(colorGridView, 'execute:removeColor', () => {
+					commands.execute('setBackgroundColor', null);
+					dropdown.isOpen = false;
+				});
+
+				// Listener para color input (seletor de cor)
+				this.listenTo(colorInputView, 'execute', evt => {
 					const color = evt.source.value;
 					commands.execute('setBackgroundColor', color);
 					dropdown.isOpen = false;
