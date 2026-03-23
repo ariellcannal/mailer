@@ -191,6 +191,7 @@ function inlineStyles(html) {
 	// Preserva o style da body antes de processar
 	const bodyStyleMatch = html.match(/<body[^>]*style="([^"]*)"[^>]*>/i);
 	const bodyStyle = bodyStyleMatch ? bodyStyleMatch[1] : null;
+	console.log("inlineStyles - bodyStyle:", bodyStyle);
 	
 	// Cria um parser DOM
 	const parser = new DOMParser();
