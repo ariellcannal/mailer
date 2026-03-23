@@ -188,6 +188,10 @@ function isPreformattedBlockLine(line, isPreviousLinePreFormatted) {
  * @returns {string} HTML com CSS inline
  */
 function inlineStyles(html) {
+	// Preserva o style da body antes de processar
+	const bodyStyleMatch = html.match(/<body[^>]*style="([^"]*)"[^>]*>/i);
+	const bodyStyle = bodyStyleMatch ? bodyStyleMatch[1] : null;
+	
 	// Cria um parser DOM
 	const parser = new DOMParser();
 	const doc = parser.parseFromString(html, 'text/html');
@@ -238,7 +242,20 @@ function inlineStyles(html) {
 	styleElements.forEach(el => el.remove());
 	
 	// Retorna HTML serializado
-	return doc.documentElement.outerHTML;
+	let result = doc.documentElement.outerHTML;
+	
+	// Restaura o style da body se foi preservado
+	if (bodyStyle) {
+		result = result.replace(/<body([^>]*)>/i, (match, attrs) => {
+			// Se já tem style, não sobrescreve
+			if (/style="/.test(match)) {
+				return match;
+			}
+			return `<body${attrs} style="${bodyStyle}">`;
+		});
+	}
+	
+	return result;
 }
 
 /**
