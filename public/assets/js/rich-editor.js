@@ -1438,14 +1438,17 @@
 						});
 					}
 
+
 					// Restaurar background-color quando foco volta ao editor
-					editor.ui.focusTracker.on("change:isFocused", (evt, propertyName, isFocused) => {
-						if (isFocused && window.emailBackgroundColor && window.emailBackgroundColor !== "#ffffff") {
-							if (editor.ui.view.editable && editor.ui.view.editable.element) {
-								editor.ui.view.editable.element.style.backgroundColor = window.emailBackgroundColor;
+					const editableElement = editor.ui.view.editable.element;
+					if (editableElement) {
+						editableElement.addEventListener("focus", () => {
+							console.log("Editor recebeu foco, restaurando cor:", window.emailBackgroundColor);
+							if (window.emailBackgroundColor && window.emailBackgroundColor !== "#ffffff") {
+								editableElement.style.backgroundColor = window.emailBackgroundColor;
 							}
-						}
-					});
+						});
+					}
 
 					editorReadyDeferred.resolveReady(editor);
 				})
