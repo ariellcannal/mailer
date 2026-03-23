@@ -785,11 +785,7 @@
 			}
 
 			// Comando para definir cor de fundo
-			commands.add('setBackgroundColor', {
-				isEnabled: true,
-				forceDisabled: function(state) {
-					// Permitir desabilitação quando necessário
-				},
+			const bgColorCommand = {
 				execute: (color) => {
 					if (!color) {
 						// Remover cor de fundo
@@ -820,7 +816,9 @@
 						window.updateEmailPreview();
 					}
 				}
-			});
+			};
+			
+			commands.add('setBackgroundColor', bgColorCommand);
 
 			// Adiciona botão à toolbar com mesma UI do FontColor
 			editor.ui.componentFactory.add('BackgroundColor', (locale) => {
