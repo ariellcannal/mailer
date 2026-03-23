@@ -691,6 +691,21 @@
 				window.importedGoogleFonts.push(fontData);
 
 				// Adiciona fonte ao dropdown de fontes do CKEditor
+				const fontFamilyPlugin = editor.plugins.get('FontFamily');
+				if (fontFamilyPlugin) {
+					const fontFamilyCommand = editor.commands.get('fontFamily');
+					if (fontFamilyCommand) {
+						const fontOption = `${fontName}, sans-serif`;
+						// Atualiza a lista de opções do comando
+						const currentOptions = fontFamilyCommand._options || [];
+						if (!currentOptions.includes(fontOption)) {
+							currentOptions.push(fontOption);
+							fontFamilyCommand._options = currentOptions;
+						}
+					}
+				}
+
+				// Também atualiza a config para futuras referências
 				const fontFamilyConfig = editor.config.get('fontFamily');
 				if (fontFamilyConfig && fontFamilyConfig.options) {
 					const fontOption = `${fontName}, sans-serif`;
@@ -761,12 +776,19 @@
 			// Comando para definir cor de fundo
 			commands.add('setBackgroundColor', {
 				execute: (color) => {
-					window.emailBackgroundColor = color;
-					
-					// Atualiza HTML do editor com a cor de fundo
-					const html = editor.getData();
-					const updatedHtml = this.applyBackgroundColorToHtml(html, color);
-					editor.setData(updatedHtml);
+					if (!color) {
+						// Remover cor de fundo
+						window.emailBackgroundColor = '#ffffff';
+						const html = editor.getData();
+						const updatedHtml = this.removeBackgroundColorFromHtml(html);
+						editor.setData(updatedHtml);
+					} else {
+						// Definir cor de fundo
+						window.emailBackgroundColor = color;
+						const html = editor.getData();
+						const updatedHtml = this.applyBackgroundColorToHtml(html, color);
+						editor.setData(updatedHtml);
+					}
 					
 					// Atualiza preview
 					if (window.updateEmailPreview) {
@@ -811,45 +833,45 @@
 				return dropdown;
 			});
 
-			// Detectar cor de fundo ao sair do modo "Fonte" (SourceEditing)
-			const sourceEditing = editor.plugins.get('SourceEditing');
-			if (sourceEditing) {
-				sourceEditing.on('change:isSourceEditingMode', (evt, propertyName, newValue) => {
-					if (!newValue) { // Saindo do modo fonte
-						setTimeout(() => {
-							const html = editor.getData();
-							
-							// Detectar cor inline na body
-							const bodyMatch = html.match(/<body[^>]*style="[^"]*background-color:\s*([^;]+);[^"]*"/i);
-							if (bodyMatch && bodyMatch[1]) {
-								const color = bodyMatch[1].trim();
-								window.emailBackgroundColor = color;
-								return;
-							}
-							
-							// Detectar cor em <style>
-							const styleMatch = html.match(/body\s*{\s*[^}]*background-color:\s*([^;]+);/i);
-							if (styleMatch && styleMatch[1]) {
-								const color = styleMatch[1].trim();
-								window.emailBackgroundColor = color;
-							}
-						}, 100);
-					}
-				});
-			}
+		// Detectar cor de fundo ao sair do modo "Fonte" (SourceEditing)
+		const sourceEditing = editor.plugins.get('SourceEditing');
+		if (sourceEditing) {
+			sourceEditing.on('change:isSourceEditingMode', (evt, propertyName, newValue) => {
+				if (!newValue) { // Saindo do modo fonte
+					setTimeout(() => {
+						const html = editor.getData();
+						
+						// Detectar cor inline na body
+						const bodyMatch = html.match(/<body[^>]*style="[^"]*background-color:\s*([^;]+);[^"]*"/i);
+						if (bodyMatch && bodyMatch[1]) {
+							const color = bodyMatch[1].trim();
+							window.emailBackgroundColor = color;
+							return;
+						}
+						
+						// Detectar cor em <style>
+						const styleMatch = html.match(/body\s*{\s*[^}]*background-color:\s*([^;]+);/i);
+						if (styleMatch && styleMatch[1]) {
+							const color = styleMatch[1].trim();
+							window.emailBackgroundColor = color;
+						}
+					}, 100);
+				}
+			});
+		}
 
-			// Desabilitar botão no modo "Fonte"
-			if (sourceEditing) {
-				sourceEditing.on('change:isSourceEditingMode', (evt, propertyName, newValue) => {
-					const bgColorButton = editor.ui.view.toolbar.children.find(item => 
-						item.buttonView && item.buttonView.label === 'Cor de Fundo'
-					);
-					
-					if (bgColorButton) {
-						bgColorButton.isEnabled = !newValue;
-					}
-				});
-			}
+		// Desabilitar botão no modo "Fonte"
+		if (sourceEditing) {
+			sourceEditing.on('change:isSourceEditingMode', (evt, propertyName, newValue) => {
+				const bgColorButton = editor.ui.view.toolbar.children.find(item => 
+					item.buttonView && item.buttonView.label === 'Cor de Fundo'
+				);
+				
+				if (bgColorButton) {
+					bgColorButton.isEnabled = !newValue;
+				}
+			});
+		}
 		}
 
 		/**
@@ -875,6 +897,35 @@
 				// Adiciona style com background-color
 				return html.replace(/(<body[^>]*)(>)/i, `$1 style="background-color: ${color};"$2`);
 			}
+		}
+
+		/**
+		 * Remove cor de fundo do HTML
+		 */
+		removeBackgroundColorFromHtml(html) {
+			if (!html) return html;
+
+			// Remove background-color do style da tag body
+			html = html.replace(/(<body[^>]*)style="([^"]*background-color:\s*[^;]+;[^"]*)"/i, (match, tag, style) => {
+				const newStyle = style.replace(/background-color:\s*[^;]+;?\s*/i, '').trim();
+				if (newStyle) {
+					return `${tag}style="${newStyle}"`;
+				} else {
+					return tag;
+				}
+			});
+
+			// Remove background-color do <style>
+			html = html.replace(/body\s*{\s*([^}]*background-color:\s*[^;]+;[^}]*)}/i, (match, content) => {
+				const newContent = content.replace(/background-color:\s*[^;]+;?\s*/i, '').trim();
+				if (newContent) {
+					return `body { ${newContent} }`;
+				} else {
+					return 'body { }';
+				}
+			});
+
+			return html;
 		}
 	}
 
