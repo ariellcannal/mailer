@@ -927,12 +927,25 @@
 				return dropdown;
 			});
 
-		// Restaurar cor quando editor ganha foco
-		editor.ui.view.editable.element.addEventListener('focus', () => {
-			if (window.emailBackgroundColor && window.emailBackgroundColor !== '#ffffff') {
-				editor.ui.view.editable.element.style.backgroundColor = window.emailBackgroundColor;
-			}
-		});
+		// Restaurar cor quando editor ganha foco (após renderização)
+		if (editor.ui.view.editable && editor.ui.view.editable.element) {
+			editor.ui.view.editable.element.addEventListener('focus', () => {
+				if (window.emailBackgroundColor && window.emailBackgroundColor !== '#ffffff') {
+					editor.ui.view.editable.element.style.backgroundColor = window.emailBackgroundColor;
+				}
+			});
+		} else {
+			// Se ainda não foi renderizado, aguardar
+			setTimeout(() => {
+				if (editor.ui.view.editable && editor.ui.view.editable.element) {
+					editor.ui.view.editable.element.addEventListener('focus', () => {
+						if (window.emailBackgroundColor && window.emailBackgroundColor !== '#ffffff') {
+							editor.ui.view.editable.element.style.backgroundColor = window.emailBackgroundColor;
+						}
+					});
+				}
+			}, 100);
+		}
 
 		// Detectar cor de fundo ao sair do modo "Fonte" (SourceEditing)
 		const sourceEditing = editor.plugins.get('SourceEditing');
