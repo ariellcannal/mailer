@@ -1455,8 +1455,14 @@
 		if (!previewFrame) return;
 		
 		// Obtém HTML do editor
-		const html = window.getRichEditorData();
+		let html = window.getRichEditorData();
 		console.log("updateEmailPreview - HTML do editor:", html.substring(0, 200));
+		
+		// Restaura background-color se foi definida
+		if (window.emailBackgroundColor && window.emailBackgroundColor !== '#ffffff') {
+			html = html.replace(/(<body[^>]*)(>)/i, `$1 style="background-color: ${window.emailBackgroundColor};"$2`);
+			console.log("updateEmailPreview - HTML com background restaurado:", html.substring(0, 200));
+		}
 		
 		// Obtém fontes Google importadas (se houver)
 		const googleFonts = window.importedGoogleFonts || [];
