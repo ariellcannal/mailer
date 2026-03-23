@@ -32,12 +32,19 @@ class BackgroundColorPlugin extends CKEDITOR.Plugin {
 
 		// Adiciona botão à toolbar usando ColorUI (igual FontColor)
 		editor.ui.componentFactory.add('BackgroundColor', (locale) => {
-			const colorPickerView = new CKEDITOR.ColorPickerView(locale);
-			
-			colorPickerView.set({
-				colors: DEFAULT_HEX_COLORS.map(c => c.color),
-				columns: 5
-			});
+		const colorPickerView = new CKEDITOR.ColorPickerView(locale);
+		
+		// Cores predefinidas (mesmas do FontColor)
+		const bgColors = [
+			'#000000', '#4D4D4D', '#999999', '#E6E6E6', '#FFFFFF',
+			'#E65C5C', '#E69C5C', '#E6E65C', '#C2E65C', '#5CE65C',
+			'#5CE6A6', '#5CE6E6', '#5CA6E6', '#5C5CE6', '#A65CE6'
+		];
+		
+		colorPickerView.set({
+			colors: bgColors,
+			columns: 5
+		});
 
 			const dropdownView = CKEDITOR.createDropdown(locale);
 			dropdownView.buttonView.set({
