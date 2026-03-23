@@ -915,7 +915,7 @@
 								dropdown.buttonView.element.style.backgroundColor = color;
 							}
 							dropdown.isOpen = false;
-						});}
+						});
 						colorInputContainer.appendChild(confirmBtn);
 						colorPickerDiv.appendChild(colorInputContainer);
 
