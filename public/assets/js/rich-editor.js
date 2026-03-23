@@ -775,6 +775,7 @@
 			// Comando para definir cor de fundo
 			commands.add('setBackgroundColor', {
 				execute: (color) => {
+					console.log('setBackgroundColor execute chamado com:', color);
 					if (!color) {
 						// Remover cor de fundo
 						window.emailBackgroundColor = '#ffffff';
@@ -782,15 +783,20 @@
 						const updatedHtml = this.removeBackgroundColorFromHtml(html);
 						editor.setData(updatedHtml);
 					} else {
+						console.log('Aplicando cor:', color);
 						// Definir cor de fundo
 						window.emailBackgroundColor = color;
 						const html = editor.getData();
+						console.log('HTML antes de aplicar:', html.substring(0, 150));
 						const updatedHtml = this.applyBackgroundColorToHtml(html, color);
+						console.log('HTML depois de aplicar:', updatedHtml.substring(0, 150));
 						editor.setData(updatedHtml);
 					}
 					
 					// Atualiza preview
+					console.log('window.updateEmailPreview:', typeof window.updateEmailPreview);
 					if (window.updateEmailPreview) {
+						console.log('Chamando updateEmailPreview');
 						window.updateEmailPreview();
 					}
 				}
