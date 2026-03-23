@@ -827,6 +827,10 @@
 						removeBtn.addEventListener('click', (e) => {
 							e.preventDefault();
 							commands.execute('setBackgroundColor', null);
+							// Sincronizar input com cor removida
+							if (dropdown.panelView.element.querySelector('.ck-color-input')) {
+								dropdown.panelView.element.querySelector('.ck-color-input').value = '#ffffff';
+							}
 							dropdown.isOpen = false;
 						});
 						colorPickerDiv.appendChild(removeBtn);
@@ -841,11 +845,16 @@
 							colorBtn.dataset.color = color;
 							colorBtn.style.cssText = `width: 30px; height: 30px; background: ${color}; border: 2px solid #ccc; cursor: pointer; border-radius: 3px;`;
 							colorBtn.title = color;
-							colorBtn.addEventListener('click', (e) => {
-								e.preventDefault();
-								commands.execute('setBackgroundColor', color);
-								dropdown.isOpen = false;
-							});
+										colorBtn.addEventListener('click', (e) => {
+											e.preventDefault();
+											console.log('Cor selecionada:', color);
+											commands.execute('setBackgroundColor', color);
+											// Sincronizar input com cor selecionada
+											if (dropdown.panelView.element.querySelector('.ck-color-input')) {
+												dropdown.panelView.element.querySelector('.ck-color-input').value = color;
+											}
+											dropdown.isOpen = false;
+										});
 							colorGrid.appendChild(colorBtn);
 						});
 						colorPickerDiv.appendChild(colorGrid);
@@ -856,17 +865,28 @@
 						colorInputLabel.style.cssText = 'display: block; font-size: 12px; margin-bottom: 5px;';
 						colorPickerDiv.appendChild(colorInputLabel);
 
+						const colorInputContainer = document.createElement('div');
+						colorInputContainer.style.cssText = 'display: flex; gap: 5px;';
+
 						const colorInput = document.createElement('input');
 						colorInput.type = 'color';
 						colorInput.className = 'ck-color-input';
 						colorInput.value = window.emailBackgroundColor;
-						colorInput.style.cssText = 'width: 100%; height: 40px; cursor: pointer; border: 1px solid #ccc; border-radius: 3px;';
-						colorInput.addEventListener('change', (e) => {
-							const color = e.target.value;
+						colorInput.style.cssText = 'flex: 1; height: 40px; cursor: pointer; border: 1px solid #ccc; border-radius: 3px;';
+						colorInputContainer.appendChild(colorInput);
+
+						const confirmBtn = document.createElement('button');
+						confirmBtn.textContent = 'OK';
+						confirmBtn.style.cssText = 'padding: 8px 16px; background: #007bff; color: #fff; border: none; cursor: pointer; border-radius: 3px;';
+						confirmBtn.addEventListener('click', (e) => {
+							e.preventDefault();
+							const color = colorInput.value;
+							console.log('Executando setBackgroundColor com cor:', color);
 							commands.execute('setBackgroundColor', color);
 							dropdown.isOpen = false;
 						});
-						colorPickerDiv.appendChild(colorInput);
+						colorInputContainer.appendChild(confirmBtn);
+						colorPickerDiv.appendChild(colorInputContainer);
 
 						// Adiciona ao dropdown
 						dropdown.panelView.element.appendChild(colorPickerDiv);
