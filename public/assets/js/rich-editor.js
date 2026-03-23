@@ -826,6 +826,16 @@
 					icon: icons.bgColor,
 					isToggleable: true
 				});
+				
+				// Inicializar ícone com cor atual
+				if (window.emailBackgroundColor && window.emailBackgroundColor !== '#ffffff') {
+					const svg = dropdown.buttonView.element.querySelector('svg');
+					if (svg) {
+						svg.querySelectorAll('path, rect, circle').forEach(el => {
+							el.setAttribute('fill', window.emailBackgroundColor);
+						});
+					}
+				}
 
 				// Cores predefinidas (mesmas do FontColor)
 				const bgColors = DEFAULT_HEX_COLORS.map(c => c.color);
@@ -850,14 +860,14 @@
 							if (dropdown.panelView.element.querySelector('.ck-color-input')) {
 								dropdown.panelView.element.querySelector('.ck-color-input').value = '#ffffff';
 							}
-						// Remover cor do ícone SVG do botão
-						const svg = dropdown.buttonView.element.querySelector('svg');
-						if (svg) {
-							// Restaurar cor original do SVG (cinza)
-							svg.querySelectorAll('path, rect, circle').forEach(el => {
-								el.setAttribute('fill', '#333');
-							});
-						}
+				// Remover cor do ícone SVG do botão
+				const svg = dropdown.buttonView.element.querySelector('svg');
+				if (svg) {
+					// Restaurar cor original do SVG (branco)
+					svg.querySelectorAll('path, rect, circle').forEach(el => {
+						el.setAttribute('fill', '#ffffff');
+					});
+				}
 							dropdown.isOpen = false;
 						});
 						colorPickerDiv.appendChild(removeBtn);
