@@ -15,7 +15,8 @@ use CodeIgniter\I18n\Time;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\HTTP\RedirectResponse;
 
-class MessageController extends BaseController {
+class MessageController extends BaseController
+{
     /**
      * Fuso horário padrão configurado para os agendamentos.
      *
@@ -23,15 +24,16 @@ class MessageController extends BaseController {
      */
     protected string $appTimezone = 'America/Sao_Paulo';
 
-    public function index(): string {
+    public function index(): string
+    {
         $model = new MessageModel();
-        
+
         // Suporte a per_page (25, 50, 100, 200)
         $perPage = (int) $this->request->getGet('per_page');
         if (!in_array($perPage, [25, 50, 100, 200])) {
             $perPage = 25; // Padrão
         }
-        
+
         $messages = $model->orderBy('created_at', 'DESC')->paginate($perPage);
 
         $sendModel = new MessageSendModel();
@@ -76,8 +78,9 @@ class MessageController extends BaseController {
             'pageTitle' => 'Mensagens'
         ]);
     }
-    
-    public function create(): string {
+
+    public function create(): string
+    {
         $campaignModel = new CampaignModel();
         $senderModel = new SenderModel();
         $contactListModel = new ContactListModel();
@@ -121,7 +124,7 @@ class MessageController extends BaseController {
             $campaign = $campaignModel->find($message['campaign_id']);
             $campaignName = $campaign['name'] ?? '';
         }
-        
+
         $senderEmail = '';
         if (!empty($message['sender_id'])) {
             $sender = $senderModel->find($message['sender_id']);
@@ -138,7 +141,7 @@ class MessageController extends BaseController {
                 }
             }
         }
-        
+
         // Buscar regras de reenvio
         $db = \Config\Database::connect();
         $resendRules = $db->table('resend_rules')
@@ -173,12 +176,12 @@ class MessageController extends BaseController {
 
         // Retornar HTML puro da mensagem
         $html = $message['html_content'];
-        
+
         // Remover placeholders de personalização para pré-visualização
         $html = str_replace('{{nome}}', '[NOME]', $html);
         $html = str_replace('{{email}}', '[EMAIL]', $html);
         $html = str_replace('{{apelido}}', '[APELIDO]', $html);
-        
+
         return $this->response
             ->setContentType('text/html')
             ->setBody($html);
@@ -198,7 +201,7 @@ class MessageController extends BaseController {
 
         // Obter permissões de edição
         $permissions = $this->getEditPermissions($message);
-        
+
         // Se não pode editar de forma alguma
         if ($permissions['edit_mode'] === 'none' && !$permissions['show_draft_prompt']) {
             return redirect()->to('/messages/view/' . $id)
@@ -237,7 +240,8 @@ class MessageController extends BaseController {
      *
      * @return ResponseInterface
      */
-    public function store(): ResponseInterface {
+    public function store(): ResponseInterface
+    {
         try {
             $model = new MessageModel();
 
@@ -245,92 +249,92 @@ class MessageController extends BaseController {
 
             // Validar opt-out link
             $htmlContent = $this->sanitizeHtmlContent($this->request->getPost('html_content'));
-            
+
             if (empty(trim($htmlContent))) {
                 return $this->response->setJSON([
                     'success' => false,
                     'error' => 'O conteúdo do email não pode estar vazio.'
                 ]);
             }
-            
+
             $validation = $this->validateOptOutLink($htmlContent);
 
-        if (!$validation['valid']) {
+            if (!$validation['valid']) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'error' => $validation['message']
+                ]);
+            }
+
+            $scheduledAt = $this->normalizeScheduleInput($this->request->getPost('scheduled_at'));
+            $contactLists = (array) $this->request->getPost('contact_lists');
+
+            if (empty($contactLists) && $messageId > 0) {
+                $contactLists = $this->getDraftContactLists($messageId);
+            }
+
+            if (empty($contactLists)) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'error' => 'Selecione ao menos uma lista de contatos para agendar o envio.',
+                ]);
+            }
+
+            $contactIds = $this->getContactsFromLists($contactLists);
+
+            if (empty($contactIds)) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'error' => 'Nenhum contato válido encontrado nas listas selecionadas.',
+                ]);
+            }
+
+            $data = [
+                'campaign_id' => $this->request->getPost('campaign_id'),
+                'sender_id' => $this->request->getPost('sender_id'),
+                'subject' => $this->request->getPost('subject'),
+                'from_name' => $this->request->getPost('from_name'),
+                'reply_to' => $this->request->getPost('reply_to'),
+                'html_content' => $htmlContent,
+                'has_optout_link' => $validation['has_optout'],
+                'optout_link_visible' => $validation['is_visible'],
+                'status' => 'scheduled',
+                'scheduled_at' => $scheduledAt ?: $this->getCurrentDateTime(),
+                'progress_data' => null,
+            ];
+
+            $resendData = (array) $this->request->getPost('resends');
+
+            if ($messageId > 0) {
+                log_message('info', "Atualizando mensagem {$messageId} com status: {$data['status']}");
+                $model->update($messageId, $data);
+                log_message('info', "Mensagem {$messageId} atualizada");
+            } else {
+                log_message('info', "Criando nova mensagem com status: {$data['status']}");
+                $messageId = $model->insert($data);
+                log_message('info', "Mensagem criada com ID: {$messageId}");
+            }
+
+            if ($messageId > 0) {
+                $queue = new QueueManager();
+                $queue->queueMessage($messageId, $contactIds, 0);
+
+                $model->update($messageId, [
+                    'total_recipients' => count($contactIds),
+                ]);
+
+                $this->saveResendRules($messageId, $data['scheduled_at'], $resendData);
+
+                return $this->response->setJSON([
+                    'success' => true,
+                    'message_id' => $messageId
+                ]);
+            }
+
             return $this->response->setJSON([
                 'success' => false,
-                'error' => $validation['message']
+                'error' => 'Erro ao salvar mensagem'
             ]);
-        }
-
-        $scheduledAt = $this->normalizeScheduleInput($this->request->getPost('scheduled_at'));
-        $contactLists = (array) $this->request->getPost('contact_lists');
-
-        if (empty($contactLists) && $messageId > 0) {
-            $contactLists = $this->getDraftContactLists($messageId);
-        }
-
-        if (empty($contactLists)) {
-            return $this->response->setJSON([
-                'success' => false,
-                'error' => 'Selecione ao menos uma lista de contatos para agendar o envio.',
-            ]);
-        }
-
-        $contactIds = $this->getContactsFromLists($contactLists);
-
-        if (empty($contactIds)) {
-            return $this->response->setJSON([
-                'success' => false,
-                'error' => 'Nenhum contato válido encontrado nas listas selecionadas.',
-            ]);
-        }
-
-        $data = [
-            'campaign_id' => $this->request->getPost('campaign_id'),
-            'sender_id' => $this->request->getPost('sender_id'),
-            'subject' => $this->request->getPost('subject'),
-            'from_name' => $this->request->getPost('from_name'),
-            'reply_to' => $this->request->getPost('reply_to'),
-            'html_content' => $htmlContent,
-            'has_optout_link' => $validation['has_optout'],
-            'optout_link_visible' => $validation['is_visible'],
-            'status' => 'scheduled',
-            'scheduled_at' => $scheduledAt ?: $this->getCurrentDateTime(),
-            'progress_data' => null,
-        ];
-
-        $resendData = (array) $this->request->getPost('resends');
-
-        if ($messageId > 0) {
-            log_message('info', "Atualizando mensagem {$messageId} com status: {$data['status']}");
-            $model->update($messageId, $data);
-            log_message('info', "Mensagem {$messageId} atualizada");
-        } else {
-            log_message('info', "Criando nova mensagem com status: {$data['status']}");
-            $messageId = $model->insert($data);
-            log_message('info', "Mensagem criada com ID: {$messageId}");
-        }
-
-        if ($messageId > 0) {
-            $queue = new QueueManager();
-            $queue->queueMessage($messageId, $contactIds, 0);
-
-            $model->update($messageId, [
-                'total_recipients' => count($contactIds),
-            ]);
-
-            $this->saveResendRules($messageId, $data['scheduled_at'], $resendData);
-
-            return $this->response->setJSON([
-                'success' => true,
-                'message_id' => $messageId
-            ]);
-        }
-
-        return $this->response->setJSON([
-            'success' => false,
-            'error' => 'Erro ao salvar mensagem'
-        ]);
         } catch (\Exception $e) {
             log_message('error', 'Erro ao salvar mensagem: ' . $e->getMessage());
             return $this->response->setJSON([
@@ -349,44 +353,43 @@ class MessageController extends BaseController {
     {
         try {
             $model = new MessageModel();
-        $messageId = (int) ($this->request->getPost('message_id') ?? 0);
-        $current = $messageId > 0 ? $model->find($messageId) : null;
+            $messageId = (int) ($this->request->getPost('message_id') ?? 0);
+            $current = $messageId > 0 ? $model->find($messageId) : null;
 
-        $step = (int) ($this->request->getPost('step') ?? 1);
-        $htmlContent = $this->sanitizeHtmlContent($this->request->getPost('html_content') ?? '');
-        $validation = $this->validateStepData($step, $htmlContent);
+            $step = (int) ($this->request->getPost('step') ?? 1);
+            $htmlContent = $this->sanitizeHtmlContent($this->request->getPost('html_content') ?? '');
+            $validation = $this->validateStepData($step, $htmlContent);
 
-        if (!$validation['valid']) 
-        {
+            if (!$validation['valid']) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'error' => $validation['message'],
+                ]);
+            }
+
+            $data = $this->collectStepFields($step, $htmlContent, $validation);
+
+            if ($current) {
+                $data = array_filter($data, static fn($value) => $value !== null);
+                $model->update((int) $current['id'], $data);
+                $messageId = (int) $current['id'];
+            } else {
+                $messageId = $model->insert($data);
+            }
+
+            if ($messageId <= 0) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'error' => 'Não foi possível salvar o progresso da mensagem.',
+                ]);
+            }
+
+            $this->storeStepProgressData($messageId, $step);
+
             return $this->response->setJSON([
-                'success' => false,
-                'error' => $validation['message'],
+                'success' => true,
+                'message_id' => $messageId,
             ]);
-        }
-
-        $data = $this->collectStepFields($step, $htmlContent, $validation);
-
-        if ($current) {
-            $data = array_filter($data, static fn ($value) => $value !== null);
-            $model->update((int) $current['id'], $data);
-            $messageId = (int) $current['id'];
-        } else {
-            $messageId = $model->insert($data);
-        }
-
-        if ($messageId <= 0) {
-            return $this->response->setJSON([
-                'success' => false,
-                'error' => 'Não foi possível salvar o progresso da mensagem.',
-            ]);
-        }
-
-        $this->storeStepProgressData($messageId, $step);
-
-        return $this->response->setJSON([
-            'success' => true,
-            'message_id' => $messageId,
-        ]);
         } catch (\Exception $e) {
             log_message('error', 'Erro ao salvar progresso: ' . $e->getMessage());
             return $this->response->setJSON([
@@ -410,28 +413,28 @@ class MessageController extends BaseController {
 
         // Obter permissões de edição
         $permissions = $this->getEditPermissions($message);
-        
+
         // Se não pode editar
         if (!$permissions['can_edit']) {
             return redirect()->to('/messages/view/' . $id)
                 ->with('error', $permissions['reason']);
         }
-        
+
         // Se modo de edição é apenas reenvios
         if ($permissions['edit_mode'] === 'resend_only') {
             // Apenas permitir edição de reenvios
             $resends = (array) $this->request->getPost('resends');
-            
+
             if (empty($resends)) {
                 return redirect()->back()->with('error', 'Nenhum reenvio para atualizar.');
             }
-            
+
             $this->rescheduleResends($id, $resends, $message['subject']);
-            
+
             return redirect()->to('/messages/view/' . $id)
                 ->with('success', 'Reenvios atualizados com sucesso!');
         }
-        
+
         // Modo de edição completa
         $htmlContent = $this->sanitizeHtmlContent($this->request->getPost('html_content'));
         $validation = $this->validateOptOutLink($htmlContent);
@@ -487,15 +490,16 @@ class MessageController extends BaseController {
 
         return redirect()->to('/messages/view/' . $id)->with('success', 'Mensagem atualizada!');
     }
-    
-    public function send($id) {
+
+    public function send($id)
+    {
         $model = new MessageModel();
         $message = $model->find($id);
-        
+
         if (!$message) {
             return $this->response->setJSON(['success' => false, 'error' => 'Mensagem não encontrada']);
         }
-        
+
         // Validar opt-out
         if (!$message['has_optout_link'] || !$message['optout_link_visible']) {
             return $this->response->setJSON([
@@ -503,38 +507,39 @@ class MessageController extends BaseController {
                 'error' => 'Link de opt-out ausente ou invisível'
             ]);
         }
-        
+
         // Obter contatos
         $contactIds = $this->request->getPost('contact_ids');
-        
+
         if (empty($contactIds)) {
             return $this->response->setJSON(['success' => false, 'error' => 'Nenhum contato selecionado']);
         }
-        
+
         // Adicionar à fila
         $queue = new QueueManager();
         $result = $queue->queueMessage($id, $contactIds, 0);
-        
+
         // Atualizar status
         $model->update($id, [
             'status' => 'sending',
             'total_recipients' => count($contactIds),
         ]);
-        
+
         return $this->response->setJSON([
             'success' => true,
             'queued' => $result['queued']
         ]);
     }
-    
-    public function duplicate($id) {
+
+    public function duplicate($id)
+    {
         $model = new MessageModel();
         $message = $model->find($id);
-        
+
         if (!$message) {
             return redirect()->back()->with('error', 'Mensagem não encontrada');
         }
-        
+
         unset($message['id']);
         $message['status'] = 'draft';
         $message['total_sent'] = 0;
@@ -584,35 +589,38 @@ class MessageController extends BaseController {
         return redirect()->to('/messages')->with('success', 'Mensagem excluída com sucesso.');
     }
 
-    public function cancel($id) {
+    public function cancel($id)
+    {
         $model = new MessageModel();
-        
+
         if ($model->update($id, ['status' => 'cancelled'])) {
             return redirect()->back()->with('success', 'Envio cancelado!');
         }
-        
+
         return redirect()->back()->with('error', 'Erro ao cancelar');
     }
-    
-    public function reschedule($id) {
+
+    public function reschedule($id)
+    {
         $model = new MessageModel();
         $scheduledAt = $this->normalizeScheduleInput($this->request->getPost('scheduled_at'));
 
         if ($model->update($id, ['scheduled_at' => $scheduledAt, 'status' => 'scheduled'])) {
             return redirect()->back()->with('success', 'Reagendado com sucesso!');
         }
-        
+
         return redirect()->back()->with('error', 'Erro ao reagendar');
     }
-    
-    protected function validateOptOutLink(string $html): array {
+
+    protected function validateOptOutLink(string $html): array
+    {
         // Verifica presença de link de opt-out
         $hasOptout = (
             stripos($html, '{{optout_link}}') !== false ||
             stripos($html, '{{unsubscribe_link}}') !== false ||
             stripos($html, 'href="' . base_url('optout/') . '"') !== false
         );
-        
+
         if (!$hasOptout) {
             return [
                 'valid' => false,
@@ -621,10 +629,10 @@ class MessageController extends BaseController {
                 'message' => 'Link de opt-out não encontrado. Use {{optout_link}} no HTML.'
             ];
         }
-        
+
         // Verifica visibilidade (não está escondido)
         $isVisible = true;
-        
+
         // Verifica se está dentro de elemento com display:none
         if (preg_match('/style=["\']([^"\']*)display:\s*none([^"\']*)["\']/i', $html, $matches)) {
             $styleBlock = $matches[0];
@@ -632,10 +640,10 @@ class MessageController extends BaseController {
                 $isVisible = false;
             }
         }
-        
+
         // Verifica cor do texto igual ao fundo
         // (implementação simplificada)
-        
+
         if (!$isVisible) {
             return [
                 'valid' => false,
@@ -644,7 +652,7 @@ class MessageController extends BaseController {
                 'message' => 'Link de opt-out está escondido (display:none ou cor invisível)'
             ];
         }
-        
+
         return [
             'valid' => true,
             'has_optout' => true,
@@ -652,7 +660,7 @@ class MessageController extends BaseController {
             'message' => 'OK'
         ];
     }
-    
+
     /**
      * Calcula e persiste regras de reenvio vinculadas à mensagem.
      *
@@ -671,19 +679,19 @@ class MessageController extends BaseController {
 
         $db = \Config\Database::connect();
         $defaultSubject = (string) $this->request->getPost('subject');
-        
+
         log_message('info', "saveResendRules: Processando " . count($resends) . " reenvios para mensagem {$messageId}");
 
         foreach ($resends as $index => $resend) {
             log_message('info', "saveResendRules: Reenvio {$index} - scheduled_at: " . ($resend['scheduled_at'] ?? 'vazio'));
-            
+
             $scheduledAt = $this->normalizeScheduleInput($resend['scheduled_at'] ?? '');
 
             if (empty($scheduledAt)) {
                 log_message('warning', "saveResendRules: Reenvio {$index} ignorado - scheduled_at vazio após normalização");
                 continue;
             }
-            
+
             log_message('info', "saveResendRules: Reenvio {$index} normalizado para: {$scheduledAt}");
 
             $subject = trim((string) ($resend['subject'] ?? ''));
@@ -723,7 +731,7 @@ class MessageController extends BaseController {
         }
 
         if (in_array($step, [2, 3], true)) {
-            
+
             if (trim(strip_tags($htmlContent)) === '') {
                 return [
                     'valid' => false,
@@ -767,6 +775,8 @@ class MessageController extends BaseController {
 
     /**
      * Remove atributos de largura e altura das imagens para evitar distorções e preserva placeholders.
+     * Garante a estrutura com as tags <html><head></head><body> para melhor compatibilidade com editores WYSIWYG e clientes de email.
+     * Garante a cor de fundo do e-mail.
      *
      * @param string|null $htmlContent Conteúdo HTML recebido do formulário.
      *
@@ -774,10 +784,49 @@ class MessageController extends BaseController {
      */
     protected function sanitizeHtmlContent(?string $htmlContent): string
     {
-        $content = $htmlContent ?? '';
-
-        if (trim($content) === '') {
+        if (trim($htmlContent) === '') {
             return '';
+        }
+
+        // 1. Obtém a cor de fundo do POST ou aplica o fallback (#ffffff)
+        $bgColor = $this->request->getPost('emailBackgroundColor');
+        $bgColor = !empty($bgColor) ? $bgColor : '#ffffff';
+
+        // 2. Verifica se a tag <body> já existe no conteúdo (ignorando maiúsculas/minúsculas)
+        if (!preg_match('/<body[^>]*>/i', $htmlContent)) {
+            // Se não existir, assumimos que é apenas o conteúdo solto. Embrulhamos tudo.
+            $htmlContent = "<html>\n<head></head>\n<body style=\"background-color: {$bgColor};\">\n"
+                . $htmlContent
+                . "\n</body>\n</html>";
+        } else {
+            // 3. Se o <body> existe, garantimos que <html> e <head> também existam
+            if (!preg_match('/<html[^>]*>/i', $htmlContent)) {
+                $htmlContent = "<html>\n" . $htmlContent . "\n</html>";
+            }
+            if (!preg_match('/<head[^>]*>/i', $htmlContent)) {
+                // Insere o <head></head> logo após a tag de abertura do <html>
+                $htmlContent = preg_replace('/(<html[^>]*>)/i', "$1\n<head></head>", $htmlContent);
+            }
+
+            // 4. Injeta ou atualiza o atributo 'style' na tag <body> existente
+            $htmlContent = preg_replace_callback('/(<body[^>]*>)/i', function ($matches) use ($bgColor) {
+                $bodyTag = $matches[1];
+
+                // Verifica se a tag <body> já possui um atributo style="..."
+                if (preg_match('/style=["\'](.*?)["\']/i', $bodyTag, $styleMatches)) {
+                    $existingStyle = trim($styleMatches[1]);
+                    $existingStyle = rtrim($existingStyle, ';');
+
+                    // Concatena a regra do background (no CSS, a última regra prevalece)
+                    $newStyle = $existingStyle ? $existingStyle . "; background-color: {$bgColor};" : "background-color: {$bgColor};";
+
+                    // Substitui o style antigo pelo novo
+                    return preg_replace('/style=["\'](.*?)["\']/i', 'style="' . $newStyle . '"', $bodyTag);
+                } else {
+                    // Se não possui style, adicionamos logo após a palavra "body"
+                    return preg_replace('/<body/i', '<body style="background-color: ' . $bgColor . ';"', $bodyTag);
+                }
+            }, $htmlContent);
         }
 
         $cleanedContent = preg_replace_callback(
@@ -793,10 +842,10 @@ class MessageController extends BaseController {
 
                 return preg_replace('/\s{2,}/', ' ', trim($imageTag));
             },
-            $content
+            $htmlContent
         );
 
-        return $cleanedContent ?? $content;
+        return $cleanedContent ?? $htmlContent;
     }
 
     /**
@@ -861,7 +910,7 @@ class MessageController extends BaseController {
                 $progress['scheduled_at'] = $scheduledAt;
                 $needsUpdate = true;
             }
-            
+
             $resends = $this->request->getPost('resends');
             if ($resends) {
                 $progress['resends'] = $resends;
@@ -1080,11 +1129,11 @@ class MessageController extends BaseController {
                 $year = $matches[3];
                 $hour = $matches[4];
                 $minute = $matches[5];
-                
+
                 $isoFormat = "{$year}-{$month}-{$day} {$hour}:{$minute}:00";
                 return Time::parse($isoFormat, $this->getAppTimezone())->toDateTimeString();
             }
-            
+
             // Tentar parse direto para outros formatos
             return Time::parse($dateTime, $this->getAppTimezone())->toDateTimeString();
         } catch (\Exception $exception) {
@@ -1261,7 +1310,7 @@ class MessageController extends BaseController {
     {
         $timezone = $this->getAppTimezone();
         $now = Time::now($timezone);
-        
+
         // Verificar se todos os envios (original + 3 reenvios) já passaram
         if ($this->allSendsCompleted($message)) {
             return [
@@ -1272,7 +1321,7 @@ class MessageController extends BaseController {
                 'reason' => 'Todos os envios foram concluídos'
             ];
         }
-        
+
         // Verificar se o primeiro envio já passou
         if ($this->firstSendPassed($message)) {
             return [
@@ -1283,13 +1332,13 @@ class MessageController extends BaseController {
                 'reason' => 'Primeiro envio já realizado, apenas reenvios podem ser editados'
             ];
         }
-        
+
         // Mensagem agendada
         if ($message['status'] === 'scheduled' && !empty($message['scheduled_at'])) {
             try {
                 $scheduledTime = Time::parse($message['scheduled_at'], $timezone);
                 $timeUntilSend = $scheduledTime->getTimestamp() - $now->getTimestamp();
-                
+
                 // Menos de 1 minuto: mostrar prompt para transformar em rascunho
                 if ($timeUntilSend < 60 && $timeUntilSend > 0) {
                     return [
@@ -1300,7 +1349,7 @@ class MessageController extends BaseController {
                         'reason' => 'Envio agendado para menos de 1 minuto'
                     ];
                 }
-                
+
                 // Agendado mas já passou: não permitir edição
                 if ($timeUntilSend <= 0) {
                     return [
@@ -1311,7 +1360,7 @@ class MessageController extends BaseController {
                         'reason' => 'Data de envio já passou'
                     ];
                 }
-                
+
                 // Agendado com mais de 1 minuto: bloquear edição
                 return [
                     'can_edit' => false,
@@ -1324,7 +1373,7 @@ class MessageController extends BaseController {
                 log_message('error', 'Erro ao calcular permissões de edição: ' . $e->getMessage());
             }
         }
-        
+
         // Rascunho ou outros status: edição completa
         return [
             'can_edit' => true,
@@ -1334,7 +1383,7 @@ class MessageController extends BaseController {
             'reason' => 'Mensagem pode ser editada livremente'
         ];
     }
-    
+
     /**
      * Verifica se o primeiro envio já foi realizado.
      *
@@ -1346,18 +1395,18 @@ class MessageController extends BaseController {
         if (empty($message['scheduled_at'])) {
             return false;
         }
-        
+
         try {
             $timezone = $this->getAppTimezone();
             $scheduledTime = Time::parse($message['scheduled_at'], $timezone);
             $now = Time::now($timezone);
-            
+
             return $scheduledTime->getTimestamp() < $now->getTimestamp();
         } catch (\Exception $e) {
             return false;
         }
     }
-    
+
     /**
      * Verifica se todos os envios (original + 3 reenvios) já foram concluídos.
      *
@@ -1370,7 +1419,7 @@ class MessageController extends BaseController {
         if (!$this->firstSendPassed($message)) {
             return false;
         }
-        
+
         // Buscar todas as regras de reenvio
         $db = \Config\Database::connect();
         $resendRules = $db->table('resend_rules')
@@ -1378,22 +1427,22 @@ class MessageController extends BaseController {
             ->orderBy('scheduled_at', 'DESC')
             ->get()
             ->getResultArray();
-        
+
         // Se não há reenvios, considerar completo se o primeiro envio passou
         if (empty($resendRules)) {
             return true;
         }
-        
+
         // Verificar se todos os reenvios já passaram
         $timezone = $this->getAppTimezone();
         $now = Time::now($timezone);
-        
+
         foreach ($resendRules as $rule) {
             if (empty($rule['scheduled_at'])) {
                 // Se há reenvio sem data, não está completo
                 return false;
             }
-            
+
             try {
                 $resendTime = Time::parse($rule['scheduled_at'], $timezone);
                 if ($resendTime->getTimestamp() >= $now->getTimestamp()) {
@@ -1405,10 +1454,10 @@ class MessageController extends BaseController {
                 return false;
             }
         }
-        
+
         return true;
     }
-    
+
     /**
      * Transforma mensagem agendada em rascunho.
      * Usado quando usuário confirma edição de mensagem agendada para menos de 1 minuto.
@@ -1420,35 +1469,35 @@ class MessageController extends BaseController {
     {
         $model = new MessageModel();
         $message = $model->find($messageId);
-        
+
         if (!$message) {
             return redirect()->to('/messages')->with('error', 'Mensagem não encontrada');
         }
-        
+
         // Verificar se está agendada
         if ($message['status'] !== 'scheduled') {
             return redirect()->to('/messages/edit/' . $messageId)
                 ->with('error', 'Apenas mensagens agendadas podem ser transformadas em rascunho');
         }
-        
+
         // Transformar em rascunho
         $model->update($messageId, [
             'status' => 'draft',
             'scheduled_at' => null,
         ]);
-        
+
         // Remover filas de envio pendentes
         $sendModel = new MessageSendModel();
         $sendModel->where('message_id', $messageId)
             ->where('status', 'pending')
             ->delete();
-        
+
         // Remover regras de reenvio
         $db = \Config\Database::connect();
         $db->table('resend_rules')
             ->where('message_id', $messageId)
             ->delete();
-        
+
         return redirect()->to('/messages/edit/' . $messageId)
             ->with('success', 'Mensagem transformada em rascunho. Você pode editá-la agora.');
     }

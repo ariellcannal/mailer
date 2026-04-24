@@ -114,7 +114,8 @@
 
 		const formData = new FormData($form[0]);
 		formData.set('step', currentStep);
-		formData.set('html_content', window.getRichEditorData());
+		formData.set('html_content', window.renderHTML());
+		formData.set('emailBackgroundColor', window.emailBackgroundColor || '#ffffff');
 
 		return $.ajax({
 			url: progressUrl,
@@ -227,8 +228,15 @@
 			if (!validateCurrentStep()) return;
 			persistStep();
 
-			const data = $form.serialize();
+			let data = $form.serialize();
 
+			const bgColor = window.emailBackgroundColor || '#ffffff';
+			const htmlContent = window.renderHTML();
+
+			// Adiciona os novos campos formatados corretamente na string
+			data += '&emailBackgroundColor=' + encodeURIComponent(bgColor);
+			data += '&html_content=' + encodeURIComponent(htmlContent);
+			
 			$.post(storeUrl, data, function(payload) {
 				if (payload.success) {
 					showFeedback('Mensagem agendada com sucesso!', 'success');
