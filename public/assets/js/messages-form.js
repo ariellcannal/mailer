@@ -17,7 +17,7 @@
 	const $recipientTotal = $('#recipientTotal');
 	const $scheduledAt = $('#scheduledAt');
 
-	const maxStep = 5;
+	const maxStep = 4;
 	let currentStep = 1;
 
 	/* ===========================================================
@@ -78,7 +78,7 @@
 		const $current = $(`.step-content[data-step="${currentStep}"]`);
 		const $fields = $current.find('input, select, textarea');
 
-		if (currentStep !== 2 && currentStep !== 3) {
+		if (currentStep !== 2) {
 			let valid = true;
 			$fields.each(function() {
 				if (this.checkValidity && !this.checkValidity()) {
@@ -90,7 +90,7 @@
 			if (!valid) return false;
 		}
 
-		if (currentStep === 2 || currentStep === 3) {
+		if (currentStep === 2) {
 			const html = typeof getRichEditorData === 'function' ? getRichEditorData() : '';
 			if (!html || html.trim() === '') {
 				showFeedback('Preencha o conteúdo do email antes de continuar.');

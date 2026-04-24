@@ -63,9 +63,6 @@
                         </a>
                     <?php endif; ?>
                 <?php endif; ?>
-                <a href="<?= base_url('messages/preview/' . $message['id']) ?>" target="_blank" class="btn btn-outline-success">
-                    <i class="fas fa-eye"></i> Pré-visualizar
-                </a>
                 <form action="<?= base_url('messages/duplicate/' . $message['id']) ?>" method="POST">
                     <?= csrf_field() ?>
                     <button type="submit" class="btn btn-outline-info">

@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS contacts (
     opted_out_at DATETIME NULL,
     bounced TINYINT(1) DEFAULT 0,
     bounce_type VARCHAR(50) NULL COMMENT 'hard, soft, complaint',
+    bounce_subtype VARCHAR(50) NULL COMMENT 'Subtipo do último bounce recebido',
     bounced_at DATETIME NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -91,6 +92,32 @@ CREATE TABLE IF NOT EXISTS contact_list_members (
     FOREIGN KEY (list_id) REFERENCES contact_lists(id) ON DELETE CASCADE,
     UNIQUE KEY unique_contact_list (contact_id, list_id),
     INDEX idx_list_contact (list_id, contact_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabela de importações assíncronas de contatos
+CREATE TABLE IF NOT EXISTS contact_imports (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    filename VARCHAR(255) NOT NULL,
+    filepath VARCHAR(500) NOT NULL,
+    status ENUM('pending', 'processing', 'completed', 'failed') DEFAULT 'pending',
+    total_rows INT UNSIGNED DEFAULT 0,
+    processed_rows INT UNSIGNED DEFAULT 0,
+    imported_count INT UNSIGNED DEFAULT 0,
+    skipped_count INT UNSIGNED DEFAULT 0,
+    error_count INT UNSIGNED DEFAULT 0,
+    progress_percent DECIMAL(5,2) DEFAULT 0.00,
+    email_column INT NULL,
+    name_column INT NULL,
+    nickname_column INT NULL,
+    list_ids TEXT NULL COMMENT 'JSON array of list IDs',
+    error_message TEXT NULL,
+    error_details LONGTEXT NULL COMMENT 'JSON array of detailed errors',
+    started_at DATETIME NULL,
+    completed_at DATETIME NULL,
+    created_at DATETIME NULL,
+    updated_at DATETIME NULL,
+    INDEX idx_status (status),
+    INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabela de campanhas
@@ -211,8 +238,10 @@ CREATE TABLE IF NOT EXISTS message_sends (
     contact_id INT UNSIGNED NOT NULL,
     resend_number TINYINT UNSIGNED DEFAULT 0 COMMENT '0=original, 1+=resend',
     tracking_hash VARCHAR(64) NOT NULL UNIQUE,
+    aws_message_id VARCHAR(255) NULL COMMENT 'MessageId retornado pela AWS SES no momento do envio',
     status ENUM('pending', 'sent', 'bounced', 'complained') DEFAULT 'pending',
     sent_at DATETIME NULL,
+    delivery_at DATETIME NULL,
     opened TINYINT(1) DEFAULT 0,
     first_open_at DATETIME NULL,
     total_opens INT UNSIGNED DEFAULT 0,
@@ -223,6 +252,7 @@ CREATE TABLE IF NOT EXISTS message_sends (
     last_click_at DATETIME NULL,
     bounced_at DATETIME NULL,
     bounce_type VARCHAR(50) NULL,
+    bounce_subtype VARCHAR(50) NULL COMMENT 'Subtipo do bounce (ex: General, NoEmail, MailboxFull)',
     bounce_reason TEXT NULL,
     complained_at DATETIME NULL,
     FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
@@ -230,6 +260,7 @@ CREATE TABLE IF NOT EXISTS message_sends (
     INDEX idx_message (message_id),
     INDEX idx_contact (contact_id),
     INDEX idx_tracking (tracking_hash),
+    INDEX idx_aws_message_id (aws_message_id),
     INDEX idx_status (status),
     INDEX idx_opened (opened),
     INDEX idx_clicked (clicked)
@@ -312,6 +343,46 @@ CREATE TABLE IF NOT EXISTS activity_logs (
     INDEX idx_action (action),
     INDEX idx_entity (entity_type, entity_id),
     INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabela de tarefas de importação da Receita Federal
+CREATE TABLE IF NOT EXISTS receita_import_tasks (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NULL COMMENT 'Nome opcional da tarefa',
+    cnaes TEXT NULL COMMENT 'CNAEs filtrados (JSON array)',
+    ufs TEXT NULL COMMENT 'Estados filtrados (JSON array)',
+    situacoes_fiscais VARCHAR(50) NULL COMMENT 'Situações fiscais filtradas (ex: 01,02,03)',
+    status ENUM('agendada', 'em_andamento', 'concluida', 'erro') DEFAULT 'agendada' COMMENT 'Status da tarefa',
+    total_files INT DEFAULT 0 COMMENT 'Total de arquivos a processar',
+    processed_files INT DEFAULT 0 COMMENT 'Arquivos já processados',
+    total_bytes BIGINT DEFAULT 0 COMMENT 'Total de bytes a processar',
+    processed_bytes BIGINT DEFAULT 0 COMMENT 'Bytes já processados',
+    current_file VARCHAR(255) NULL COMMENT 'Arquivo sendo processado atualmente',
+    total_lines BIGINT DEFAULT 0 COMMENT 'Total estimado de linhas',
+    processed_lines BIGINT DEFAULT 0 COMMENT 'Linhas já processadas',
+    imported_lines BIGINT DEFAULT 0 COMMENT 'Linhas efetivamente importadas',
+    error_message TEXT NULL COMMENT 'Mensagem de erro se houver',
+    created_at DATETIME NULL,
+    started_at DATETIME NULL COMMENT 'Quando o processamento iniciou',
+    completed_at DATETIME NULL COMMENT 'Quando o processamento terminou',
+    INDEX idx_status (status),
+    INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabela de bounces
+CREATE TABLE IF NOT EXISTS bounces (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    message_id INT UNSIGNED NOT NULL COMMENT 'ID da tabela messages (pai)',
+    contact_id INT UNSIGNED NOT NULL COMMENT 'ID do contato que sofreu o bounce',
+    message_send_id INT UNSIGNED NULL COMMENT 'ID da tentativa específica na message_sends',
+    bounce_type VARCHAR(50) NULL COMMENT 'Ex: permanent, transient, undetermined',
+    bounce_subtype VARCHAR(50) NULL COMMENT 'Ex: General, NoEmail, MailboxFull',
+    reason TEXT NULL COMMENT 'Código de erro técnico (diagnosticCode)',
+    raw_payload JSON NULL COMMENT 'JSON completo da AWS para auditoria',
+    bounced_at DATETIME NULL,
+    FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
+    FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE,
+    FOREIGN KEY (message_send_id) REFERENCES message_sends(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*RECEITA*/

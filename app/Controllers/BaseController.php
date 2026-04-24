@@ -81,7 +81,41 @@ abstract class BaseController extends Controller
     {
         // Do Not Edit This Line
         parent::initController($request, $response, $logger);
+        
+        // Verificar migrações pendentes antes de qualquer processamento
+        $this->checkPendingMigrations();
+        
         $this->enforceAuthentication();
+    }
+    
+    /**
+     * Verifica se há migrações pendentes e executa automaticamente.
+     *
+     * @return void
+     */
+    protected function checkPendingMigrations(): void
+    {
+        // Apenas verificar em ambiente de produção ou desenvolvimento
+        $environment = getenv('CI_ENVIRONMENT') ?: 'production';
+        if (!in_array($environment, ['production', 'development'])) {
+            return;
+        }
+        
+        // Não executar durante comandos CLI
+        if ($this->request instanceof CLIRequest) {
+            return;
+        }
+        
+        try {
+            // Usar o serviço de migrações do CodeIgniter
+            $migration = \Config\Services::migrations();
+            
+            // Tentar executar migrações - o método latest()会自动检查并运行 pendentes
+            $migration->latest();
+            log_message('info', 'BaseController: Verificação de migrações concluída');
+        } catch (\Throwable $e) {
+            log_message('error', 'BaseController: Erro ao verificar migrações: ' . $e->getMessage());
+        }
     }
 
     /**

@@ -245,9 +245,24 @@ class BounceNotificationService
      */
     protected function bindSesIdentity(string $identity, string $topicArn): void
     {
+        // Configurar notificação para Bounce
         $this->sesClient->setIdentityNotificationTopic([
             'Identity' => $identity,
             'NotificationType' => 'Bounce',
+            'SnsTopic' => $topicArn,
+        ]);
+
+        // Configurar notificação para Complaint
+        $this->sesClient->setIdentityNotificationTopic([
+            'Identity' => $identity,
+            'NotificationType' => 'Complaint',
+            'SnsTopic' => $topicArn,
+        ]);
+
+        // Configurar notificação para Delivery
+        $this->sesClient->setIdentityNotificationTopic([
+            'Identity' => $identity,
+            'NotificationType' => 'Delivery',
             'SnsTopic' => $topicArn,
         ]);
 

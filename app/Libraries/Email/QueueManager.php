@@ -501,18 +501,31 @@ class QueueManager
 
     protected function prepareEmailContent(string $htmlContent, array $contact, string $trackingHash): string
     {
+        $baseUrl = $this->getBaseUrl();
+        
+        // Substituir variáveis de personalização
         $htmlContent = str_replace([
             '{{nome}}',
             '{{apelido}}',
             '{{email}}'
         ], [
-            $contact['name'],
-            $contact['nickname'],
-            $contact['email']
+            $contact['name'] ?? '',
+            $contact['nickname'] ?? '',
+            $contact['email'] ?? ''
         ], $htmlContent);
-        $baseUrl = $this->getBaseUrl();
+        
+        // Substituir link de opt-out
+        $optoutUrl = $baseUrl . 'track/optout/' . $trackingHash;
+        $htmlContent = str_replace('{{optout_link}}', $optoutUrl, $htmlContent);
+        
+        // Substituir link de webview
+        $webviewUrl = $baseUrl . 'track/webview/' . $trackingHash;
+        $htmlContent = str_replace('{{webview_link}}', $webviewUrl, $htmlContent);
+        
+        // Adicionar pixel de tracking de abertura
         $pixel = '<img src="' . $baseUrl . 'track/open/' . $trackingHash . '" width="1" height="1" style="display:none;" />';
         $htmlContent = stripos($htmlContent, '</body>') !== false ? str_ireplace('</body>', $pixel . '</body>', $htmlContent) : $htmlContent . $pixel;
+        
         return $htmlContent;
     }
 

@@ -53,6 +53,7 @@ class BounceProcessor
             $result = $this->sqsClient->getQueueUrl(['QueueName' => $queueName]);
             return (string) ($result['QueueUrl'] ?? null);
         } catch (AwsException $e) {
+            log_message('error', 'BounceProcessor: Falha ao resolver URL da fila SQS "' . $queueName . '": ' . $e->getMessage());
             return null;
         }
     }

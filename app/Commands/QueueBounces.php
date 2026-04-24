@@ -6,6 +6,7 @@ use CodeIgniter\CLI\CLI;
 use App\Libraries\Email\BounceProcessor;
 
 #*/10 * * * * /usr/local/bin/ea-php82 /home/cannal/public_html/mailer/spark queue:bounces >> /dev/null 2>&1
+# php C:\TI\projetos\cannal\public_html\mailer\spark queue:bounces
 class QueueBounces extends BaseCommand
 {
 
@@ -25,7 +26,7 @@ class QueueBounces extends BaseCommand
         }
         
         // Otimizações de memória e CPU
-        set_time_limit(60);
+        set_time_limit(300);
         ini_set('memory_limit', '64M');
         gc_enable();
         

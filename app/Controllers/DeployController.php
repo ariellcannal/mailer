@@ -82,7 +82,7 @@ class DeployController extends BaseController
         $this->logDeploy("Payload contém push para branch master (ref={$ref})");
 
         // 4) Lock para evitar concorrência
-        $lockFile = rtrim($this->rootPath, '/') . '/deploy.lock';
+        $lockFile = WRITEPATH . 'deploy.lock';
         $lockHandle = fopen($lockFile, 'c');
 
         if ($lockHandle === false) {
