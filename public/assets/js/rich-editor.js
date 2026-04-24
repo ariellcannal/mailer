@@ -259,6 +259,7 @@
 				if (sourceArea) {
 					sourceArea.style.height = `${height}px`;
 					sourceArea.style.minHeight = `${height}px`;
+					sourceArea.style.overflow = 'auto';
 				}
 			};
 
@@ -800,29 +801,8 @@
 			class SetBackgroundColorCommand extends Command {
 				execute(color) {
 					try {
-						if (!color) {
-							// Remover cor de fundo
-							window.emailBackgroundColor = '#ffffff';
-							const html = editor.getData();
-							const updatedHtml = this.editor.plugins.get('CANNALBackgroundColorCKPlugin').removeBackgroundColorFromHtml(html);
-							editor.setData(updatedHtml);
-
-							// Remover cor do editor visualmente
-							if (editor.ui.view.editable && editor.ui.view.editable.element) {
-								editor.ui.view.editable.element.style.backgroundColor = '#ffffff';
-							}
-						} else {
-							// Definir cor de fundo
-							window.emailBackgroundColor = color;
-							const html = editor.getData();
-							const updatedHtml = this.editor.plugins.get('CANNALBackgroundColorCKPlugin').applyBackgroundColorToHtml(html, color);
-							editor.setData(updatedHtml);
-
-							// Aplicar cor no editor visualmente
-							if (editor.ui.view.editable && editor.ui.view.editable.element) {
-								editor.ui.view.editable.element.style.backgroundColor = color;
-							}
-						}
+						// Atualizar background color
+						window.updateBackground(color || '#ffffff');
 
 						// Atualiza preview
 						if (window.updateEmailPreview) {
@@ -1002,26 +982,7 @@
 					try {
 						if (!newValue) { // Saindo do modo fonte
 							setTimeout(() => {
-								const html = editor.getData();
-
-								// Detectar cor inline na body
-								const bodyMatch = html.match(/<body[^>]*style="[^"]*background-color:\s*([^;]+);[^"]*"/i);
-								if (bodyMatch && bodyMatch[1]) {
-									const color = bodyMatch[1].trim();
-									window.emailBackgroundColor = color;
-									// Restaurar visualmente
-									editor.ui.view.editable.element.style.backgroundColor = color;
-									return;
-								}
-
-								// Detectar cor em <style>
-								const styleMatch = html.match(/body\s*{\s*[^}]*background-color:\s*([^;]+);/i);
-								if (styleMatch && styleMatch[1]) {
-									const color = styleMatch[1].trim();
-									window.emailBackgroundColor = color;
-									// Restaurar visualmente
-									editor.ui.view.editable.element.style.backgroundColor = color;
-								}
+								window.sourceOut();
 							}, 100);
 						}
 					} catch (e) {
@@ -1032,59 +993,7 @@
 
 		}
 
-		/**
-		 * Aplica cor de fundo ao HTML
-		 */
-		applyBackgroundColorToHtml(html, color) {
-			if (!html) return html;
 
-			// Se não tem <body>, cria uma
-			if (!html.includes('<body')) {
-				return html.replace(/<\/head>/i, `</head>\n<body style="background-color: ${color};">\n${html}\n</body>`);
-			}
-
-			// Se tem <body>, atualiza o style
-			const bodyRegex = /(<body[^>]*)style="([^"]*)"/i;
-			if (bodyRegex.test(html)) {
-				return html.replace(bodyRegex, (match, tag, style) => {
-					// Remove background-color anterior
-					const newStyle = style.replace(/background-color:\s*[^;]+;?\s*/i, '');
-					return `${tag}style="${newStyle}background-color: ${color};"`;
-				});
-			} else {
-				// Adiciona style com background-color
-				return html.replace(/(<body[^>]*)(>)/i, `$1 style="background-color: ${color};"$2`);
-			}
-		}
-
-		/**
-		 * Remove cor de fundo do HTML
-		 */
-		removeBackgroundColorFromHtml(html) {
-			if (!html) return html;
-
-			// Remove background-color do style da tag body
-			html = html.replace(/(<body[^>]*)style="([^"]*background-color:\s*[^;]+;[^"]*)"/i, (match, tag, style) => {
-				const newStyle = style.replace(/background-color:\s*[^;]+;?\s*/i, '').trim();
-				if (newStyle) {
-					return `${tag}style="${newStyle}"`;
-				} else {
-					return tag;
-				}
-			});
-
-			// Remove background-color do <style>
-			html = html.replace(/body\s*{\s*([^}]*background-color:\s*[^;]+;[^}]*)}/i, (match, content) => {
-				const newContent = content.replace(/background-color:\s*[^;]+;?\s*/i, '').trim();
-				if (newContent) {
-					return `body { ${newContent} }`;
-				} else {
-					return 'body { }';
-				}
-			});
-
-			return html;
-		}
 	}
 
 	function createModal(title, bodyHtml) {
@@ -1420,37 +1329,17 @@
 						}
 					})
 					.then((editor) => {
-						editorInstance = editor;
-						window.editor = editor;
+					editorInstance = editor;
+					window.editor = editor;
 
-						enforceEditorHeight(editor, settings.height);
+					enforceEditorHeight(editor, settings.height);
+					
+					// Detectar e aplicar cor de fundo ao carregar
+					window.updateBackground(null);
 
 						window.renderEditorPreview = renderEditorPreview;
 
-						// Aplicar estilos inline ao sair do modo fonte
-						try {
-							const sourceEditing = editor.plugins.get('SourceEditing');
-							if (sourceEditing) {
-								sourceEditing.on('change:isSourceEditingMode', (evt, propertyName, newValue) => {
-									try {
-										// Quando sai do modo fonte (newValue = false)
-										if (!newValue) {
-											setTimeout(() => {
-												const html = editor.getData();
-												if (html && window.inlineStyles && window.adjustForOldEmailClients) {
-													const processedHtml = window.adjustForOldEmailClients(window.inlineStyles(html));
-													editor.setData(processedHtml);
-												}
-											}, 100);
-										}
-									} catch (e) {
-										// Ignorar erros ao sair do modo fonte
-									}
-								});
-							}
-						} catch (e) {
-							// Ignorar erros de sourceEditing
-						}
+						// Listener de SourceEditing já foi adicionado no plugin CANNALBackgroundColorCKPlugin
 
 
 						// Restaurar background-color continuamente
@@ -1495,7 +1384,7 @@
 		const googleFonts = window.importedGoogleFonts || [];
 
 		// Processa HTML para email
-		const processedHtml = window.processEmailHtml ? window.processEmailHtml(html, googleFonts) : html;
+		const processedHtml = window.renderHTML(html, googleFonts);
 
 		// Atualiza iframe
 		const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
@@ -1514,3 +1403,392 @@
 
 	$(document).ready(initEditors);
 })(jQuery);
+
+	/**
+	 * ==========================================
+	 * FUNÇÕES DE FORMATAÇÃO E RENDERIZAÇÃO HTML
+	 * ==========================================
+	 */
+
+	/**
+	 * Formata o HTML de saída para melhor legibilidade.
+	 * 
+	 * @param {string} input - HTML a ser formatado
+	 * @returns {string} HTML formatado com indentação
+	 */
+	function formatHtml(input) {
+		// Decodifica entidades HTML antes de formatar
+		input = decodeHtmlEntities(input);
+
+		// Lista de elementos block-level que devem ter quebras de linha e indentação
+		const elementsToFormat = [
+			{ name: 'html', isVoid: false },
+			{ name: 'head', isVoid: false },
+			{ name: 'body', isVoid: false },
+			{ name: 'address', isVoid: false },
+			{ name: 'article', isVoid: false },
+			{ name: 'aside', isVoid: false },
+			{ name: 'blockquote', isVoid: false },
+			{ name: 'details', isVoid: false },
+			{ name: 'dialog', isVoid: false },
+			{ name: 'dd', isVoid: false },
+			{ name: 'div', isVoid: false },
+			{ name: 'dl', isVoid: false },
+			{ name: 'dt', isVoid: false },
+			{ name: 'fieldset', isVoid: false },
+			{ name: 'figcaption', isVoid: false },
+			{ name: 'figure', isVoid: false },
+			{ name: 'footer', isVoid: false },
+			{ name: 'form', isVoid: false },
+			{ name: 'h1', isVoid: false },
+			{ name: 'h2', isVoid: false },
+			{ name: 'h3', isVoid: false },
+			{ name: 'h4', isVoid: false },
+			{ name: 'h5', isVoid: false },
+			{ name: 'h6', isVoid: false },
+			{ name: 'header', isVoid: false },
+			{ name: 'hgroup', isVoid: false },
+			{ name: 'hr', isVoid: true },
+			{ name: 'li', isVoid: false },
+			{ name: 'main', isVoid: false },
+			{ name: 'nav', isVoid: false },
+			{ name: 'ol', isVoid: false },
+			{ name: 'p', isVoid: false },
+			{ name: 'section', isVoid: false },
+			{ name: 'table', isVoid: false },
+			{ name: 'tbody', isVoid: false },
+			{ name: 'td', isVoid: false },
+			{ name: 'th', isVoid: false },
+			{ name: 'thead', isVoid: false },
+			{ name: 'tr', isVoid: false },
+			{ name: 'ul', isVoid: false },
+			{ name: 'style', isVoid: false }
+		];
+
+		const elementNamesToFormat = elementsToFormat.map(element => element.name).join('|');
+
+		// Adiciona quebras de linha antes e depois das tags
+		const lines = input
+			.replace(new RegExp(`</?(${ elementNamesToFormat })( .*?)?>`, 'g'), '\n$&\n')
+			.replace(/<br[^>]*>/g, '$&\n')
+			.split('\n');
+
+		let indentCount = 0;
+		let isPreformattedLine = false;
+
+		return lines
+			.filter(line => line.length)
+			.map(line => {
+				isPreformattedLine = isPreformattedBlockLine(line, isPreformattedLine);
+
+				if (isNonVoidOpeningTag(line, elementsToFormat)) {
+					return indentLine(line, indentCount++);
+				}
+
+				if (isClosingTag(line, elementsToFormat)) {
+					return indentLine(line, --indentCount);
+				}
+
+				if (isPreformattedLine === 'middle' || isPreformattedLine === 'last') {
+					return line;
+				}
+
+				return indentLine(line, indentCount);
+			})
+			.join('\n');
+	}
+
+	/**
+	 * Decodifica entidades HTML para suas representações de caracteres.
+	 * 
+	 * @param {string} html - HTML com entidades
+	 * @returns {string} HTML com entidades decodificadas
+	 */
+	function decodeHtmlEntities(html) {
+		const entities = {
+			'&quot;': '"',
+			'&amp;': '&',
+			'&lt;': '<',
+			'&gt;': '>',
+			'&nbsp;': ' ',
+			'&apos;': "'",
+			'&#39;': "'",
+			'&#x2F;': '/',
+			'&#x27;': "'",
+			'&#x60;': '`'
+		};
+
+		return html.replace(/&quot;|&amp;|&lt;|&gt;|&nbsp;|&apos;|&#39;|&#x2F;|&#x27;|&#x60;/g,
+			match => entities[match]);
+	}
+
+	/**
+	 * Verifica se uma linha é uma tag de abertura de elemento não-void.
+	 * 
+	 * @param {string} line - Linha a verificar
+	 * @param {Array} elementsToFormat - Elementos a formatar
+	 * @returns {boolean}
+	 */
+	function isNonVoidOpeningTag(line, elementsToFormat) {
+		return elementsToFormat.some(element => {
+			if (element.isVoid) {
+				return false;
+			}
+
+			if (!new RegExp(`<${ element.name }( .*?)?>`).test(line)) {
+				return false;
+			}
+
+			return true;
+		});
+	}
+
+	/**
+	 * Verifica se uma linha é uma tag de fechamento.
+	 * 
+	 * @param {string} line - Linha a verificar
+	 * @param {Array} elementsToFormat - Elementos a formatar
+	 * @returns {boolean}
+	 */
+	function isClosingTag(line, elementsToFormat) {
+		return elementsToFormat.some(element => {
+			return new RegExp(`</${ element.name }>`).test(line);
+		});
+	}
+
+	/**
+	 * Indenta uma linha por um número especificado de caracteres.
+	 * 
+	 * @param {string} line - Linha a indentar
+	 * @param {number} indentCount - Número de níveis de indentação
+	 * @param {string} indentChar - Caractere(s) de indentação (2 espaços por padrão)
+	 * @returns {string}
+	 */
+	function indentLine(line, indentCount, indentChar = '  ') {
+		return `${ indentChar.repeat(Math.max(0, indentCount)) }${ line }`;
+	}
+
+	/**
+	 * Verifica se uma linha pertence a um bloco pré-formatado (<pre>).
+	 * 
+	 * @param {string} line - Linha a verificar
+	 * @param {string|boolean} isPreviousLinePreFormatted - Informação sobre a linha anterior
+	 * @returns {string|boolean}
+	 */
+	function isPreformattedBlockLine(line, isPreviousLinePreFormatted) {
+		if (new RegExp('<pre( .*?)?>'). test(line)) {
+			return 'first';
+		} else if (new RegExp('</pre>').test(line)) {
+			return 'last';
+		} else if (isPreviousLinePreFormatted === 'first' || isPreviousLinePreFormatted === 'middle') {
+			return 'middle';
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Converte CSS de <style> tags para inline styles.
+	 * Remove todas as classes e IDs, incorporando estilos inline.
+	 * 
+	 * @param {string} html - HTML com CSS em <style> tags
+	 * @returns {string} HTML com CSS inline
+	 */
+	function inlineStyles(html) {
+		try {
+			// Cria um parser DOM
+			const parser = new DOMParser();
+			const doc = parser.parseFromString(html, 'text/html');
+			
+			// Extrai todas as regras CSS
+			const styleElements = doc.querySelectorAll('style');
+			const cssRules = [];
+			
+			styleElements.forEach(styleEl => {
+				const cssText = styleEl.textContent;
+				// Parse simples de CSS (não cobre todos os casos, mas funciona para emails básicos)
+				const ruleMatches = cssText.matchAll(/([^{]+)\{([^}]+)\}/g);
+				
+				for (const match of ruleMatches) {
+					const selector = match[1].trim();
+					const styles = match[2].trim();
+					
+					cssRules.push({ selector, styles });
+				}
+			});
+			
+			// Aplica estilos inline nos elementos correspondentes
+			cssRules.forEach(rule => {
+				try {
+					const elements = doc.querySelectorAll(rule.selector);
+					elements.forEach(el => {
+						const existingStyle = el.getAttribute('style') || '';
+						const newStyles = rule.styles
+							.split(';')
+							.map(s => s.trim())
+							.filter(s => s.length > 0)
+							.join('; ');
+						
+						if (newStyles) {
+							const combinedStyles = existingStyle 
+								? `${existingStyle}; ${newStyles}` 
+								: newStyles;
+							el.setAttribute('style', combinedStyles);
+						}
+					});
+				} catch (e) {
+					// Ignora seletores inválidos
+				}
+			});
+			
+			// Remove tags <style> após aplicar
+			styleElements.forEach(el => el.remove());
+			
+			// Remove todos os atributos class e id
+			const allElements = doc.querySelectorAll('*');
+			allElements.forEach(el => {
+				el.removeAttribute('class');
+				el.removeAttribute('id');
+			});
+			
+			// Retorna HTML serializado
+			return doc.documentElement.outerHTML;
+		} catch (e) {
+			console.error('Erro ao processar inlineStyles:', e);
+			return html;
+		}
+	}
+
+	/**
+	 * Atualiza a cor de fundo do email.
+	 * Se $hex for null, analisa o código e detecta a cor.
+	 * Atualiza: window.emailBackgroundColor, BG do editor, BG do ícone SVG
+	 * 
+	 * @param {string|null} hex - Cor em formato hex ou null para detectar
+	 */
+	function updateBackground(hex = null) {
+		try {
+			if (hex === null) {
+				// Detectar cor do HTML existente
+				const html = editor.getData();
+				
+				// Tenta encontrar cor inline na body
+				const bodyMatch = html.match(/<body[^>]*style="[^"]*background-color:\s*([^;]+);[^"]*"/i);
+				if (bodyMatch && bodyMatch[1]) {
+					hex = bodyMatch[1].trim();
+				} else {
+					// Tenta encontrar em <style>
+					const styleMatch = html.match(/body\s*{\s*[^}]*background-color:\s*([^;]+);/i);
+					if (styleMatch && styleMatch[1]) {
+						hex = styleMatch[1].trim();
+					} else {
+						hex = '#ffffff';
+					}
+				}
+			}
+			
+			// Atualiza variável global
+			window.emailBackgroundColor = hex;
+			
+			// Atualiza BG do editor
+			if (editor.ui.view.editable && editor.ui.view.editable.element) {
+				editor.ui.view.editable.element.style.backgroundColor = hex;
+			}
+			
+			// Atualiza BG do ícone SVG (se existir)
+			const bgColorButton = document.querySelector('[data-cke-tooltip-text="Background Color"]');
+			if (bgColorButton) {
+				const svg = bgColorButton.querySelector('svg');
+				if (svg) {
+					svg.style.backgroundColor = hex;
+				}
+			}
+		} catch (e) {
+			console.error('Erro ao atualizar background:', e);
+		}
+	}
+
+	/**
+	 * Função chamada ao SAIR do modo Source.
+	 * Executa: updateBackground() + inlineStyles()
+	 */
+	function sourceOut() {
+		try {
+			// 1. Atualiza background
+			updateBackground();
+			
+			// 2. Aplica inline styles
+			const html = editor.getData();
+			const processedHtml = inlineStyles(html);
+			editor.setData(processedHtml);
+		} catch (e) {
+			console.error('Erro ao sair do modo Source:', e);
+		}
+	}
+
+	/**
+	 * Renderiza HTML completo para email.
+	 * Construa <html><head><body> com tudo necessário.
+	 * Inclui Google Fonts, BG color inline, estilos inline, sem classes/ids.
+	 * 
+	 * @param {string} contentHtml - Conteúdo HTML do editor
+	 * @param {Array} googleFonts - Array de fontes Google [{name, url}]
+	 * @returns {string} HTML completo pronto para envio
+	 */
+	function renderHTML(contentHtml, googleFonts = []) {
+		try {
+			// 1. Processa inline styles (remove classes, ids, <style> tags)
+			let html = inlineStyles(contentHtml);
+			
+			// 2. Cria estrutura HTML completa
+			let headContent = '';
+			
+			// Adiciona meta tags essenciais para compatibilidade
+			headContent += '  <meta charset="UTF-8">\n';
+			headContent += '  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n';
+			headContent += '  <meta http-equiv="X-UA-Compatible" content="IE=edge">\n';
+			
+			// Adiciona Google Fonts
+			if (googleFonts && googleFonts.length > 0) {
+				googleFonts.forEach(font => {
+					headContent += `  <link href="${font.url}" rel="stylesheet">\n`;
+				});
+			}
+			
+			// Extrai apenas o conteúdo da body (sem tags body)
+			let bodyContent = html;
+			const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+			if (bodyMatch) {
+				bodyContent = bodyMatch[1];
+			}
+			
+			// Obtém cor de fundo
+			const bgColor = window.emailBackgroundColor || '#ffffff';
+			
+			// Monta HTML final
+			let finalHtml = '<!DOCTYPE html>\n';
+			finalHtml += '<html>\n';
+			finalHtml += '<head>\n';
+			finalHtml += headContent;
+			finalHtml += '</head>\n';
+			finalHtml += `<body style="background-color: ${bgColor}; margin: 0; padding: 0;">\n`;
+			finalHtml += bodyContent;
+			finalHtml += '</body>\n';
+			finalHtml += '</html>';
+			
+			// 3. Formata para legibilidade
+			finalHtml = formatHtml(finalHtml);
+			
+			return finalHtml;
+		} catch (e) {
+			console.error('Erro ao renderizar HTML:', e);
+			return contentHtml;
+		}
+	}
+
+	// Exporta funções globalmente
+	window.renderHTML = renderHTML;
+	window.updateBackground = updateBackground;
+	window.sourceOut = sourceOut;
+	window.inlineStyles = inlineStyles;
+	window.formatHtml = formatHtml;
