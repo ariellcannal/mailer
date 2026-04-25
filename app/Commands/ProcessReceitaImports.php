@@ -10,8 +10,9 @@ use CodeIgniter\CLI\CLI;
 /**
  * Comando para processar fila de importações da Receita Federal
  * 
- * Uso: php spark receita:process
- * CRON: * * * * * cd /path/to/project && php spark receita:process >> /dev/null 2>&1
+ * USO
+ * /usr/local/bin/ea-php82 spark receita:process
+ * php C:\TI\projetos\cannal\public_html\mailer\spark receita:process
  */
 class ProcessReceitaImports extends BaseCommand
 {

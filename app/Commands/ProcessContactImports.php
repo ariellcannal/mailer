@@ -11,7 +11,9 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 /**
  * Comando para processar fila de importações de contatos
  * 
- * Uso: php spark contacts:import-process
+ * USO
+ * /usr/local/bin/ea-php82 spark contacts:import-process
+ * php C:\TI\projetos\cannal\public_html\mailer\spark contacts:import-process
  */
 class ProcessContactImports extends BaseCommand
 {

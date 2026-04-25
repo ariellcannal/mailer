@@ -5,8 +5,14 @@ use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 use App\Libraries\Email\BounceProcessor;
 
-#*/10 * * * * /usr/local/bin/ea-php82 /home/cannal/public_html/mailer/spark queue:bounces >> /dev/null 2>&1
-# php C:\TI\projetos\cannal\public_html\mailer\spark queue:bounces
+
+/**
+ * Comando para processar BOUNCES
+ * 
+ * USO
+ * /usr/local/bin/ea-php82 spark queue:bounces
+ * php C:\TI\projetos\cannal\public_html\mailer\spark queue:bounces
+ */
 class QueueBounces extends BaseCommand
 {
 
