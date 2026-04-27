@@ -2014,7 +2014,7 @@ function renderHTML() {
     finalHtml += "<head>\n";
     finalHtml += headContent;
     finalHtml += "</head>\n";
-    finalHtml += `<body style="background-color: ${bgColor}; margin: 0; padding: 0;">\n`;
+    finalHtml += `<body style="background-color: ${bgColor}; margin: 0; padding: 0 0.6em;">\n`;
     finalHtml += bodyContent;
     finalHtml += "</body>\n";
     finalHtml += "</html>";

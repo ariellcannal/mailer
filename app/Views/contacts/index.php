@@ -5,7 +5,7 @@
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="mb-0"><i class="fas fa-users"></i> Contatos</h4>
-            <div class="d-flex gap-2">
+            <div class="d-flex btn-group btn-group-sm" role="group">
                 <a href="<?= base_url('contact-lists') ?>" class="btn btn-outline-secondary">
                     <i class="fas fa-list-ul"></i> Listas
                 </a>
@@ -187,12 +187,14 @@
                                     <?php endif; ?>
                                 </td>
                                 <td>
+                                    <div class="btn-group btn-group-sm" role="group">
                                     <a href="<?= base_url('contacts/view/' . $contact['id']) ?>" class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-eye"></i> Ver
                                     </a>
                                     <a href="<?= base_url('contacts/edit/' . $contact['id']) ?>" class="btn btn-sm btn-outline-secondary">
                                         <i class="fas fa-edit"></i> Editar
                                     </a>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

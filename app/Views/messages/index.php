@@ -60,6 +60,7 @@
                                 </td>
                                 <td><?= date('d/m/Y H:i', strtotime($message['created_at'])) ?></td>
                                 <td>
+                                    <div class="btn-group btn-group-sm" role="group">
                                     <?php $canDelete = in_array($message['status'], ['draft', 'scheduled'], true); ?>
                                     <?php 
                                         // Verificar se pode editar
@@ -97,6 +98,7 @@
                                             </button>
                                         </form>
                                     <?php endif; ?>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

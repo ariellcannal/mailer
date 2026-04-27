@@ -46,6 +46,7 @@
                                     <span class="badge <?= (int) $sender['dmarc_verified'] === 1 ? 'bg-success' : 'bg-warning' ?>">DMARC</span>
                                 </td>
                                 <td>
+                                    <div class="btn-group btn-group-sm" role="group">
                                     <a href="<?= base_url('senders/view/' . $sender['id']) ?>" class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-eye"></i>
                                     </a>
@@ -58,6 +59,7 @@
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

@@ -42,7 +42,8 @@
                                     <?php endif; ?>
                                 </td>
                                 <td><?= date('d/m/Y H:i', strtotime($template['created_at'])) ?></td>
-                                <td>
+                                <td> 
+                                    <div class="btn-group btn-group-sm" role="group">
                                     <a href="<?= base_url('templates/view/' . $template['id']) ?>" class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-eye"></i>
                                     </a>
@@ -55,6 +56,7 @@
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
