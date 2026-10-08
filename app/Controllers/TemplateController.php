@@ -24,7 +24,7 @@ class TemplateController extends BaseController
         return view('templates/index', [
             'templates' => $templates,
             'activeMenu' => 'templates',
-            'pageTitle' => 'Templates',
+            'pageTitle' => 'Templates de E-mail',
         ]);
     }
 
@@ -35,7 +35,7 @@ class TemplateController extends BaseController
     {
         return view('templates/entry', [
             'activeMenu' => 'templates',
-            'pageTitle' => 'Novo Template',
+            'pageTitle' => 'Novo Template de E-mail',
         ]);
     }
 
@@ -98,7 +98,7 @@ class TemplateController extends BaseController
         return view('templates/entry', [
             'template' => $template,
             'activeMenu' => 'templates',
-            'pageTitle' => 'Editar Template',
+            'pageTitle' => 'Editar Template de E-mail',
         ]);
     }
 

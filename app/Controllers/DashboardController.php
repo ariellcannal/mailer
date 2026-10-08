@@ -80,6 +80,13 @@ class DashboardController extends BaseController
         $totalOpens = $sendModel->where('opened', 1)->countAllResults(false);
         $totalClicks = $sendModel->where('clicked', 1)->countAllResults(false);
 
+        $companyId = (int) session()->get('company_id');
+        $whatsappStats = \Config\Database::connect()->table('whatsapp_sends')
+            ->select("COUNT(*) AS total, SUM(status IN ('sent','delivered','read')) AS sent, SUM(status IN ('delivered','read')) AS delivered, SUM(status = 'read') AS `read`, SUM(status = 'failed') AS failed", false)
+            ->where('company_id', $companyId)
+            ->get()
+            ->getRowArray() ?? [];
+
         // Taxas
         $openRate = $totalSends > 0 ? round(($totalOpens / $totalSends) * 100, 2) : 0;
         $clickRate = $totalSends > 0 ? round(($totalClicks / $totalSends) * 100, 2) : 0;
@@ -94,6 +101,11 @@ class DashboardController extends BaseController
             'totalClicks' => $totalClicks,
             'openRate' => $openRate,
             'clickRate' => $clickRate,
+            'whatsappTotal' => (int) ($whatsappStats['total'] ?? 0),
+            'whatsappSent' => (int) ($whatsappStats['sent'] ?? 0),
+            'whatsappDelivered' => (int) ($whatsappStats['delivered'] ?? 0),
+            'whatsappRead' => (int) ($whatsappStats['read'] ?? 0),
+            'whatsappFailed' => (int) ($whatsappStats['failed'] ?? 0),
         ];
     }
 
@@ -168,7 +180,9 @@ class DashboardController extends BaseController
 
         // Envios por período
         $sends = $db->table('message_sends')
+            ->join('messages', 'messages.id = message_sends.message_id')
             ->select("DATE_FORMAT(sent_at, '%Y-%m-%d') as date, COUNT(*) as count")
+            ->where('messages.company_id', (int) session()->get('company_id'))
             ->where('sent_at >=', $startDate)
             ->where('status', 'sent')
             ->groupBy('date')
@@ -178,7 +192,10 @@ class DashboardController extends BaseController
 
         // Aberturas por período
         $opens = $db->table('message_opens')
+            ->join('message_sends', 'message_sends.id = message_opens.send_id')
+            ->join('messages', 'messages.id = message_sends.message_id')
             ->select("DATE_FORMAT(opened_at, '%Y-%m-%d') as date, COUNT(*) as count")
+            ->where('messages.company_id', (int) session()->get('company_id'))
             ->where('opened_at >=', $startDate)
             ->groupBy('date')
             ->orderBy('date', 'ASC')
@@ -187,7 +204,10 @@ class DashboardController extends BaseController
 
         // Cliques por período
         $clicks = $db->table('message_clicks')
+            ->join('message_sends', 'message_sends.id = message_clicks.send_id')
+            ->join('messages', 'messages.id = message_sends.message_id')
             ->select("DATE_FORMAT(clicked_at, '%Y-%m-%d') as date, COUNT(*) as count")
+            ->where('messages.company_id', (int) session()->get('company_id'))
             ->where('clicked_at >=', $startDate)
             ->groupBy('date')
             ->orderBy('date', 'ASC')

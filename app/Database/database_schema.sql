@@ -2,9 +2,21 @@
 -- CodeIgniter 4 + PHP 8.1
 -- MySQL/MariaDB
 
+CREATE TABLE IF NOT EXISTS companies (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at DATETIME NULL,
+    updated_at DATETIME NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO companies (id, name, is_active) VALUES (1, 'Empresa legada', 1)
+ON DUPLICATE KEY UPDATE id = id;
+
 -- Tabela de usuários (autenticação)
 CREATE TABLE IF NOT EXISTS users (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id INT UNSIGNED NOT NULL,
     google_id VARCHAR(255) NULL UNIQUE,
     passkey_credential_id VARCHAR(255) NULL UNIQUE,
     email VARCHAR(320) NOT NULL UNIQUE,
@@ -18,6 +30,7 @@ CREATE TABLE IF NOT EXISTS users (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     last_login DATETIME NULL,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
     INDEX idx_email (email),
     INDEX idx_google_id (google_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -37,7 +50,9 @@ CREATE TABLE IF NOT EXISTS sessions (
 -- Tabela de contatos
 CREATE TABLE IF NOT EXISTS contacts (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    email VARCHAR(320) NOT NULL UNIQUE,
+    company_id INT UNSIGNED NOT NULL,
+    email VARCHAR(320) NOT NULL,
+    phone VARCHAR(32) NULL,
     name VARCHAR(255) NULL,
     nickname VARCHAR(255) NULL,
     quality_score TINYINT UNSIGNED DEFAULT 3 COMMENT '1-5 score based on engagement',
@@ -55,7 +70,8 @@ CREATE TABLE IF NOT EXISTS contacts (
     bounced_at DATETIME NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_email (email),
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
+    UNIQUE KEY uq_company_contact_email (company_id, email),
     INDEX idx_quality_score (quality_score),
     INDEX idx_opted_out (opted_out),
     INDEX idx_bounced (bounced)
@@ -74,22 +90,26 @@ CREATE TABLE IF NOT EXISTS contact_custom_fields (
 -- Tabela de listas de contatos
 CREATE TABLE IF NOT EXISTS contact_lists (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id INT UNSIGNED NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT NULL,
     total_contacts INT UNSIGNED DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
     INDEX idx_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabela de relacionamento contatos-listas (N:N)
 CREATE TABLE IF NOT EXISTS contact_list_members (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id INT UNSIGNED NOT NULL,
     contact_id INT UNSIGNED NOT NULL,
     list_id INT UNSIGNED NOT NULL,
     added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE,
     FOREIGN KEY (list_id) REFERENCES contact_lists(id) ON DELETE CASCADE,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
     UNIQUE KEY unique_contact_list (contact_id, list_id),
     INDEX idx_list_contact (list_id, contact_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -97,6 +117,7 @@ CREATE TABLE IF NOT EXISTS contact_list_members (
 -- Tabela de importações assíncronas de contatos
 CREATE TABLE IF NOT EXISTS contact_imports (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id INT UNSIGNED NOT NULL,
     filename VARCHAR(255) NOT NULL,
     filepath VARCHAR(500) NOT NULL,
     status ENUM('pending', 'processing', 'completed', 'failed') DEFAULT 'pending',
@@ -107,6 +128,7 @@ CREATE TABLE IF NOT EXISTS contact_imports (
     error_count INT UNSIGNED DEFAULT 0,
     progress_percent DECIMAL(5,2) DEFAULT 0.00,
     email_column INT NULL,
+    phone_column INT NULL,
     name_column INT NULL,
     nickname_column INT NULL,
     list_ids TEXT NULL COMMENT 'JSON array of list IDs',
@@ -116,6 +138,7 @@ CREATE TABLE IF NOT EXISTS contact_imports (
     completed_at DATETIME NULL,
     created_at DATETIME NULL,
     updated_at DATETIME NULL,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
     INDEX idx_status (status),
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -123,6 +146,7 @@ CREATE TABLE IF NOT EXISTS contact_imports (
 -- Tabela de campanhas
 CREATE TABLE IF NOT EXISTS campaigns (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id INT UNSIGNED NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT NULL,
     total_messages INT UNSIGNED DEFAULT 0,
@@ -134,13 +158,15 @@ CREATE TABLE IF NOT EXISTS campaigns (
     is_active TINYINT(1) DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
     INDEX idx_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabela de remetentes
 CREATE TABLE IF NOT EXISTS senders (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    email VARCHAR(320) NOT NULL UNIQUE,
+    company_id INT UNSIGNED NOT NULL,
+    email VARCHAR(320) NOT NULL,
     name VARCHAR(255) NOT NULL,
     domain VARCHAR(255) NOT NULL,
     ses_verified TINYINT(1) DEFAULT 0,
@@ -153,6 +179,8 @@ CREATE TABLE IF NOT EXISTS senders (
     is_active TINYINT(1) DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
+    UNIQUE KEY uq_company_sender_email (company_id, email),
     INDEX idx_email (email),
     INDEX idx_domain (domain)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -160,30 +188,76 @@ CREATE TABLE IF NOT EXISTS senders (
 -- Tabela de domínios de links
 CREATE TABLE IF NOT EXISTS link_domains (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    domain VARCHAR(255) NOT NULL UNIQUE,
+    company_id INT UNSIGNED NOT NULL,
+    domain VARCHAR(255) NOT NULL,
     is_verified TINYINT(1) DEFAULT 0,
     dns_record VARCHAR(500) NULL,
     is_active TINYINT(1) DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
+    UNIQUE KEY uq_company_link_domain (company_id, domain),
     INDEX idx_domain (domain)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabela de templates
 CREATE TABLE IF NOT EXISTS templates (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id INT UNSIGNED NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT NULL,
     html_content LONGTEXT NOT NULL,
     is_active TINYINT(1) DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
     INDEX idx_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Números conectados à WhatsApp Cloud API
+CREATE TABLE IF NOT EXISTS whatsapp_numbers (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id INT UNSIGNED NOT NULL,
+    waba_id VARCHAR(255) NOT NULL,
+    phone_number_id VARCHAR(64) NOT NULL UNIQUE,
+    display_phone_number VARCHAR(32) NOT NULL,
+    verified_name VARCHAR(255) NULL,
+    quality_rating VARCHAR(32) NULL,
+    status VARCHAR(32) DEFAULT 'CONNECTED',
+    is_active TINYINT(1) DEFAULT 1,
+    synced_at DATETIME NULL,
+    created_at DATETIME NULL,
+    updated_at DATETIME NULL,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
+    INDEX idx_wa_number_company (company_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Templates WhatsApp locais e templates sincronizados da Meta
+CREATE TABLE IF NOT EXISTS whatsapp_templates (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id INT UNSIGNED NOT NULL,
+    name VARCHAR(128) NOT NULL,
+    language VARCHAR(20) DEFAULT 'pt_BR',
+    category VARCHAR(32) DEFAULT 'UTILITY',
+    header_type VARCHAR(16) DEFAULT 'NONE',
+    header_content VARCHAR(1024) NULL,
+    body_content LONGTEXT NOT NULL,
+    footer_content VARCHAR(60) NULL,
+    buttons JSON NULL,
+    meta_template_id VARCHAR(128) NULL,
+    status VARCHAR(32) DEFAULT 'draft',
+    rejection_reason TEXT NULL,
+    created_at DATETIME NULL,
+    updated_at DATETIME NULL,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
+    UNIQUE KEY uq_wa_template_company (company_id, name, language),
+    INDEX idx_wa_template_company (company_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabela de mensagens
 CREATE TABLE IF NOT EXISTS messages (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id INT UNSIGNED NOT NULL,
     campaign_id INT UNSIGNED NULL,
     sender_id INT UNSIGNED NOT NULL,
     link_domain_id INT UNSIGNED NULL,
@@ -206,6 +280,7 @@ CREATE TABLE IF NOT EXISTS messages (
     progress_data LONGTEXT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
     FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE SET NULL,
     FOREIGN KEY (sender_id) REFERENCES senders(id) ON DELETE RESTRICT,
     FOREIGN KEY (link_domain_id) REFERENCES link_domains(id) ON DELETE SET NULL,
@@ -213,6 +288,56 @@ CREATE TABLE IF NOT EXISTS messages (
     INDEX idx_campaign (campaign_id),
     INDEX idx_status (status),
     INDEX idx_scheduled (scheduled_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Envios WhatsApp associados a campanhas
+CREATE TABLE IF NOT EXISTS whatsapp_messages (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id INT UNSIGNED NOT NULL,
+    campaign_id INT UNSIGNED NOT NULL,
+    template_id INT UNSIGNED NOT NULL,
+    whatsapp_number_id INT UNSIGNED NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    list_ids TEXT NOT NULL,
+    variable_mapping JSON NULL,
+    scheduled_at DATETIME NULL,
+    status VARCHAR(32) DEFAULT 'draft',
+    total_recipients INT UNSIGNED DEFAULT 0,
+    total_sent INT UNSIGNED DEFAULT 0,
+    total_delivered INT UNSIGNED DEFAULT 0,
+    total_read INT UNSIGNED DEFAULT 0,
+    total_failed INT UNSIGNED DEFAULT 0,
+    created_at DATETIME NULL,
+    updated_at DATETIME NULL,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
+    FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE,
+    FOREIGN KEY (template_id) REFERENCES whatsapp_templates(id) ON DELETE RESTRICT,
+    FOREIGN KEY (whatsapp_number_id) REFERENCES whatsapp_numbers(id) ON DELETE RESTRICT,
+    INDEX idx_wa_queue (company_id, status, scheduled_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Destinatários e status assíncronos WhatsApp
+CREATE TABLE IF NOT EXISTS whatsapp_sends (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id INT UNSIGNED NOT NULL,
+    whatsapp_message_id INT UNSIGNED NOT NULL,
+    contact_id INT UNSIGNED NOT NULL,
+    destination_phone VARCHAR(32) NOT NULL,
+    status VARCHAR(32) DEFAULT 'pending',
+    meta_message_id VARCHAR(255) NULL,
+    error_code VARCHAR(64) NULL,
+    error_message TEXT NULL,
+    sent_at DATETIME NULL,
+    delivered_at DATETIME NULL,
+    read_at DATETIME NULL,
+    created_at DATETIME NULL,
+    updated_at DATETIME NULL,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
+    FOREIGN KEY (whatsapp_message_id) REFERENCES whatsapp_messages(id) ON DELETE CASCADE,
+    FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE,
+    UNIQUE KEY uq_wa_send_recipient (whatsapp_message_id, contact_id),
+    INDEX idx_wa_meta_message (meta_message_id),
+    INDEX idx_wa_send_status (company_id, status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabela de regras de reenvio
@@ -321,9 +446,12 @@ CREATE TABLE IF NOT EXISTS suppression_list (
 -- Tabela de configurações do sistema
 CREATE TABLE IF NOT EXISTS system_settings (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    setting_key VARCHAR(100) NOT NULL UNIQUE,
+    company_id INT UNSIGNED NOT NULL,
+    setting_key VARCHAR(100) NOT NULL,
     setting_value TEXT NULL,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
+    UNIQUE KEY uq_company_setting (company_id, setting_key),
     INDEX idx_key (setting_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -348,6 +476,7 @@ CREATE TABLE IF NOT EXISTS activity_logs (
 -- Tabela de tarefas de importação da Receita Federal
 CREATE TABLE IF NOT EXISTS receita_import_tasks (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id INT UNSIGNED NOT NULL,
     name VARCHAR(255) NULL COMMENT 'Nome opcional da tarefa',
     cnaes TEXT NULL COMMENT 'CNAEs filtrados (JSON array)',
     ufs TEXT NULL COMMENT 'Estados filtrados (JSON array)',
@@ -365,6 +494,7 @@ CREATE TABLE IF NOT EXISTS receita_import_tasks (
     created_at DATETIME NULL,
     started_at DATETIME NULL COMMENT 'Quando o processamento iniciou',
     completed_at DATETIME NULL COMMENT 'Quando o processamento terminou',
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
     INDEX idx_status (status),
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -413,15 +543,15 @@ CREATE TABLE IF NOT EXISTS socios (
 ) ENGINE=InnoDB;
 
 -- Inserir configurações padrão do sistema
-INSERT INTO system_settings (setting_key, setting_value) VALUES
-('aws_ses_region', 'us-east-1'),
-('aws_ses_access_key', ''),
-('aws_ses_secret_key', ''),
-('daily_send_limit', '50000'),
-('hourly_send_limit', '10000'),
-('throttle_rate', '14'),
-('google_oauth_client_id', ''),
-('google_oauth_client_secret', ''),
-('site_name', 'Email Marketing System'),
-('timezone', 'America/Sao_Paulo')
+INSERT INTO system_settings (company_id, setting_key, setting_value) VALUES
+(1, 'aws_ses_region', 'us-east-1'),
+(1, 'aws_ses_access_key', ''),
+(1, 'aws_ses_secret_key', ''),
+(1, 'daily_send_limit', '50000'),
+(1, 'hourly_send_limit', '10000'),
+(1, 'throttle_rate', '14'),
+(1, 'google_oauth_client_id', ''),
+(1, 'google_oauth_client_secret', ''),
+(1, 'site_name', 'Email Marketing System'),
+(1, 'timezone', 'America/Sao_Paulo')
 ON DUPLICATE KEY UPDATE setting_key=setting_key;

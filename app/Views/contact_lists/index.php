@@ -2,8 +2,8 @@
 
 <?= $this->section('content') ?>
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="mb-0 text-uppercase"><i class="fas fa-list-ul text-secondary me-2"></i> Listas de Contatos</h4>
-    <div class="d-flex gap-2">
+    <h4 class="mb-0"><i class="fas fa-list-ul text-secondary me-2"></i> Listas de Contatos</h4>
+    <div class="btn-group btn-group-sm" role="group" aria-label="Ações de listas">
         <button type="button" class="btn btn-info btn-sm" id="btn-refresh-all">
             <i class="fas fa-sync-alt"></i> Atualizar Contadores
         </button>
@@ -25,7 +25,7 @@
 
 <div class="card">
     <div class="card-body">
-        <h5 class="section-title mb-3 text-uppercase">Listas existentes</h5>
+        <h5 class="section-title mb-3">Listas existentes</h5>
         <div class="table-responsive">
             <table class="table align-middle">
                 <thead class="table-light">

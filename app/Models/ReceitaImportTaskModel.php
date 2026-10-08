@@ -8,7 +8,7 @@ use CodeIgniter\Model;
 /**
  * Model para gerenciar tarefas de importação da Receita Federal
  */
-class ReceitaImportTaskModel extends Model
+class ReceitaImportTaskModel extends TenantModel
 {
     protected $table = 'receita_import_tasks';
     protected $primaryKey = 'id';
@@ -18,6 +18,7 @@ class ReceitaImportTaskModel extends Model
     protected $protectFields = true;
     
     protected $allowedFields = [
+        'company_id',
         'name',
         'cnaes',
         'ufs',
@@ -57,7 +58,7 @@ class ReceitaImportTaskModel extends Model
 
     // Callbacks
     protected $allowCallbacks = true;
-    protected $beforeInsert = [];
+    protected $beforeInsert = ['assignCompany'];
     protected $afterInsert = [];
     protected $beforeUpdate = [];
     protected $afterUpdate = [];

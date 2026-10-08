@@ -4,7 +4,7 @@
 <div class="card">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="mb-0"><i class="fas fa-file-code"></i> Templates</h4>
+            <h4 class="mb-0"><i class="fas fa-file-code"></i> Templates de E-mail</h4>
             <a href="<?= base_url('templates/create') ?>" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Novo Template
             </a>

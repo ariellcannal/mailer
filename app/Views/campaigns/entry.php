@@ -20,11 +20,11 @@
                 <textarea class="form-control" name="description" rows="4"><?= esc(old('description', $campaign['description'] ?? '')) ?></textarea>
             </div>
 
-            <div class="d-flex gap-2">
+            <div class="btn-group" role="group" aria-label="Ações do formulário">
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save"></i> Salvar
                 </button>
-                <a href="<?= base_url('campaigns') ?>" class="btn btn-secondary">Cancelar</a>
+                <a href="<?= base_url('campaigns') ?>" class="btn btn-neutral">Cancelar</a>
             </div>
         </form>
     </div>

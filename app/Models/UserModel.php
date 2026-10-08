@@ -19,6 +19,7 @@ class UserModel extends Model
 
     /** @var list<string> */
     protected $allowedFields = [
+        'company_id',
         'google_id',
         'passkey_credential_id',
         'email',

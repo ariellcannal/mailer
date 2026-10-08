@@ -4,9 +4,9 @@
 <div class="card">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="mb-0"><i class="fas fa-paper-plane"></i> Mensagens</h4>
+            <h4 class="mb-0"><i class="fas fa-paper-plane"></i> Envios de E-mail</h4>
             <a href="<?= base_url('messages/create') ?>" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Nova Mensagem
+                <i class="fas fa-plus"></i> Novo E-mail
             </a>
         </div>
 
@@ -26,7 +26,7 @@
                 <tbody>
                     <?php if (empty($messages)): ?>
                         <tr>
-                            <td colspan="6" class="text-center py-4">
+                            <td colspan="7" class="text-center py-4">
                                 <i class="fas fa-inbox fa-3x text-muted mb-3 d-block"></i>
                                 Nenhuma mensagem cadastrada
                             </td>

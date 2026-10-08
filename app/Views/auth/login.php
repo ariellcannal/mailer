@@ -6,7 +6,7 @@
         <div class="auth-banner-content h-100 d-flex flex-column justify-content-between">
             <div>
                 <img src="<?= base_url('assets/images/logo.png') ?>" alt="Cannal" class="img-fluid mb-4" style="max-width: 200px;">
-                <h2 class="fw-bold">Bem-vindo de volta</h2>
+                <h2 class="fw-bold"><?= !empty($isAddingProfile) ? 'Adicionar perfil' : 'Bem-vindo de volta' ?></h2>
                 <p class="mb-0">Acesse o painel seguro para gerenciar campanhas e entregabilidade com rapidez.</p>
             </div>
             <div class="d-flex align-items-center">
@@ -22,8 +22,8 @@
     <div class="col-lg-6 p-4 p-lg-5">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-                <h4 class="fw-bold mb-1">CANNAL Mailing</h4>
-                <small class="text-muted">Acesso ao painel</small>
+                <h4 class="fw-bold mb-1">CANNAL Envios</h4>
+                <small class="text-muted"><?= !empty($isAddingProfile) ? 'Autentique outro perfil' : 'Acesso ao painel' ?></small>
             </div>
             <img src="<?= base_url('assets/images/icon.png') ?>" alt="Ícone" width="48" height="48">
         </div>
@@ -52,7 +52,7 @@
                     <input type="password" class="form-control" id="loginPassword" name="password" minlength="8" required>
                 </div>
                 <div class="col-12 d-grid">
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-sign-in-alt me-2"></i> Entrar</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-sign-in-alt me-2"></i> <?= !empty($isAddingProfile) ? 'Adicionar Perfil' : 'Entrar' ?></button>
                 </div>
                 <div class="col-12 d-grid">
                     <a href="<?= base_url('register') . ($redirectTarget ? '?redirect=' . urlencode($redirectTarget) : '') ?>" class="btn btn-outline-secondary">
@@ -105,7 +105,7 @@
         </div>
 
         <div class="d-grid">
-            <a href="<?= base_url('auth/google') . ($redirectTarget ? '?redirect=' . urlencode($redirectTarget) : '') ?>" class="btn btn-danger">
+            <a href="<?= base_url('auth/google') . ($redirectTarget ? '?redirect=' . urlencode($redirectTarget) : '') ?>" class="btn btn-google">
                 <i class="fab fa-google me-2"></i> Entrar com Google
             </a>
         </div>

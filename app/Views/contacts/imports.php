@@ -5,7 +5,7 @@
 <div class="container-fluid">
     <div class="row mb-3">
         <div class="col-md-6">
-            <h1 class="h3 mb-0">Importações de Contatos</h1>
+            <h1 class="h3 mb-0">Importar Contatos</h1>
         </div>
         <div class="col-md-6 text-end">
             <a href="<?= site_url('contacts/import') ?>" class="btn btn-primary">

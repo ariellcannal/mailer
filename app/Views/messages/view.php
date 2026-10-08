@@ -8,7 +8,7 @@
                 <h4 class="mb-1"><i class="fas fa-paper-plane"></i> <?= esc($message['subject']) ?></h4>
                 <small class="text-muted">Criada em <?= date('d/m/Y H:i', strtotime($message['created_at'])) ?></small>
             </div>
-            <div class="d-flex gap-2">
+            <div class="btn-group" role="group" aria-label="Ações da mensagem">
                 <?php 
                     // Verificar se pode mostrar botão editar
                     $showEditButton = true;
@@ -81,7 +81,7 @@
         </div>
 
         <div class="mb-3">
-            <span class="badge bg-primary text-uppercase">Status: <?= esc($message['status']) ?></span>
+            <span class="badge bg-primary">Status: <?= esc($message['status']) ?></span>
         </div>
 
         <!-- Detalhes do Remetente -->
@@ -226,7 +226,7 @@
 
 <div class="card">
     <div class="card-body">
-        <h5 class="mb-3"><i class="fas fa-users"></i> Últimos envios</h5>
+        <h5 class="mb-3"><i class="fas fa-users"></i> Últimos envios de E-mail</h5>
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>

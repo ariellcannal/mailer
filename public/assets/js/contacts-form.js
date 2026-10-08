@@ -6,7 +6,7 @@
 
         $('.select2').each(function() {
             const placeholder = $(this).data('placeholder') || 'Selecione';
-            $(this).select2({ width: '100%', placeholder: placeholder, allowClear: true });
+            $(this).select2({ theme: 'bootstrap-5', width: '100%', placeholder: placeholder, allowClear: true });
         });
     }
 

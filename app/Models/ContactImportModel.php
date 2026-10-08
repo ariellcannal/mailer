@@ -9,7 +9,7 @@ use CodeIgniter\Model;
  * 
  * Model para gerenciamento de importações de contatos
  */
-class ContactImportModel extends Model
+class ContactImportModel extends TenantModel
 {
     protected $table = 'contact_imports';
     protected $primaryKey = 'id';
@@ -19,6 +19,7 @@ class ContactImportModel extends Model
     protected $protectFields = true;
 
     protected $allowedFields = [
+        'company_id',
         'filename',
         'filepath',
         'status',
@@ -29,6 +30,7 @@ class ContactImportModel extends Model
         'error_count',
         'progress_percent',
         'email_column',
+        'phone_column',
         'name_column',
         'nickname_column',
         'list_ids',

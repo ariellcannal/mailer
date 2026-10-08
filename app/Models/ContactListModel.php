@@ -9,7 +9,7 @@ use CodeIgniter\Model;
 /**
  * Modelo responsável pelas listas de contatos.
  */
-class ContactListModel extends Model
+class ContactListModel extends TenantModel
 {
     /**
      * @var string
@@ -30,6 +30,7 @@ class ContactListModel extends Model
      * @var array<int, string>
      */
     protected $allowedFields = [
+        'company_id',
         'name',
         'description',
         'total_contacts',
@@ -56,17 +57,19 @@ class ContactListModel extends Model
      * @param array<int> $listIds Identificadores das listas que devem ser recalculadas.
      * @return void
      */
-    public function refreshCounters(array $listIds): void
+    public function refreshCounters(array $listIds, int $companyId = 0): void
     {
         if (empty($listIds)) {
             return;
         }
 
         foreach ($listIds as $listId) {
-            $total = $this->db
-                ->table('contact_list_members')
-                ->where('list_id', $listId)
-                ->countAllResults();
+            $builder = $this->db->table('contact_list_members')->where('list_id', $listId);
+            $tenantId = $companyId > 0 ? $companyId : (int) (session()->get('company_id') ?? 0);
+            if ($tenantId > 0) {
+                $builder->where('company_id', $tenantId);
+            }
+            $total = $builder->countAllResults();
 
             $this->update((int) $listId, ['total_contacts' => $total]);
         }

@@ -127,10 +127,15 @@ class TrackController extends BaseController
      */
     protected function recordOpen(array $send): void
     {
+        $companyId = $this->companyIdForSend($send);
+        if ($companyId <= 0) {
+            return;
+        }
+
         $sendModel = new MessageSendModel();
         $openModel = new MessageOpenModel();
-        $contactModel = new ContactModel();
-        $messageModel = new MessageModel();
+        $contactModel = (new ContactModel())->forCompany($companyId);
+        $messageModel = (new MessageModel())->forCompany($companyId);
 
         // Verifica se é primeira abertura
         $isFirstOpen = !$send['opened'];
@@ -193,9 +198,21 @@ class TrackController extends BaseController
         // Atualiza contadores da campanha (se houver)
         $message = $messageModel->find($send['message_id']);
         if ($message && $message['campaign_id'] && $isFirstOpen) {
-            $campaignModel = new \App\Models\CampaignModel();
+            $campaignModel = (new \App\Models\CampaignModel())->forCompany($companyId);
             $campaignModel->increment($message['campaign_id'], 'total_opens');
         }
+    }
+
+    protected function companyIdForSend(array $send): int
+    {
+        $row = \Config\Database::connect()
+            ->table('messages')
+            ->select('company_id')
+            ->where('id', (int) ($send['message_id'] ?? 0))
+            ->get()
+            ->getRowArray();
+
+        return (int) ($row['company_id'] ?? 0);
     }
 
     /**
@@ -225,10 +242,15 @@ class TrackController extends BaseController
      */
     protected function recordClick(array $send, string $url): void
     {
+        $companyId = $this->companyIdForSend($send);
+        if ($companyId <= 0) {
+            return;
+        }
+
         $sendModel = new MessageSendModel();
         $clickModel = new MessageClickModel();
-        $contactModel = new ContactModel();
-        $messageModel = new MessageModel();
+        $contactModel = (new ContactModel())->forCompany($companyId);
+        $messageModel = (new MessageModel())->forCompany($companyId);
 
         // Verifica se é primeiro clique
         $isFirstClick = !$send['clicked'];
@@ -280,7 +302,7 @@ class TrackController extends BaseController
         // Atualiza contadores da campanha (se houver)
         $message = $messageModel->find($send['message_id']);
         if ($message && $message['campaign_id'] && $isFirstClick) {
-            $campaignModel = new \App\Models\CampaignModel();
+            $campaignModel = (new \App\Models\CampaignModel())->forCompany($companyId);
             $campaignModel->increment($message['campaign_id'], 'total_clicks');
         }
     }
@@ -301,14 +323,19 @@ class TrackController extends BaseController
             return view('errors/html/error_404');
         }
 
-        $messageModel = new MessageModel();
+        $companyId = $this->companyIdForSend($send);
+        if ($companyId <= 0) {
+            return view('errors/html/error_404');
+        }
+
+        $messageModel = (new MessageModel())->forCompany($companyId);
         $message = $messageModel->find($send['message_id']);
 
         if (!$message) {
             return view('errors/html/error_404');
         }
 
-        $contactModel = new ContactModel();
+        $contactModel = (new ContactModel())->forCompany($companyId);
         $contact = $contactModel->find($send['contact_id']);
 
         if (!$contact) {
@@ -341,7 +368,12 @@ class TrackController extends BaseController
             return view('errors/html/error_404');
         }
 
-        $contactModel = new ContactModel();
+        $companyId = $this->companyIdForSend($send);
+        if ($companyId <= 0) {
+            return view('errors/html/error_404');
+        }
+
+        $contactModel = (new ContactModel())->forCompany($companyId);
         $contact = $contactModel->find($send['contact_id']);
 
         if (!$contact) {
@@ -369,12 +401,12 @@ class TrackController extends BaseController
             ]);
 
             // Atualiza contadores
-            $messageModel = new MessageModel();
+            $messageModel = (new MessageModel())->forCompany($companyId);
             $messageModel->increment($send['message_id'], 'total_optouts');
 
             $message = $messageModel->find($send['message_id']);
             if ($message && $message['campaign_id']) {
-                $campaignModel = new \App\Models\CampaignModel();
+                $campaignModel = (new \App\Models\CampaignModel())->forCompany($companyId);
                 $campaignModel->increment($message['campaign_id'], 'total_optouts');
             }
 

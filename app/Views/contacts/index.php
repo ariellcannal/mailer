@@ -5,7 +5,7 @@
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="mb-0"><i class="fas fa-users"></i> Contatos</h4>
-            <div class="d-flex btn-group btn-group-sm" role="group">
+            <div class="btn-group btn-group-sm" role="group" aria-label="Ações de contatos">
                 <a href="<?= base_url('contact-lists') ?>" class="btn btn-outline-secondary">
                     <i class="fas fa-list-ul"></i> Listas
                 </a>
@@ -61,13 +61,15 @@
                     <?php endfor; ?>
                 </select>
             </div>
-            <div class="col-md-2 d-flex gap-2">
-                <button type="submit" class="btn btn-primary w-100">
-                    <i class="fas fa-search"></i> Filtrar
-                </button>
-                <a href="<?= base_url('contacts') ?>" class="btn btn-outline-secondary" title="Limpar filtros">
-                    <i class="fas fa-undo"></i>
-                </a>
+            <div class="col-md-2 d-flex">
+                <div class="btn-group w-100" role="group" aria-label="Ações de filtro">
+                    <button type="submit" class="btn btn-primary flex-grow-1">
+                        <i class="fas fa-search"></i> Filtrar
+                    </button>
+                    <a href="<?= base_url('contacts') ?>" class="btn btn-outline-secondary" title="Limpar filtros">
+                        <i class="fas fa-undo"></i>
+                    </a>
+                </div>
             </div>
         </form>
 
@@ -90,36 +92,34 @@
                         <label class="form-label mb-0"><strong>Ação com Selecionados:</strong></label>
                     </div>
                     <div class="col-auto">
-                        <div class="dropdown">
-                            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="btnAddToList" data-bs-toggle="dropdown" aria-expanded="false" disabled>
+                        <div class="btn-toolbar gap-2" role="toolbar" aria-label="Ações em massa">
+                            <div class="dropdown">
+                                <button class="btn btn-outline-primary dropdown-toggle" type="button" id="btnAddToList" data-bs-toggle="dropdown" aria-expanded="false" disabled>
                                 <i class="fas fa-list-ul"></i> Adicionar à lista
-                            </button>
-                            <ul class="dropdown-menu" aria-labelledby="btnAddToList" style="max-height: 300px; overflow-y: auto;">
-                                <?php foreach ($lists as $list): ?>
-                                    <li>
-                                        <label class="dropdown-item">
-                                            <input type="checkbox" name="lists[]" value="<?= $list['id'] ?>" class="form-check-input me-2">
-                                            <?= esc($list['name']) ?>
-                                        </label>
-                                    </li>
-                                <?php endforeach; ?>
-                            </ul>
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="btnAddToList" style="max-height: 300px; overflow-y: auto;">
+                                    <?php foreach ($lists as $list): ?>
+                                        <li>
+                                            <label class="dropdown-item">
+                                                <input type="checkbox" name="lists[]" value="<?= $list['id'] ?>" class="form-check-input me-2">
+                                                <?= esc($list['name']) ?>
+                                            </label>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            </div>
+                            <div class="btn-group" role="group" aria-label="Ações dos contatos">
+                                <button type="button" id="btnExportCSV" class="btn btn-outline-primary" disabled>
+                                    <i class="fas fa-file-csv"></i> Exportar CSV
+                                </button>
+                                <button type="button" id="btnDeleteInactivate" class="btn btn-outline-danger" disabled>
+                                    <i class="fas fa-trash-alt"></i> Excluir ou Inativar
+                                </button>
+                                <button type="submit" id="btnExecuteAction" class="btn btn-primary" disabled>
+                                    <i class="fas fa-play"></i> Executar
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-auto">
-                        <button type="button" id="btnExportCSV" class="btn btn-outline-success" disabled>
-                            <i class="fas fa-file-csv"></i> Exportar CSV
-                        </button>
-                    </div>
-                    <div class="col-auto">
-                        <button type="button" id="btnDeleteInactivate" class="btn btn-outline-danger" disabled>
-                            <i class="fas fa-trash-alt"></i> Excluir ou Inativar
-                        </button>
-                    </div>
-                    <div class="col-auto">
-                        <button type="submit" id="btnExecuteAction" class="btn btn-primary" disabled>
-                            <i class="fas fa-play"></i> Executar
-                        </button>
                     </div>
                 </div>
                 <div class="mt-2">
@@ -139,6 +139,7 @@
                             </div>
                         </th>
                         <th>Email</th>
+                        <th>Telefone</th>
                         <th>Nome</th>
                         <th>Apelido</th>
                         <th>Listas</th>
@@ -150,7 +151,7 @@
                 <tbody>
                     <?php if (empty($contacts)): ?>
                         <tr>
-                            <td colspan="8" class="text-center py-4">
+                            <td colspan="9" class="text-center py-4">
                                 <i class="fas fa-inbox fa-3x text-muted mb-3 d-block"></i>
                                 Nenhum contato encontrado
                             </td>
@@ -162,6 +163,7 @@
                                     <input type="checkbox" name="contacts[]" value="<?= $contact['id'] ?>" form="bulkActionsForm" class="form-check-input contact-checkbox">
                                 </td>
                                 <td><?= esc($contact['email']) ?></td>
+                                <td><?= !empty($contact['phone']) ? '+' . esc($contact['phone']) : '-' ?></td>
                                 <td><?= esc($contact['name']) ?></td>
                                 <td><?= esc($contact['nickname'] ?? '') ?></td>
                                 <td>
@@ -188,11 +190,11 @@
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group">
-                                    <a href="<?= base_url('contacts/view/' . $contact['id']) ?>" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-eye"></i> Ver
+                                    <a href="<?= base_url('contacts/view/' . $contact['id']) ?>" class="btn btn-sm btn-outline-primary" title="Ver contato" aria-label="Ver contato">
+                                        <i class="fas fa-eye" aria-hidden="true"></i>
                                     </a>
-                                    <a href="<?= base_url('contacts/edit/' . $contact['id']) ?>" class="btn btn-sm btn-outline-secondary">
-                                        <i class="fas fa-edit"></i> Editar
+                                    <a href="<?= base_url('contacts/edit/' . $contact['id']) ?>" class="btn btn-sm btn-outline-secondary" title="Editar contato" aria-label="Editar contato">
+                                        <i class="fas fa-edit" aria-hidden="true"></i>
                                     </a>
                                     </div>
                                 </td>

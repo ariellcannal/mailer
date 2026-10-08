@@ -6,12 +6,11 @@
 
 <?= $this->section('content') ?>
 <div class="container-fluid">
-    <?= $this->include('receita/_toolbar') ?>
     <div class="row">
         <div class="col-12">
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-white">
-                    <h6 class="mb-0"><i class="fas fa-filter me-2"></i>Configuração de Importação</h6>
+                    <h6 class="mb-0"><i class="fas fa-filter me-2"></i>Nova Importação RFB</h6>
                 </div>
                 <div class="card-body">
                     <form id="form-import">

@@ -9,7 +9,7 @@ use CodeIgniter\Model;
 /**
  * Modelo responsável pelos templates de email.
  */
-class TemplateModel extends Model
+class TemplateModel extends TenantModel
 {
     /**
      * @var string
@@ -25,6 +25,7 @@ class TemplateModel extends Model
      * @var array<int, string>
      */
     protected $allowedFields = [
+        'company_id',
         'name',
         'description',
         'html_content',

@@ -6,7 +6,7 @@
 <div class="row g-4 mb-4">
     <div class="col-xl-3 col-md-6">
         <div class="stat-card">
-            <div class="stat-card-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff;">
+            <div class="stat-card-icon stat-card-icon-primary">
                 <i class="fas fa-users"></i>
             </div>
             <div class="stat-card-value"><?= number_format($stats['totalContacts'], 0, ',', '.') ?></div>
@@ -19,20 +19,20 @@
     
     <div class="col-xl-3 col-md-6">
         <div class="stat-card">
-            <div class="stat-card-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: #fff;">
+            <div class="stat-card-icon stat-card-icon-accent">
                 <i class="fas fa-paper-plane"></i>
             </div>
             <div class="stat-card-value"><?= number_format($stats['totalSends'], 0, ',', '.') ?></div>
             <div class="stat-card-label">Emails Enviados</div>
             <small class="text-muted">
-                <i class="fas fa-envelope"></i> <?= number_format($stats['totalMessages'], 0, ',', '.') ?> mensagens
+                <i class="fas fa-envelope"></i> <?= number_format($stats['totalMessages'], 0, ',', '.') ?> envios de e-mail
             </small>
         </div>
     </div>
     
     <div class="col-xl-3 col-md-6">
         <div class="stat-card">
-            <div class="stat-card-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: #fff;">
+            <div class="stat-card-icon stat-card-icon-tertiary">
                 <i class="fas fa-envelope-open"></i>
             </div>
             <div class="stat-card-value"><?= $stats['openRate'] ?>%</div>
@@ -45,7 +45,7 @@
     
     <div class="col-xl-3 col-md-6">
         <div class="stat-card">
-            <div class="stat-card-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: #fff;">
+            <div class="stat-card-icon stat-card-icon-success">
                 <i class="fas fa-mouse-pointer"></i>
             </div>
             <div class="stat-card-value"><?= $stats['clickRate'] ?>%</div>
@@ -56,6 +56,16 @@
         </div>
     </div>
 </div>
+
+<section class="mb-4" aria-labelledby="whatsappStatsTitle">
+    <h5 id="whatsappStatsTitle" class="section-title mb-3">WhatsApp</h5>
+    <div class="row g-3">
+        <div class="col-xl-3 col-md-6"><div class="stat-card"><div class="stat-card-icon stat-card-icon-primary"><i class="fab fa-whatsapp"></i></div><div class="stat-card-value"><?= number_format($stats['whatsappSent'], 0, ',', '.') ?></div><div class="stat-card-label">Enviados</div></div></div>
+        <div class="col-xl-3 col-md-6"><div class="stat-card"><div class="stat-card-icon stat-card-icon-success"><i class="fas fa-check"></i></div><div class="stat-card-value"><?= number_format($stats['whatsappDelivered'], 0, ',', '.') ?></div><div class="stat-card-label">Entregues</div></div></div>
+        <div class="col-xl-3 col-md-6"><div class="stat-card"><div class="stat-card-icon stat-card-icon-accent"><i class="fas fa-eye"></i></div><div class="stat-card-value"><?= number_format($stats['whatsappRead'], 0, ',', '.') ?></div><div class="stat-card-label">Lidos</div></div></div>
+        <div class="col-xl-3 col-md-6"><div class="stat-card"><div class="stat-card-icon stat-card-icon-tertiary"><i class="fas fa-triangle-exclamation"></i></div><div class="stat-card-value"><?= number_format($stats['whatsappFailed'], 0, ',', '.') ?></div><div class="stat-card-label">Falhas</div></div></div>
+    </div>
+</section>
 
 <!-- AWS SES Limits -->
 <div class="row mb-4">
@@ -152,7 +162,7 @@
                                     <small><?= date('d/m/Y', strtotime($campaign['created_at'])) ?></small>
                                 </div>
                                 <small class="text-muted">
-                                    <?= $campaign['total_messages'] ?> mensagens · 
+                                    <?= $campaign['total_messages'] ?> e-mails ·
                                     <?= $campaign['total_opens'] ?> aberturas
                                 </small>
                             </a>
@@ -174,10 +184,10 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="card-title mb-0">
-                        <i class="fas fa-paper-plane"></i> Mensagens Recentes
+                        <i class="fas fa-paper-plane"></i> E-mails Recentes
                     </h5>
                     <a href="<?= base_url('messages/create') ?>" class="btn btn-primary btn-sm">
-                        <i class="fas fa-plus"></i> Nova Mensagem
+                        <i class="fas fa-plus"></i> Novo E-mail
                     </a>
                 </div>
                 

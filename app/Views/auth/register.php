@@ -40,6 +40,10 @@
                     <?= csrf_field() ?>
                     <input type="hidden" name="redirect" value="<?= esc($redirectTarget) ?>">
                     <div class="col-12">
+                        <label class="form-label" for="registerCompany">Nome da empresa</label>
+                        <input type="text" class="form-control" id="registerCompany" name="company_name" value="<?= esc(old('company_name')) ?>" maxlength="255" required>
+                    </div>
+                    <div class="col-12">
                         <label class="form-label" for="registerName">Nome completo</label>
                         <input type="text" class="form-control" id="registerName" name="name" value="<?= esc(old('name')) ?>" required>
                     </div>
@@ -62,7 +66,7 @@
             <a href="<?= base_url('login') . ($redirectTarget ? '?redirect=' . urlencode($redirectTarget) : '') ?>" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-2"></i> Voltar para login
             </a>
-            <a href="<?= base_url('auth/google') . ($redirectTarget ? '?redirect=' . urlencode($redirectTarget) : '') ?>" class="btn btn-danger">
+            <a href="<?= base_url('auth/google') . ($redirectTarget ? '?redirect=' . urlencode($redirectTarget) : '') ?>" class="btn btn-google">
                 <i class="fab fa-google me-2"></i> Entrar com Google
             </a>
         </div>

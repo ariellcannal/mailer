@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use CodeIgniter\Model;
 
 /**
  * Modelo de associação entre contatos e listas.
  */
-class ContactListMemberModel extends Model
+class ContactListMemberModel extends TenantModel
 {
     /**
      * @var string
@@ -30,6 +29,7 @@ class ContactListMemberModel extends Model
      * @var array<int, string>
      */
     protected $allowedFields = [
+        'company_id',
         'contact_id',
         'list_id',
         'added_at',
@@ -55,6 +55,7 @@ class ContactListMemberModel extends Model
         $rows = $this->db->table($this->table)
             ->select('contact_list_members.contact_id, contact_lists.id as list_id, contact_lists.name')
             ->join('contact_lists', 'contact_lists.id = contact_list_members.list_id')
+            ->where('contact_list_members.company_id', (int) (session()->get('company_id') ?? 0))
             ->whereIn('contact_list_members.contact_id', $contactIds)
             ->get()
             ->getResultArray();

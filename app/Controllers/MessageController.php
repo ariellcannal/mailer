@@ -75,7 +75,7 @@ class MessageController extends BaseController
             'senderMap' => $senderMap,
             'messageProgress' => $messageProgress,
             'activeMenu' => 'messages',
-            'pageTitle' => 'Mensagens'
+            'pageTitle' => 'Envios de E-mail'
         ]);
     }
 
@@ -94,7 +94,7 @@ class MessageController extends BaseController
             'message' => [],
             'selectedLists' => [],
             'activeMenu' => 'messages',
-            'pageTitle' => 'Nova Mensagem',
+            'pageTitle' => 'Novo Envio de E-mail',
             'selectedCampaignId' => $defaultCampaignId > 0 ? $defaultCampaignId : null,
         ]);
     }
@@ -163,31 +163,6 @@ class MessageController extends BaseController
     }
 
     /**
-     * Pré-visualização da mensagem (sem tracking)
-     */
-    public function preview(int $id)
-    {
-        $model = new MessageModel();
-        $message = $model->find($id);
-
-        if (!$message) {
-            return view('errors/html/error_404');
-        }
-
-        // Retornar HTML puro da mensagem
-        $html = $message['html_content'];
-
-        // Remover placeholders de personalização para pré-visualização
-        $html = str_replace('{{nome}}', '[NOME]', $html);
-        $html = str_replace('{{email}}', '[EMAIL]', $html);
-        $html = str_replace('{{apelido}}', '[APELIDO]', $html);
-
-        return $this->response
-            ->setContentType('text/html')
-            ->setBody($html);
-    }
-
-    /**
      * Exibe formulário de edição da mensagem.
      */
     public function edit(int $id): string|RedirectResponse
@@ -229,7 +204,7 @@ class MessageController extends BaseController
             'contactLists' => $contactListModel->orderBy('name', 'ASC')->findAll(),
             'selectedLists' => $preselectedLists,
             'activeMenu' => 'messages',
-            'pageTitle' => 'Editar Mensagem',
+            'pageTitle' => 'Editar Envio de E-mail',
             'selectedCampaignId' => null,
             'editPermissions' => $permissions,
         ]);
@@ -246,6 +221,20 @@ class MessageController extends BaseController
             $model = new MessageModel();
 
             $messageId = (int) ($this->request->getPost('message_id') ?? 0);
+            if ($messageId > 0 && !$model->find($messageId)) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'error' => 'Mensagem não encontrada.',
+                ]);
+            }
+
+            if (!(new CampaignModel())->find((int) $this->request->getPost('campaign_id'))
+                || !(new SenderModel())->find((int) $this->request->getPost('sender_id'))) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'error' => 'Campanha ou remetente inválido para esta empresa.',
+                ]);
+            }
 
             // Validar opt-out link
             $htmlContent = $this->sanitizeHtmlContent($this->request->getPost('html_content'));
@@ -454,6 +443,11 @@ class MessageController extends BaseController
             'optout_link_visible' => $validation['is_visible'],
         ];
 
+        if (!(new CampaignModel())->find((int) $data['campaign_id'])
+            || !(new SenderModel())->find((int) $data['sender_id'])) {
+            return redirect()->back()->withInput()->with('error', 'Campanha ou remetente inválido para esta empresa.');
+        }
+
         $scheduledAt = $this->normalizeScheduleInput($this->request->getPost('scheduled_at'));
         $resends = (array) $this->request->getPost('resends');
         $contactLists = (array) $this->request->getPost('contact_lists');
@@ -509,10 +503,15 @@ class MessageController extends BaseController
         }
 
         // Obter contatos
-        $contactIds = $this->request->getPost('contact_ids');
+        $contactIds = array_values(array_filter(array_map('intval', (array) $this->request->getPost('contact_ids'))));
 
         if (empty($contactIds)) {
             return $this->response->setJSON(['success' => false, 'error' => 'Nenhum contato selecionado']);
+        }
+
+        $contactIds = (new ContactModel())->whereIn('id', $contactIds)->findColumn('id') ?? [];
+        if (empty($contactIds)) {
+            return $this->response->setJSON(['success' => false, 'error' => 'Nenhum contato válido encontrado para esta empresa.']);
         }
 
         // Adicionar à fila
@@ -748,7 +747,7 @@ class MessageController extends BaseController
             return $validation;
         }
 
-        if ($step === 4) {
+        if ($step === 3) {
             $contactLists = (array) $this->request->getPost('contact_lists');
 
             if (empty($contactLists)) {
@@ -759,7 +758,7 @@ class MessageController extends BaseController
             }
         }
 
-        if ($step === 5) {
+        if ($step === 4) {
             $scheduledAt = $this->normalizeScheduleInput($this->request->getPost('scheduled_at'));
 
             if (empty($scheduledAt)) {
@@ -774,18 +773,21 @@ class MessageController extends BaseController
     }
 
     /**
-     * Remove atributos de largura e altura das imagens para evitar distorções e preserva placeholders.
-     * Garante a estrutura com as tags <html><head></head><body> para melhor compatibilidade com editores WYSIWYG e clientes de email.
-     * Garante a cor de fundo do e-mail.
+    * Preserva documentos completos renderizados pelo editor e normaliza HTML incompleto.
+    * Garante a estrutura básica e a cor de fundo do e-mail quando necessário.
      *
      * @param string|null $htmlContent Conteúdo HTML recebido do formulário.
      *
-     * @return string HTML saneado sem os atributos width e height.
+    * @return string HTML saneado e normalizado.
      */
     protected function sanitizeHtmlContent(?string $htmlContent): string
     {
-        if (trim($htmlContent) === '') {
+        if ($htmlContent === null || trim($htmlContent) === '') {
             return '';
+        }
+
+        if (preg_match('/<html\\b[^>]*>/i', $htmlContent) && preg_match('/<body\\b[^>]*>/i', $htmlContent)) {
+            return trim($htmlContent);
         }
 
         // 1. Obtém a cor de fundo do POST ou aplica o fallback (#ffffff)
@@ -870,7 +872,7 @@ class MessageController extends BaseController
             'optout_link_visible' => $validation['is_visible'] ?? false,
         ];
 
-        if ($step === 5) {
+        if ($step === 4) {
             $data['scheduled_at'] = $this->normalizeScheduleInput($this->request->getPost('scheduled_at'));
         }
 
@@ -896,15 +898,15 @@ class MessageController extends BaseController
         $progress = $this->decodeProgressData($message['progress_data'] ?? null);
         $needsUpdate = false;
 
-        // Step 4: Destinatários
-        if ($step === 4) {
+        // Step 3: Destinatários
+        if ($step === 3) {
             $contactLists = (array) $this->request->getPost('contact_lists');
             $progress['contact_lists'] = array_values(array_filter(array_map('intval', $contactLists)));
             $needsUpdate = true;
         }
 
-        // Step 5: Envios (Agendamento + Reenvios)
-        if ($step === 5) {
+        // Step 4: Envios (Agendamento + Reenvios)
+        if ($step === 4) {
             $scheduledAt = $this->request->getPost('scheduled_at');
             if ($scheduledAt) {
                 $progress['scheduled_at'] = $scheduledAt;
@@ -956,7 +958,10 @@ class MessageController extends BaseController
         $builder = $contactModel->builder();
         $builder->select('contacts.id')
             ->join('contact_list_members', 'contact_list_members.contact_id = contacts.id')
+            ->join('contact_lists', 'contact_lists.id = contact_list_members.list_id')
             ->whereIn('contact_list_members.list_id', $contactLists)
+            ->where('contact_list_members.company_id', (int) session()->get('company_id'))
+            ->where('contact_lists.company_id', (int) session()->get('company_id'))
             ->where('contacts.is_active', 1)
             ->where('contacts.opted_out', 0)
             ->where('contacts.bounced', 0)
@@ -1223,6 +1228,7 @@ class MessageController extends BaseController
             ->join('contact_list_members', 'contact_list_members.list_id = contact_lists.id')
             ->join('message_sends', 'message_sends.contact_id = contact_list_members.contact_id')
             ->where('message_sends.message_id', $messageId)
+            ->where('contact_lists.company_id', (int) session()->get('company_id'))
             ->where('message_sends.resend_number', 0)
             ->groupBy('contact_lists.id, contact_lists.total_contacts')
             ->get()
@@ -1254,6 +1260,7 @@ class MessageController extends BaseController
             ->join('contact_list_members', 'contact_list_members.list_id = contact_lists.id')
             ->join('message_sends', 'message_sends.contact_id = contact_list_members.contact_id')
             ->where('message_sends.message_id', $messageId)
+            ->where('contact_lists.company_id', (int) session()->get('company_id'))
             ->where('message_sends.resend_number', 0)
             ->groupBy('contact_lists.id, contact_lists.name')
             ->orderBy('contact_lists.name', 'ASC')

@@ -3,7 +3,7 @@
 <?= $this->section('content') ?>
 <div class="card mb-4">
     <div class="card-body">
-        <h4 class="mb-4 section-title"><i class="fas fa-cog text-secondary me-2"></i> Configurações Gerais</h4>
+        <h4 class="mb-4 section-title"><i class="fas fa-cog text-secondary me-2"></i> SMTP</h4>
 
         <?php if (session('success')): ?>
             <div class="alert alert-success"><?= esc(session('success')) ?></div>
@@ -36,7 +36,7 @@
                 </div>
             </div>
 
-            <div class="d-flex gap-2 mt-4">
+            <div class="btn-group mt-4" role="group" aria-label="Ações de configuração">
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save"></i> Salvar Configurações
                 </button>

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Models\UserModel;
+use App\Models\CompanyModel;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\I18n\Time;
 use Config\Services;
@@ -27,6 +28,7 @@ class AuthController extends BaseController
         return view('auth/login', [
             'pageTitle' => 'Entrar',
             'redirectTarget' => $this->getRedirectTarget(),
+            'isAddingProfile' => $this->request->getGet('add_profile') === '1',
         ]);
     }
 
@@ -40,6 +42,35 @@ class AuthController extends BaseController
         session()->destroy();
 
         return redirect()->to('/login')->with('success', 'Sessão encerrada com sucesso.');
+    }
+
+    /**
+     * Troca para uma conta autenticada anteriormente nesta sessão.
+     */
+    public function switchProfile(): RedirectResponse
+    {
+        $userId = (int) $this->request->getPost('user_id');
+        $profiles = (array) session()->get('logged_profiles');
+
+        if ($userId <= 0 || ! isset($profiles[$userId])) {
+            return redirect()->to('/dashboard')->with('error', 'Este perfil não está autenticado nesta sessão.');
+        }
+
+        $user = (new UserModel())->find($userId);
+        if (!$user || !(bool) ($user['is_active'] ?? false)) {
+            unset($profiles[$userId]);
+            session()->set('logged_profiles', $profiles);
+            return redirect()->to('/dashboard')->with('error', 'Este perfil está inativo.');
+        }
+
+        $company = (new CompanyModel())->find((int) ($user['company_id'] ?? 0));
+        if (!$company || !(bool) ($company['is_active'] ?? false)) {
+            return redirect()->to('/dashboard')->with('error', 'A empresa deste perfil está inativa.');
+        }
+
+        $this->persistUserSession($user, (string) ($profiles[$userId]['provider'] ?? 'password'));
+
+        return redirect()->to('/dashboard')->with('success', 'Perfil alterado.');
     }
 
     /**
@@ -91,7 +122,24 @@ class AuthController extends BaseController
             return redirect()->back()->withInput()->with('error', 'E-mail já cadastrado.');
         }
 
+        $companyName = trim((string) $this->request->getPost('company_name'));
+        if ($companyName === '') {
+            $companyName = trim($name) !== '' ? trim($name) . ' - Empresa' : 'Minha empresa';
+        }
+
+        $companyModel = new CompanyModel();
+        $companyId = (int) $companyModel->insert([
+            'name' => $companyName,
+            'is_active' => 1,
+        ]);
+
+        if ($companyId <= 0) {
+            return redirect()->back()->withInput()->with('error', 'Não foi possível criar a empresa.');
+        }
+        $this->seedCompanySettings($companyId);
+
         $userId = $userModel->insert([
+            'company_id' => $companyId,
             'email' => $email,
             'name' => $name ?: 'Usuário Autorizado',
             'password_hash' => password_hash($password, PASSWORD_DEFAULT),
@@ -100,6 +148,7 @@ class AuthController extends BaseController
         ]);
 
         if (!$userId) {
+            $companyModel->delete($companyId);
             return redirect()->back()->withInput()->with('error', 'Não foi possível concluir o cadastro.');
         }
 
@@ -349,7 +398,25 @@ class AuthController extends BaseController
                 $user = $userModel->find((int) $user['id']);
             }
         } else {
+            $companyName = trim((string) $name);
+            if ($companyName === '') {
+                $companyName = strstr($email, '@', true) ?: 'Minha empresa';
+                $companyName .= ' - Empresa';
+            }
+
+            $companyModel = new CompanyModel();
+            $companyId = (int) $companyModel->insert([
+                'name' => $companyName,
+                'is_active' => 1,
+            ]);
+
+            if ($companyId <= 0) {
+                return redirect()->to('/login')->with('error', 'Não foi possível criar a empresa do usuário Google.');
+            }
+            $this->seedCompanySettings($companyId);
+
             $userId = $userModel->insert([
+                'company_id' => $companyId,
                 'email' => $email,
                 'name' => $name,
                 'avatar' => $avatar,
@@ -359,6 +426,7 @@ class AuthController extends BaseController
             ]);
 
             if (!$userId) {
+                $companyModel->delete($companyId);
                 return redirect()->to('/login')->with('error', 'Não foi possível criar o usuário via Google.');
             }
 
@@ -380,15 +448,51 @@ class AuthController extends BaseController
      * @param array<string, string|int|null> $user
      * @param string                         $provider
      */
+    private function seedCompanySettings(int $companyId): void
+    {
+        $defaults = [
+            'aws_ses_region' => 'us-east-1',
+            'daily_send_limit' => '50000',
+            'hourly_send_limit' => '10000',
+            'throttle_rate' => '14',
+            'site_name' => 'Email Marketing System',
+            'timezone' => 'America/Sao_Paulo',
+        ];
+
+        $rows = [];
+        foreach ($defaults as $key => $value) {
+            $rows[] = [
+                'company_id' => $companyId,
+                'setting_key' => $key,
+                'setting_value' => $value,
+            ];
+        }
+
+        \Config\Database::connect()->table('system_settings')->insertBatch($rows);
+    }
+
     private function persistUserSession(array $user, string $provider): void
     {
+        $profiles = (array) session()->get('logged_profiles');
+        $userId = (int) $user['id'];
+        $profiles[$userId] = [
+            'id' => $userId,
+            'company_id' => (int) ($user['company_id'] ?? 0),
+            'email' => (string) $user['email'],
+            'name' => (string) $user['name'],
+            'avatar' => $user['avatar'] ?? null,
+            'provider' => $provider,
+        ];
+
         session()->regenerate(true);
         session()->set([
-            'user_id' => $user['id'],
+            'user_id' => $userId,
+            'company_id' => $user['company_id'] ?? null,
             'user_email' => $user['email'],
             'user_name' => $user['name'],
             'user_avatar' => $user['avatar'] ?? null,
             'auth_provider' => $provider,
+            'logged_profiles' => $profiles,
         ]);
     }
 

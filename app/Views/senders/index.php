@@ -14,12 +14,12 @@
             <table class="table table-hover align-middle">
                 <thead>
                     <tr>
-                        <th class="text-uppercase">Email</th>
-                        <th class="text-uppercase">Nome</th>
-                        <th class="text-uppercase">Domínio</th>
-                        <th class="text-uppercase">Status</th>
-                        <th class="text-uppercase">Verificações</th>
-                        <th class="text-uppercase">Ações</th>
+                        <th>Email</th>
+                        <th>Nome</th>
+                        <th>Domínio</th>
+                        <th>Status</th>
+                        <th>Verificações</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody>

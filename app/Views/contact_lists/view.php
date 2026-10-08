@@ -2,8 +2,8 @@
 
 <?= $this->section('content') ?>
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="mb-0 text-uppercase"><i class="fas fa-list-ul text-secondary me-2"></i> <?= esc($list['name']) ?></h4>
-    <div class="d-flex gap-2">
+    <h4 class="mb-0"><i class="fas fa-list-ul text-secondary me-2"></i> <?= esc($list['name']) ?></h4>
+    <div class="btn-group btn-group-sm" role="group" aria-label="Ações da lista">
         <a href="<?= base_url('contact-lists') ?>" class="btn btn-outline-secondary btn-sm">
             <i class="fas fa-arrow-left"></i> Voltar
         </a>
@@ -33,7 +33,7 @@
 <div class="card">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-            <h5 class="mb-0 text-uppercase">Contatos na lista</h5>
+            <h5 class="mb-0">Contatos na lista</h5>
             <form class="d-flex gap-2" method="GET" action="<?= current_url() ?>">
                 <input type="hidden" name="page" value="<?= esc($pager->getCurrentPage()) ?>">
                 <input type="text" name="email" class="form-control" placeholder="Filtrar por email" value="<?= esc($filters['email']) ?>">
@@ -101,15 +101,17 @@
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-end">
-                                    <a href="<?= base_url('contacts/view/' . $contact['id']) ?>" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <form action="<?= base_url('contact-lists/detach-contact/' . $list['id'] . '/' . $contact['id']) ?>" method="POST" class="d-inline">
-                                        <?= csrf_field() ?>
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remover este contato da lista?');">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </form>
+                                    <div class="btn-group btn-group-sm" role="group" aria-label="Ações do contato">
+                                        <a href="<?= base_url('contacts/view/' . $contact['id']) ?>" class="btn btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <form action="<?= base_url('contact-lists/detach-contact/' . $list['id'] . '/' . $contact['id']) ?>" method="POST">
+                                            <?= csrf_field() ?>
+                                            <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Remover este contato da lista?');">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

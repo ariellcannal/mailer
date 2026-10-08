@@ -32,8 +32,8 @@ $htmlContent = $htmlContent ?? old('html_content');
 		
 		<!-- Aba Preview -->
 		<div class="tab-pane fade" id="preview-panel" role="tabpanel" aria-labelledby="preview-tab">
-			<div class="preview-wrapper" style="padding: 20px; background: #f5f5f5;">
-				<iframe id="emailPreviewFrame" style="width: 100%; min-height: 600px; border: 1px solid #ddd; background: white;"></iframe>
+			<div class="preview-wrapper">
+				<iframe id="emailPreviewFrame" class="email-preview-frame"></iframe>
 			</div>
 		</div>
 	</div>

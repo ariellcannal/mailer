@@ -6,9 +6,9 @@
 .avatar-preview {
     width: 96px;
     height: 96px;
-    border-radius: 50%;
+    border-radius: var(--radius-round);
     overflow: hidden;
-    background: #f8f9fa;
+    background: var(--surface-muted);
 }
 
 .avatar-preview img {

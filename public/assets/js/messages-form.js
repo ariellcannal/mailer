@@ -98,7 +98,7 @@
 			}
 		}
 
-		if (currentStep === 4) {
+		if (currentStep === 3) {
 			const selected = $contactSelect.val() || [];
 			if (($contactSelect[0].options.length > 0) && selected.length === 0) {
 				showFeedback('Selecione pelo menos uma lista de contato.');
@@ -145,7 +145,7 @@
 
 			currentStep = Math.min(maxStep, currentStep + 1);
 
-			if (currentStep === 5) {
+			if (currentStep === 4) {
 				updateScheduleSummary();
 			}
 
@@ -203,6 +203,8 @@
 		if ($contactSelect.length && $.fn.select2) {
 			$contactSelect.select2({
 				width: '100%',
+				theme: 'bootstrap-5',
+				language: 'pt-BR',
 				placeholder: $contactSelect.data('placeholder') || 'Selecione as listas'
 			});
 

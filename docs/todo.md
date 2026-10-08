@@ -1,4 +1,4 @@
-# Project TODO - Mailer CI4
+# CANNAL Envios - Lista de Tarefas
 
 ## Novas Funcionalidades
 

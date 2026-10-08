@@ -1,15 +1,15 @@
 /* Estilos para página de consulta de empresas */
 
 #paginacao {
-    border-top: 1px solid #dee2e6;
+    border-top: var(--border-width) solid var(--border-default);
     padding-top: 1rem;
 }
 
 .table code {
     font-size: 0.9em;
-    background-color: #f8f9fa;
-    padding: 0.2rem 0.4rem;
-    border-radius: 0.25rem;
+    background-color: var(--surface-muted);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-control);
 }
 
 .table small {

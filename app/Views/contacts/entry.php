@@ -14,6 +14,12 @@
             </div>
 
             <div class="mb-3">
+                <label class="form-label" for="contactPhone">Telefone WhatsApp</label>
+                <input type="tel" id="contactPhone" class="form-control" name="phone" value="<?= esc(old('phone', $contact['phone'] ?? '')) ?>" placeholder="(11) 99999-9999" inputmode="tel" maxlength="15" data-br-phone-mask>
+                <small class="text-muted">DDD + telefone com 8 ou 9 dígitos. O código do Brasil (55) é aplicado ao salvar.</small>
+            </div>
+
+            <div class="mb-3">
                 <label class="form-label">Nome</label>
                 <input type="text" class="form-control" name="name" value="<?= esc(old('name', $contact['name'] ?? '')) ?>">
             </div>
@@ -36,11 +42,11 @@
             </div>
             <?php endif; ?>
 
-            <div class="d-flex gap-2">
+            <div class="btn-group" role="group" aria-label="Ações do formulário">
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save"></i> Salvar
                 </button>
-                <a href="<?= $isEdit ? base_url('contacts/view/' . $contact['id']) : base_url('contacts') ?>" class="btn btn-secondary">Cancelar</a>
+                <a href="<?= base_url('contacts') ?>" class="btn btn-neutral">Cancelar</a>
             </div>
         </form>
     </div>

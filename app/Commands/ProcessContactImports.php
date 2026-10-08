@@ -97,6 +97,7 @@ class ProcessContactImports extends BaseCommand
 
                     $headers = array_map('trim', $rows[0]);
                     $emailIndex = (int) $import['email_column'];
+                    $phoneIndex = $import['phone_column'] !== null ? (int) $import['phone_column'] : null;
                     $nameIndex = $import['name_column'] !== null ? (int) $import['name_column'] : null;
                     $nicknameIndex = $import['nickname_column'] !== null ? (int) $import['nickname_column'] : null;
                     $listIds = !empty($import['list_ids']) ? json_decode($import['list_ids'], true) : [];
@@ -129,12 +130,17 @@ class ProcessContactImports extends BaseCommand
 
                         $name = $nameIndex !== null ? trim((string) ($row[$nameIndex] ?? '')) : null;
                         $formattedName = $this->formatNameUcFirst($name);
+
+                        $phone = $phoneIndex !== null
+                            ? $this->normalizeBrazilPhone((string) ($row[$phoneIndex] ?? ''))
+                            : null;
                         
                         $nickname = $nicknameIndex !== null ? trim((string) ($row[$nicknameIndex] ?? '')) : null;
                         $formattedNickname = $this->formatNameUcFirst($nickname);
 
                         $contacts[] = [
                             'email' => $email,
+                            'phone' => $phone,
                             'name' => $formattedName,
                             'nickname' => $formattedNickname,
                         ];
@@ -143,7 +149,7 @@ class ProcessContactImports extends BaseCommand
 
                         // Processar em lotes de 500
                         if (count($contacts) >= 500) {
-                            $result = $contactModel->importContactsBatch($contacts, $listIds);
+                            $result = $contactModel->importContactsBatch($contacts, $listIds, (int) $import['company_id']);
                             
                             // Acumular resultados
                             $totalImported += $result['imported'];
@@ -170,7 +176,7 @@ class ProcessContactImports extends BaseCommand
 
                     // Processar lote restante
                     if (!empty($contacts)) {
-                        $result = $contactModel->importContactsBatch($contacts, $listIds);
+                        $result = $contactModel->importContactsBatch($contacts, $listIds, (int) $import['company_id']);
                         
                         // Acumular resultados do último lote
                         $totalImported += $result['imported'];
@@ -310,5 +316,23 @@ class ProcessContactImports extends BaseCommand
         $rest = mb_substr($trimmed, 1, null, 'UTF-8');
 
         return $firstChar . $rest;
+    }
+
+    private function normalizeBrazilPhone(string $phone): ?string
+    {
+        $digits = preg_replace('/\D+/', '', $phone) ?? '';
+        if ($digits === '') {
+            return null;
+        }
+
+        if (in_array(strlen($digits), [12, 13], true) && str_starts_with($digits, '55')) {
+            $localDigits = substr($digits, 2);
+        } elseif (in_array(strlen($digits), [10, 11], true)) {
+            $localDigits = $digits;
+        } else {
+            return null;
+        }
+
+        return in_array(strlen($localDigits) - 2, [8, 9], true) ? '55' . $localDigits : null;
     }
 }

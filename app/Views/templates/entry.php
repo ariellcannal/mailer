@@ -4,7 +4,7 @@
 <?php $isEdit = !empty($template); ?>
 <div class="card">
     <div class="card-body">
-        <h4 class="mb-4"><i class="fas fa-file-code"></i> <?= $isEdit ? 'Editar Template' : 'Novo Template' ?></h4>
+                <h4 class="mb-4"><i class="fas fa-file-code"></i> <?= $isEdit ? 'Editar Template de E-mail' : 'Novo Template de E-mail' ?></h4>
 
         <?php if (session('errors')): ?>
             <div class="alert alert-danger">
@@ -49,11 +49,11 @@
                 <label class="form-check-label" for="is_active">Template ativo</label>
             </div>
 
-            <div class="d-flex gap-2">
+            <div class="btn-group" role="group" aria-label="Ações do formulário">
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save"></i> Salvar
                 </button>
-                <a href="<?= $isEdit ? base_url('templates/view/' . $template['id']) : base_url('templates') ?>" class="btn btn-secondary">Cancelar</a>
+                <a href="<?= base_url('templates') ?>" class="btn btn-neutral">Cancelar</a>
             </div>
         </form>
     </div>

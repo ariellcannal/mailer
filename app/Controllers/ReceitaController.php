@@ -25,7 +25,7 @@ class ReceitaController extends BaseController
     public function index()
     {
         return view('receita/index', [
-            'pageTitle' => 'Importação Receita Federal',
+            'pageTitle' => 'Nova Importação RFB',
             'activeMenu' => 'receita-index'
         ]);
     }
@@ -40,7 +40,7 @@ class ReceitaController extends BaseController
             ->findAll();
         
         return view('receita/tasks', [
-            'pageTitle' => 'Tarefas de Importação',
+            'pageTitle' => 'Tarefas da RFB',
             'activeMenu' => 'receita-tasks',
             'tasks' => $tasks
         ]);
@@ -375,7 +375,7 @@ class ReceitaController extends BaseController
     public function empresas()
     {
         return view('receita/empresas', [
-            'pageTitle' => 'Consultar Empresas',
+            'pageTitle' => 'Importados da RFB',
             'activeMenu' => 'receita'
         ]);
     }
@@ -541,6 +541,7 @@ class ReceitaController extends BaseController
             $term = $this->request->getGet('q');
             $db = \Config\Database::connect();
             $builder = $db->table('contact_lists');
+            $builder->where('company_id', (int) session()->get('company_id'));
             
             if (!empty($term)) {
                 $builder->like('name', $term);

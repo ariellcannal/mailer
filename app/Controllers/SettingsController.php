@@ -30,7 +30,7 @@ class SettingsController extends BaseController
         return view('settings/index', [
             'settings' => $settings,
             'activeMenu' => 'settings',
-            'pageTitle' => 'Configurações',
+            'pageTitle' => 'SMTP',
             'awsConfig' => [
                 'region' => getenv('aws.ses.region') ?: 'us-east-1',
                 'hasAccessKey' => (bool) getenv('aws.ses.accessKey'),

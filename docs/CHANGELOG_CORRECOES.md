@@ -1,4 +1,4 @@
-# Changelog de Correções - Sistema Mailer
+# Changelog de Correções - CANNAL Envios
 
 ## [2026-01-28] Correção de Duplicação de Reenvios Automáticos
 

@@ -24,7 +24,7 @@
                     <div class="col-md-6 col-lg-4 mb-4">
                         <div class="card h-100">
                             <div class="card-body">
-                                <h5 class="card-title"><?= esc($campaign['name']) ?></h5>
+                                <h5 class="card-title campaign-title"><?= esc($campaign['name']) ?></h5>
                                 <p class="card-text text-muted"><?= esc($campaign['description']) ?></p>
                                 <div class="mt-3">
                                     <small class="text-muted">

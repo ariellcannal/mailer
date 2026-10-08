@@ -909,13 +909,16 @@ class ReceitaAsyncProcessor
 
             // Criar/atualizar contato
             $contactData = [
+                'company_id' => (int) ($task['company_id'] ?? 0),
                 'email' => $email,
                 'name' => trim($row['nome_fantasia'] ?? ''),
                 'is_active' => 1
             ];
 
             // Verificar se contato já existe
-            $existingContact = $contactModel->where('email', $email)->first();
+            $existingContact = $contactModel->where('email', $email)
+                ->where('company_id', (int) ($task['company_id'] ?? 0))
+                ->first();
 
             if ($existingContact) {
                 $contactId = $existingContact['id'];
@@ -945,6 +948,7 @@ class ReceitaAsyncProcessor
 
             if (! $existingMember) {
                 $memberModel->insert([
+                    'company_id' => (int) ($task['company_id'] ?? 0),
                     'contact_id' => $contactId,
                     'list_id' => $contactListId,
                     'added_at' => date('Y-m-d H:i:s')
@@ -959,6 +963,6 @@ class ReceitaAsyncProcessor
         $listModel = new \App\Models\ContactListModel();
         $listModel->refreshCounters([
             $contactListId
-        ]);
+        ], (int) ($task['company_id'] ?? 0));
     }
 }

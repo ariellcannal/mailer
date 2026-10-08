@@ -76,6 +76,11 @@ class ContactController extends BaseController {
         $model = new ContactModel();
 
         $email = (string) $this->request->getPost('email');
+        $rawPhone = (string) $this->request->getPost('phone');
+        $phone = $this->normalizeBrazilPhone($rawPhone);
+        if (trim($rawPhone) !== '' && $phone === null) {
+            return redirect()->back()->withInput()->with('contacts_error', 'Informe DDD e telefone com 8 ou 9 dígitos.');
+        }
         $name = (string) $this->request->getPost('name');
         $nickname = trim((string) $this->request->getPost('nickname'));
 
@@ -85,6 +90,7 @@ class ContactController extends BaseController {
 
         $data = [
             'email' => $email,
+            'phone' => $phone !== '' ? $phone : null,
             'name' => $name,
             'nickname' => $nickname,
             'is_active' => 1,
@@ -104,6 +110,10 @@ class ContactController extends BaseController {
                 $updates['nickname'] = $data['nickname'];
             } elseif (!isset($existing['nickname']) || trim((string) $existing['nickname']) === '') {
                 $updates['nickname'] = $model->generateNickname($data['name'], $data['email']);
+            }
+
+            if (($data['phone'] ?? null) !== ($existing['phone'] ?? null)) {
+                $updates['phone'] = $data['phone'];
             }
 
             if (!empty($updates)) {
@@ -149,7 +159,7 @@ class ContactController extends BaseController {
         
         return view('contacts/imports', [
             'activeMenu' => 'contacts',
-            'pageTitle' => 'Importações de Contatos',
+            'pageTitle' => 'Importar Contatos',
             'imports' => $imports,
             'pager' => $importModel->pager,
         ]);
@@ -159,6 +169,8 @@ class ContactController extends BaseController {
         $file = $this->request->getFile('file');
         $listIds = (array) $this->request->getPost('lists');
         $emailColumn = $this->request->getPost('email_column');
+        $phoneColumnInput = $this->request->getPost('phone_column');
+        $phoneColumn = $phoneColumnInput !== null && $phoneColumnInput !== '' ? (int) $phoneColumnInput : null;
         $nameColumn = $this->request->getPost('name_column');
         $nicknameColumn = $this->request->getPost('nickname_column');
         $tempFile = $this->request->getPost('temp_file');
@@ -180,6 +192,7 @@ class ContactController extends BaseController {
                     'pageTitle' => 'Mapear Colunas',
                     'headers' => $headers,
                     'tempFile' => $tempPath,
+                    'selectedPhoneColumn' => $phoneColumn,
                     'lists' => (new ContactListModel())->orderBy('name', 'ASC')->findAll(),
                     'selectedLists' => $listIds,
                 ]);
@@ -199,6 +212,7 @@ class ContactController extends BaseController {
                 'status' => 'pending',
                 'total_rows' => count($rows) - 1, // Excluir header
                 'email_column' => $emailColumn,
+                'phone_column' => $phoneColumn,
                 'name_column' => $nameColumn,
                 'nickname_column' => $nicknameColumn,
                 'list_ids' => !empty($listIds) ? json_encode($listIds) : null,
@@ -249,6 +263,24 @@ class ContactController extends BaseController {
         $file->move($destination, $originalName);
 
         return $tempPath;
+    }
+
+    private function normalizeBrazilPhone(string $phone): ?string
+    {
+        $digits = preg_replace('/\D+/', '', $phone) ?? '';
+        if ($digits === '') {
+            return null;
+        }
+
+        if (in_array(strlen($digits), [12, 13], true) && str_starts_with($digits, '55')) {
+            $localDigits = substr($digits, 2);
+        } elseif (in_array(strlen($digits), [10, 11], true)) {
+            $localDigits = $digits;
+        } else {
+            return null;
+        }
+
+        return in_array(strlen($localDigits) - 2, [8, 9], true) ? '55' . $localDigits : null;
     }
 
     /**
@@ -339,6 +371,12 @@ class ContactController extends BaseController {
         $model = new ContactModel();
 
         $email = (string) $this->request->getPost('email');
+        $rawPhone = (string) $this->request->getPost('phone');
+        $phone = $this->normalizeBrazilPhone($rawPhone);
+        if (trim($rawPhone) !== '' && $phone === null) {
+            return redirect()->back()->withInput()->with('contacts_error', 'Informe DDD e telefone com 8 ou 9 dígitos.');
+        }
+
         $name = (string) $this->request->getPost('name');
         $nickname = trim((string) $this->request->getPost('nickname'));
 
@@ -349,6 +387,7 @@ class ContactController extends BaseController {
         $data = [
             'id' => (int) $id,
             'email' => $email,
+            'phone' => $phone !== '' ? $phone : null,
             'name' => $name,
             'nickname' => $nickname,
         ];

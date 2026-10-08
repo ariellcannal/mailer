@@ -9,7 +9,7 @@ use CodeIgniter\Model;
 /**
  * Modelo responsável pelas configurações do sistema.
  */
-class SystemSettingModel extends Model
+class SystemSettingModel extends TenantModel
 {
     /**
      * @var string
@@ -24,7 +24,7 @@ class SystemSettingModel extends Model
     /**
      * @var array<int, string>
      */
-    protected $allowedFields = ['setting_key', 'setting_value'];
+    protected $allowedFields = ['company_id', 'setting_key', 'setting_value'];
 
     /**
      * @var string

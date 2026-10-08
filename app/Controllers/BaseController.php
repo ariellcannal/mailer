@@ -151,11 +151,22 @@ abstract class BaseController extends Controller
         }
 
         $this->currentUser = $user;
+        $loggedProfiles = (array) $session->get('logged_profiles');
+        $loggedProfiles[$userId] = [
+            'id' => $userId,
+            'company_id' => (int) ($user['company_id'] ?? 0),
+            'email' => $user['email'],
+            'name' => $user['name'],
+            'avatar' => $user['avatar'] ?? null,
+            'provider' => $session->get('auth_provider') ?? 'password',
+        ];
         $session->set([
+            'company_id' => $user['company_id'] ?? null,
             'user_email' => $user['email'],
             'user_name' => $user['name'],
             'user_avatar' => $user['avatar'] ?? null,
             'auth_provider' => $session->get('auth_provider') ?? 'password',
+            'logged_profiles' => $loggedProfiles,
         ]);
 
         $renderer = service('renderer');

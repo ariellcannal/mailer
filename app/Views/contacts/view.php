@@ -5,7 +5,7 @@
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="mb-0"><i class="fas fa-user"></i> <?= esc($contact['name'] ?: $contact['email']) ?></h4>
-            <div class="d-flex gap-2">
+            <div class="btn-group" role="group" aria-label="Ações do contato">
                 <a href="<?= base_url('contacts/edit/' . $contact['id']) ?>" class="btn btn-outline-secondary">
                     <i class="fas fa-edit"></i> Editar
                 </a>
@@ -30,6 +30,7 @@
                 <div class="border rounded p-3 h-100">
                     <h6>Informações Principais</h6>
                     <p class="mb-1"><strong>Email:</strong> <?= esc($contact['email']) ?></p>
+                    <p class="mb-1"><strong>Telefone WhatsApp:</strong> <?= !empty($contact['phone']) ? '+' . esc($contact['phone']) : '-' ?></p>
                     <p class="mb-1"><strong>Nome:</strong> <?= esc($contact['name']) ?: '-' ?></p>
                     <p class="mb-1"><strong>Apelido:</strong> <?= esc($contact['nickname'] ?? '') ?: '-' ?></p>
                     <p class="mb-1"><strong>Status:</strong>
@@ -63,7 +64,7 @@
         <?php if (!empty($sends)): ?>
             <div class="border rounded p-3 mt-4">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h6 class="mb-0">Mensagens enviadas</h6>
+                    <h6 class="mb-0">Envios de E-mail</h6>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-striped mb-0">

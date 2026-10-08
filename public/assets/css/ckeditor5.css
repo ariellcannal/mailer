@@ -11,3 +11,16 @@
 .ck.ck-editor {
 	width: 100%;
 }
+
+.preview-wrapper {
+	padding: var(--space-4);
+	background: var(--surface-muted);
+}
+
+.email-preview-frame {
+	width: 100%;
+	min-height: 600px;
+	border: var(--border-width) solid var(--border-default);
+	border-radius: var(--radius-control);
+	background: var(--surface-card);
+}

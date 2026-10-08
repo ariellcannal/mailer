@@ -6,8 +6,6 @@
 
 <?= $this->section('content') ?>
 <div class="container-fluid">
-    <?= $this->include('receita/_toolbar') ?>
-    
     <h4 class="mb-4">
 		<i class="fas fa-building me-2"></i>Empresas Importadas
 	</h4>

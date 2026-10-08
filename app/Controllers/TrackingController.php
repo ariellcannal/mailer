@@ -20,16 +20,18 @@ class TrackingController extends BaseController
      */
     public function index(): string
     {
-        $sendModel = new MessageSendModel();
-        $openModel = new MessageOpenModel();
-        $clickModel = new MessageClickModel();
-        $optoutModel = new OptoutModel();
-
-        $totalSent = $sendModel->where('status', 'sent')->countAllResults();
-        $totalOpens = $openModel->countAllResults();
-        $totalClicks = $clickModel->countAllResults();
-        $totalBounces = $sendModel->where('status', 'bounced')->countAllResults();
-        $totalOptouts = $optoutModel->countAllResults();
+        $db = \Config\Database::connect();
+        $companyId = (int) session()->get('company_id');
+        $totalSent = $db->table('message_sends')->join('messages', 'messages.id = message_sends.message_id')
+            ->where('messages.company_id', $companyId)->where('message_sends.status', 'sent')->countAllResults();
+        $totalOpens = $db->table('message_opens')->join('message_sends', 'message_sends.id = message_opens.send_id')
+            ->join('messages', 'messages.id = message_sends.message_id')->where('messages.company_id', $companyId)->countAllResults();
+        $totalClicks = $db->table('message_clicks')->join('message_sends', 'message_sends.id = message_clicks.send_id')
+            ->join('messages', 'messages.id = message_sends.message_id')->where('messages.company_id', $companyId)->countAllResults();
+        $totalBounces = $db->table('message_sends')->join('messages', 'messages.id = message_sends.message_id')
+            ->where('messages.company_id', $companyId)->where('message_sends.status', 'bounced')->countAllResults();
+        $totalOptouts = $db->table('optouts')->join('messages', 'messages.id = optouts.message_id')
+            ->where('messages.company_id', $companyId)->countAllResults();
 
         $recentActivity = $this->buildRecentTimeline();
 
@@ -52,8 +54,12 @@ class TrackingController extends BaseController
      */
     public function opens(): string
     {
-        $openModel = new MessageOpenModel();
-        $opens = $openModel->orderBy('opened_at', 'DESC')->findAll(50);
+        $opens = \Config\Database::connect()->table('message_opens')
+            ->select('message_opens.*')
+            ->join('message_sends', 'message_sends.id = message_opens.send_id')
+            ->join('messages', 'messages.id = message_sends.message_id')
+            ->where('messages.company_id', (int) session()->get('company_id'))
+            ->orderBy('message_opens.opened_at', 'DESC')->limit(50)->get()->getResultArray();
 
         return view('tracking/list', [
             'activeMenu' => 'tracking',
@@ -68,8 +74,12 @@ class TrackingController extends BaseController
      */
     public function clicks(): string
     {
-        $clickModel = new MessageClickModel();
-        $clicks = $clickModel->orderBy('clicked_at', 'DESC')->findAll(50);
+        $clicks = \Config\Database::connect()->table('message_clicks')
+            ->select('message_clicks.*')
+            ->join('message_sends', 'message_sends.id = message_clicks.send_id')
+            ->join('messages', 'messages.id = message_sends.message_id')
+            ->where('messages.company_id', (int) session()->get('company_id'))
+            ->orderBy('message_clicks.clicked_at', 'DESC')->limit(50)->get()->getResultArray();
 
         return view('tracking/list', [
             'activeMenu' => 'tracking',
@@ -84,10 +94,12 @@ class TrackingController extends BaseController
      */
     public function bounces(): string
     {
-        $sendModel = new MessageSendModel();
-        $bounces = $sendModel->where('status', 'bounced')
-            ->orderBy('bounced_at', 'DESC')
-            ->findAll(50);
+        $bounces = \Config\Database::connect()->table('message_sends')
+            ->select('message_sends.*')
+            ->join('messages', 'messages.id = message_sends.message_id')
+            ->where('messages.company_id', (int) session()->get('company_id'))
+            ->where('message_sends.status', 'bounced')
+            ->orderBy('message_sends.bounced_at', 'DESC')->limit(50)->get()->getResultArray();
 
         return view('tracking/list', [
             'activeMenu' => 'tracking',
@@ -102,8 +114,11 @@ class TrackingController extends BaseController
      */
     public function optouts(): string
     {
-        $optoutModel = new OptoutModel();
-        $optouts = $optoutModel->orderBy('opted_out_at', 'DESC')->findAll(50);
+        $optouts = \Config\Database::connect()->table('optouts')
+            ->select('optouts.*')
+            ->join('messages', 'messages.id = optouts.message_id')
+            ->where('messages.company_id', (int) session()->get('company_id'))
+            ->orderBy('optouts.opted_out_at', 'DESC')->limit(50)->get()->getResultArray();
 
         return view('tracking/list', [
             'activeMenu' => 'tracking',
@@ -125,6 +140,9 @@ class TrackingController extends BaseController
 
         $openEvents = $db->table('message_opens')
             ->select("'open' AS type, opened_at AS event_time")
+            ->join('message_sends', 'message_sends.id = message_opens.send_id')
+            ->join('messages', 'messages.id = message_sends.message_id')
+            ->where('messages.company_id', (int) session()->get('company_id'))
             ->orderBy('opened_at', 'DESC')
             ->limit(20)
             ->get()
@@ -132,6 +150,9 @@ class TrackingController extends BaseController
 
         $clickEvents = $db->table('message_clicks')
             ->select("'click' AS type, clicked_at AS event_time")
+            ->join('message_sends', 'message_sends.id = message_clicks.send_id')
+            ->join('messages', 'messages.id = message_sends.message_id')
+            ->where('messages.company_id', (int) session()->get('company_id'))
             ->orderBy('clicked_at', 'DESC')
             ->limit(20)
             ->get()
@@ -139,6 +160,8 @@ class TrackingController extends BaseController
 
         $optoutEvents = $db->table('optouts')
             ->select("'optout' AS type, opted_out_at AS event_time")
+            ->join('messages', 'messages.id = optouts.message_id')
+            ->where('messages.company_id', (int) session()->get('company_id'))
             ->orderBy('opted_out_at', 'DESC')
             ->limit(20)
             ->get()

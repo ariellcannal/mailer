@@ -15,7 +15,7 @@ use App\Libraries\Email\QueueManager;
 class QueueProcess extends BaseCommand
 {
 
-    protected $group = 'Mailer';
+    protected $group = 'CANNAL Envios';
 
     protected $name = 'queue:process';
 

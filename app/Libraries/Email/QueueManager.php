@@ -509,17 +509,17 @@ class QueueManager
             '{{apelido}}',
             '{{email}}'
         ], [
-            $contact['name'] ?? '',
-            $contact['nickname'] ?? '',
-            $contact['email'] ?? ''
+            esc((string) ($contact['name'] ?? ''), 'html'),
+            esc((string) ($contact['nickname'] ?? ''), 'html'),
+            esc((string) ($contact['email'] ?? ''), 'html')
         ], $htmlContent);
         
         // Substituir link de opt-out
-        $optoutUrl = $baseUrl . 'track/optout/' . $trackingHash;
+        $optoutUrl = $baseUrl . 'optout/' . $trackingHash;
         $htmlContent = str_replace('{{optout_link}}', $optoutUrl, $htmlContent);
         
         // Substituir link de webview
-        $webviewUrl = $baseUrl . 'track/webview/' . $trackingHash;
+        $webviewUrl = $baseUrl . 'webview/' . $trackingHash;
         $htmlContent = str_replace('{{webview_link}}', $webviewUrl, $htmlContent);
         
         // Adicionar pixel de tracking de abertura

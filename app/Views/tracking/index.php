@@ -4,7 +4,7 @@
 <div class="row g-4 mb-4">
     <div class="col-md-3">
         <div class="stat-card text-center">
-            <div class="stat-card-icon" style="background: #3498db; color: #fff;">
+            <div class="stat-card-icon stat-card-icon-primary">
                 <i class="fas fa-paper-plane"></i>
             </div>
             <div class="stat-card-value"><?= number_format($metrics['sent'], 0, ',', '.') ?></div>
@@ -13,7 +13,7 @@
     </div>
     <div class="col-md-3">
         <div class="stat-card text-center">
-            <div class="stat-card-icon" style="background: #1abc9c; color: #fff;">
+            <div class="stat-card-icon stat-card-icon-success">
                 <i class="fas fa-envelope-open"></i>
             </div>
             <div class="stat-card-value"><?= number_format($metrics['opens'], 0, ',', '.') ?></div>
@@ -22,7 +22,7 @@
     </div>
     <div class="col-md-3">
         <div class="stat-card text-center">
-            <div class="stat-card-icon" style="background: #e67e22; color: #fff;">
+            <div class="stat-card-icon stat-card-icon-accent">
                 <i class="fas fa-mouse-pointer"></i>
             </div>
             <div class="stat-card-value"><?= number_format($metrics['clicks'], 0, ',', '.') ?></div>
@@ -31,7 +31,7 @@
     </div>
     <div class="col-md-3">
         <div class="stat-card text-center">
-            <div class="stat-card-icon" style="background: #e74c3c; color: #fff;">
+            <div class="stat-card-icon stat-card-icon-tertiary">
                 <i class="fas fa-ban"></i>
             </div>
             <div class="stat-card-value"><?= number_format($metrics['optouts'], 0, ',', '.') ?></div>
@@ -69,7 +69,7 @@
 <div class="card">
     <div class="card-body">
         <h5 class="mb-3"><i class="fas fa-filter"></i> Ações rápidas</h5>
-        <div class="d-flex gap-2 flex-wrap">
+        <div class="btn-group flex-wrap" role="group" aria-label="Ações rápidas de tracking">
             <a href="<?= base_url('tracking/opens') ?>" class="btn btn-outline-primary">
                 <i class="fas fa-envelope-open"></i> Ver aberturas
             </a>

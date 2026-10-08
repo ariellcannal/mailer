@@ -7,7 +7,7 @@
             <div class="d-flex align-items-center gap-3">
                 <img src="<?= base_url('assets/images/icon.png') ?>" alt="Ícone CANNAL" width="56" height="56">
                 <div>
-                    <h4 class="section-title mb-1 text-uppercase">Remetente</h4>
+                    <h4 class="section-title mb-1">Remetente</h4>
                     <span class="text-muted"><?= esc($sender['email']) ?></span>
                 </div>
             </div>
@@ -29,19 +29,19 @@
                 <h6 class="section-subtitle"><i class="fas fa-id-card text-secondary me-2"></i>Informações</h6>
                 <table class="table table-sm table-borderless align-middle">
                     <tr>
-                        <th class="w-25 text-uppercase">Email</th>
+                        <th class="w-25">Email</th>
                         <td><?= esc($sender['email']) ?></td>
                     </tr>
                     <tr>
-                        <th class="text-uppercase">Nome</th>
+                        <th>Nome</th>
                         <td><?= esc($sender['name']) ?></td>
                     </tr>
                     <tr>
-                        <th class="text-uppercase">Domínio</th>
+                        <th>Domínio</th>
                         <td><?= esc($sender['domain']) ?></td>
                     </tr>
                     <tr>
-                        <th class="text-uppercase">Status SES</th>
+                        <th>Status SES</th>
                         <td>
                             <?php if ((int) $sender['ses_verified'] === 1): ?>
                                 <span class="badge bg-success">Verificado</span>
@@ -51,7 +51,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <th class="text-uppercase">Bounces AWS</th>
+                        <th>Bounces AWS</th>
                         <td>
                             <?php if ((int) ($sender['bounce_flow_verified'] ?? 0) === 1): ?>
                                 <span class="badge bg-success">Fluxo ativo</span>
@@ -106,17 +106,17 @@ if (!empty($dnsInstructions['dkim']) && is_array($dnsInstructions['dkim'])) {
 
 <div class="card">
     <div class="card-body">
-        <h5 class="section-title mb-3 text-uppercase"><i class="fas fa-server text-secondary me-2"></i>Registros DNS Requeridos</h5>
+        <h5 class="section-title mb-3"><i class="fas fa-server text-secondary me-2"></i>Registros DNS Requeridos</h5>
         <p class="text-muted">Crie ou atualize os registros abaixo em seu provedor de DNS. Utilize os botões para copiar rapidamente as informações.</p>
 
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th class="text-uppercase">Tipo</th>
-                        <th class="text-uppercase">Chave</th>
-                        <th class="text-uppercase">Valor</th>
-                        <th class="text-uppercase text-center"></th>
+                        <th>Tipo</th>
+                        <th>Chave</th>
+                        <th>Valor</th>
+                        <th class="text-center"></th>
                     </tr>
                 </thead>
                 <tbody>

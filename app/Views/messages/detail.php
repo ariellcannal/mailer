@@ -9,7 +9,7 @@
         <?php $isEdit = !empty($message['id'] ?? null); ?>
         <h4 class="mb-4">
             <i class="fas fa-paper-plane"></i>
-            <?= $isEdit ? 'Editar Mensagem' : 'Nova Mensagem' ?>
+            <?= $isEdit ? 'Editar E-mail' : 'Novo E-mail' ?>
         </h4>
         
         <!-- Step Wizard -->
@@ -286,7 +286,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-neutral" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-primary" id="btnSaveResend">Salvar</button>
             </div>
         </div>

@@ -20,6 +20,8 @@ $routes->get('track/open/(:segment)', 'TrackController::open/$1');
 $routes->get('track/click/(:segment)', 'TrackController::click/$1');
 $routes->get('webview/(:segment)', 'TrackController::webview/$1');
 $routes->match(['GET', 'POST'], 'optout/(:segment)', 'TrackController::optout/$1');
+$routes->get('webhooks/whatsapp', 'WhatsAppWebhookController::verify');
+$routes->post('webhooks/whatsapp', 'WhatsAppWebhookController::receive');
 
 // Deploy route
 $routes->post('deploy', 'DeployController::index');
@@ -50,6 +52,19 @@ $routes->group('messages', function($routes) {
     $routes->post('send/(:num)', 'MessageController::send/$1');
     $routes->post('delete/(:num)', 'MessageController::delete/$1');
     $routes->post('convert-to-draft/(:num)', 'MessageController::convertToDraft/$1');
+});
+
+// WhatsApp Cloud API
+$routes->group('whatsapp', function($routes) {
+    $routes->get('/', 'WhatsAppController::index');
+    $routes->get('create', 'WhatsAppController::create');
+    $routes->post('store', 'WhatsAppController::store');
+    $routes->get('templates', 'WhatsAppController::templates');
+    $routes->get('templates/create', 'WhatsAppController::createTemplate');
+    $routes->get('templates/edit/(:num)', 'WhatsAppController::editTemplate/$1');
+    $routes->post('templates/store', 'WhatsAppController::storeTemplate');
+    $routes->post('templates/submit/(:num)', 'WhatsAppController::submitTemplate/$1');
+    $routes->post('templates/sync', 'WhatsAppController::syncTemplates');
 });
 
 // Contacts
@@ -155,6 +170,9 @@ $routes->group('settings', function($routes) {
     $routes->get('/', 'SettingsController::index');
     $routes->post('update', 'SettingsController::update');
     $routes->get('ses-limits', 'SettingsController::sesLimits');
+    $routes->get('whatsapp', 'WhatsAppController::settings');
+    $routes->post('whatsapp/connect', 'WhatsAppController::connectMeta');
+    $routes->post('whatsapp/sync-numbers', 'WhatsAppController::syncNumbers');
 });
 
 // Processamento da fila (CLI ou cron)
@@ -166,6 +184,7 @@ $routes->get('queue/process-bounces', 'QueueController::processBounces');
 // Auth routes (to be implemented)
 $routes->get('login', 'AuthController::login');
 $routes->post('login', 'AuthController::authenticate');
+$routes->post('switch-profile', 'AuthController::switchProfile');
 $routes->get('register', 'AuthController::registerForm');
 $routes->post('register', 'AuthController::register');
 $routes->post('auth/forgot-password', 'AuthController::forgotPassword');

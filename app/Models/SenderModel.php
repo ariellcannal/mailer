@@ -2,7 +2,7 @@
 namespace App\Models;
 use CodeIgniter\Model;
 
-class SenderModel extends Model
+class SenderModel extends TenantModel
 {
     /**
      * @var string
@@ -23,6 +23,7 @@ class SenderModel extends Model
      * @var array<int, string>
      */
     protected $allowedFields = [
+        'company_id',
         'email',
         'name',
         'domain',

@@ -3,7 +3,7 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class MessageModel extends Model
+class MessageModel extends TenantModel
 {
 
     protected $table = 'messages';
@@ -15,6 +15,7 @@ class MessageModel extends Model
     protected $returnType = 'array';
 
     protected $allowedFields = [
+        'company_id',
         'campaign_id',
         'sender_id',
         'link_domain_id',

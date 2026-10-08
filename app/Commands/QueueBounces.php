@@ -16,7 +16,7 @@ use App\Libraries\Email\BounceProcessor;
 class QueueBounces extends BaseCommand
 {
 
-    protected $group = 'Mailer';
+    protected $group = 'CANNAL Envios';
 
     protected $name = 'queue:bounces';
 

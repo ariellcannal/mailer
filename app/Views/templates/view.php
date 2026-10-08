@@ -5,7 +5,7 @@
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="mb-0"><i class="fas fa-file-code"></i> <?= esc($template['name']) ?></h4>
-            <div class="d-flex gap-2">
+            <div class="btn-group" role="group" aria-label="Ações do template">
                 <a href="<?= base_url('templates/edit/' . $template['id']) ?>" class="btn btn-outline-secondary">
                     <i class="fas fa-edit"></i> Editar
                 </a>

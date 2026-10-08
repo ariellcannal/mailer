@@ -5,12 +5,12 @@ use CodeIgniter\Model;
 /**
  * Classe responsável por gerenciar os registros de campanhas no banco de dados.
  */
-class CampaignModel extends Model {
+class CampaignModel extends TenantModel {
     protected $table = 'campaigns';
     protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
-    protected $allowedFields = ['name','description','total_messages','total_sends','total_opens','total_clicks','total_bounces','total_optouts','is_active'];
+    protected $allowedFields = ['company_id','name','description','total_messages','total_sends','total_opens','total_clicks','total_bounces','total_optouts','is_active'];
     protected $useTimestamps = true;
     protected $createdField = 'created_at';
     protected $updatedField = 'updated_at';

@@ -34,10 +34,12 @@
             </div>
             <?php endif; ?>
 
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-upload"></i> Importar
-            </button>
-            <a href="<?= base_url('contacts') ?>" class="btn btn-secondary">Cancelar</a>
+            <div class="btn-group" role="group" aria-label="Ações da importação">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-upload"></i> Importar
+                </button>
+                <a href="<?= base_url('contacts') ?>" class="btn btn-neutral">Cancelar</a>
+            </div>
         </form>
     </div>
 </div>

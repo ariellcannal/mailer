@@ -2,9 +2,8 @@
 
 <?= $this->section('content') ?>
 <div class="container-fluid">
-    <?= $this->include('receita/_toolbar') ?>
     
-    <h4 class="mb-4"><i class="fas fa-tasks me-2"></i>Tarefas de Importação</h4>
+    <h4 class="mb-4"><i class="fas fa-tasks me-2"></i>Tarefas da RFB</h4>
     
     <div class="card shadow-sm">
         <div class="card-body">

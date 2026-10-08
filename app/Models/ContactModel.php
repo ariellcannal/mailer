@@ -13,7 +13,7 @@ use CodeIgniter\Model;
  * @author  Mailer System
  * @version 1.0.0
  */
-class ContactModel extends Model
+class ContactModel extends TenantModel
 {
     protected $table = 'contacts';
     protected $primaryKey = 'id';
@@ -23,7 +23,9 @@ class ContactModel extends Model
     protected $protectFields = true;
 
     protected $allowedFields = [
+        'company_id',
         'email',
+        'phone',
         'name',
         'nickname',
         'quality_score',
@@ -48,7 +50,7 @@ class ContactModel extends Model
 
     protected $validationRules = [
         'id' => 'permit_empty|integer',
-        'email' => 'required|valid_email|is_unique[contacts.email,id,{id}]',
+        'email' => 'required|valid_email',
         'name' => 'permit_empty|max_length[255]',
         'nickname' => 'permit_empty|max_length[255]',
         'quality_score' => 'permit_empty|integer|in_list[1,2,3,4,5]',
@@ -83,6 +85,7 @@ class ContactModel extends Model
             ->join('messages', 'messages.id = message_sends.message_id')
             ->join('optouts', 'optouts.contact_id = message_sends.contact_id AND optouts.message_id = message_sends.message_id', 'left')
             ->join('bounces', 'bounces.contact_id = message_sends.contact_id AND bounces.message_id = message_sends.message_id', 'left')
+            ->where('messages.company_id', (int) (session()->get('company_id') ?? 0))
             ->where('message_sends.contact_id', $contactId)
             ->orderBy('message_sends.sent_at', 'DESC')
             ->orderBy('message_sends.id', 'DESC')
@@ -372,7 +375,7 @@ class ContactModel extends Model
      * @param array $listIds IDs das listas para vincular
      * @return array Resultado da importação
      */
-    public function importContactsBatch(array $contacts, array $listIds = []): array
+    public function importContactsBatch(array $contacts, array $listIds = [], int $companyId = 0): array
     {
         $imported = 0;
         $skipped = 0;
@@ -383,6 +386,7 @@ class ContactModel extends Model
         $batchSize = 500;
         $db = \Config\Database::connect();
         $allBatchEmails = []; // Armazenar todos os emails inseridos para adicionar às listas ao final
+        $phoneByEmail = [];
         
         foreach ($contacts as $index => $contact) {
             try {
@@ -394,7 +398,9 @@ class ContactModel extends Model
                     : $this->generateNickname($contact['name'] ?? null, $email);
                 
                 $batchInsert[] = [
+                    'company_id' => $companyId,
                     'email' => $email,
+                    'phone' => $contact['phone'] ?? null,
                     'name' => $contact['name'] ?? null,
                     'nickname' => $nickname,
                     'quality_score' => 3,
@@ -404,6 +410,7 @@ class ContactModel extends Model
                 ];
                 
                 $allBatchEmails[] = $email;
+                $phoneByEmail[$email] = $contact['phone'] ?? null;
                 unset($contact);
                 
                 // Inserir lote quando atingir tamanho máximo
@@ -440,10 +447,18 @@ class ContactModel extends Model
             $listModel = new ContactListModel();
             
             // Buscar IDs de todos os contatos pelos emails
-            $allContacts = $this->whereIn('email', $allBatchEmails)->findAll();
+            $allContactsQuery = $this->whereIn('email', $allBatchEmails);
+            if ($companyId > 0) {
+                $allContactsQuery->where('company_id', $companyId);
+            }
+            $allContacts = $allContactsQuery->findAll();
             
             foreach ($allContacts as $contact) {
-                $this->syncContactLists((int) $contact['id'], $listIds, $listMemberModel, $listModel);
+                $importedPhone = trim((string) ($phoneByEmail[$contact['email']] ?? ''));
+                if ($importedPhone !== '' && empty($contact['phone'])) {
+                    $this->update((int) $contact['id'], ['phone' => $importedPhone]);
+                }
+                $this->syncContactLists((int) $contact['id'], $listIds, $listMemberModel, $listModel, $companyId);
             }
         }
         
@@ -553,7 +568,8 @@ class ContactModel extends Model
         int $contactId,
         array $listIds,
         ?ContactListMemberModel $memberModel = null,
-        ?ContactListModel $listModel = null
+        ?ContactListModel $listModel = null,
+        int $companyId = 0
     ): void {
         $listIds = array_map('intval', array_unique(array_filter($listIds)));
 
@@ -563,6 +579,16 @@ class ContactModel extends Model
 
         $memberModel ??= new ContactListMemberModel();
         $listModel ??= new ContactListModel();
+
+        $tenantId = $companyId > 0 ? $companyId : (int) (session()->get('company_id') ?? 0);
+        $listBuilder = $listModel->builder()->select('id')->whereIn('id', $listIds);
+        if ($tenantId > 0) {
+            $listBuilder->where('company_id', $tenantId);
+        }
+        $listIds = array_map('intval', array_column($listBuilder->get()->getResultArray(), 'id'));
+        if (empty($listIds)) {
+            return;
+        }
 
         foreach ($listIds as $listId) {
             $exists = $memberModel
@@ -575,12 +601,13 @@ class ContactModel extends Model
             }
 
             $memberModel->insert([
+                'company_id' => $companyId,
                 'contact_id' => $contactId,
                 'list_id' => $listId,
             ], false);
         }
 
-        $listModel->refreshCounters($listIds);
+        $listModel->refreshCounters($listIds, $companyId);
     }
 
     /**
@@ -622,6 +649,8 @@ class ContactModel extends Model
         return $this->db->table('contacts')
             ->select('contacts.*')
             ->join('contact_list_members', 'contact_list_members.contact_id = contacts.id')
+            ->where('contacts.company_id', (int) (session()->get('company_id') ?? 0))
+            ->where('contact_list_members.company_id', (int) (session()->get('company_id') ?? 0))
             ->where('contact_list_members.list_id', $listId)
             ->where('contacts.is_active', 1)
             ->where('contacts.opted_out', 0)
